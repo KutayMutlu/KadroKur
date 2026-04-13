@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { shareUrl } from "@/lib/share";
 import { Download, Link2, Loader2, Save } from "lucide-react";
 
 export interface ToolbarProps {
@@ -13,6 +14,11 @@ export interface ToolbarProps {
   onCopyShare: () => void;
   saving: boolean;
   shareId: string | null;
+  /** Link üretildi (yükleme beklenmiyor) */
+  shareReady: boolean;
+  supabaseConfigured: boolean;
+  /** En az bir kez Kaydet ile yazıldı — paylaşım linki başka cihazda açılabilir */
+  didSaveOnce: boolean;
   message: string | null;
 }
 
@@ -24,6 +30,9 @@ export function Toolbar({
   onCopyShare,
   saving,
   shareId,
+  shareReady,
+  supabaseConfigured,
+  didSaveOnce,
   message,
 }: ToolbarProps) {
   return (
@@ -51,8 +60,13 @@ export function Toolbar({
             type="button"
             variant="secondary"
             onClick={onCopyShare}
-            disabled={!shareId}
+            disabled={!shareReady}
             className="w-full"
+            title={
+              shareReady
+                ? "Tam paylaşım URL’sini panoya kopyala"
+                : "Paylaşım linki hazırlanıyor…"
+            }
           >
             <Link2 className="h-4 w-4" />
             Linki kopyala
@@ -74,9 +88,32 @@ export function Toolbar({
       </div>
 
       {shareId && (
-        <p className="break-all text-xs text-[var(--muted)]">
-          Paylaşım: /t/{shareId}
-        </p>
+        <div className="space-y-1.5 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-deep)]/50 px-2.5 py-2">
+          <p className="text-[11px] font-medium uppercase tracking-wide text-[var(--muted)]">
+            Paylaşım linki
+          </p>
+          <p className="break-all font-mono text-[11px] leading-snug text-[var(--foreground)]">
+            {shareUrl(shareId)}
+          </p>
+          {supabaseConfigured ? (
+            didSaveOnce ? (
+              <p className="text-[11px] text-emerald-400/90">
+                Supabase ile kayıtlı; link başka cihazlarda da açılır.
+              </p>
+            ) : (
+              <p className="text-[11px] text-amber-200/80">
+                Başkalarının görmesi için bir kez{" "}
+                <span className="font-medium">Kaydet</span>’e basın.
+              </p>
+            )
+          ) : (
+            <p className="text-[11px] text-[var(--muted)]">
+              Bulutta paylaşım için ortamda{" "}
+              <code className="rounded bg-black/30 px-1">NEXT_PUBLIC_SUPABASE_*</code>{" "}
+              tanımlı olmalı.
+            </p>
+          )}
+        </div>
       )}
       {message && (
         <p className="text-sm text-green-400" role="status">

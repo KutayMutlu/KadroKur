@@ -95,7 +95,11 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
   const [tacticId, setTacticId] = useState<string | null>(
     initialTacticId ?? null
   );
-  const [shareId, setShareId] = useState<string | null>(null);
+  const [shareId, setShareId] = useState<string | null>(() =>
+    initialTacticId ? null : generateShareId()
+  );
+  /** Yerelde veya bulutta en az bir kez kaydedildi (paylaşım linkinin başka cihazda açılması için gerekli) */
+  const [didSaveOnce, setDidSaveOnce] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [pastSnapshots, setPastSnapshots] = useState<BoardSnapshot[]>([]);
@@ -148,12 +152,21 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
     );
     setTacticId(t.id);
     setShareId(t.share_id);
+    setDidSaveOnce(true);
   }, []);
 
   useEffect(() => {
     if (!initialTacticId) return;
     const t = getLocalTacticById(initialTacticId);
-    if (t) loadTactic(t);
+    if (t) {
+      loadTactic(t);
+      return;
+    }
+    setShareId(generateShareId());
+    setDidSaveOnce(false);
+    setMessage(
+      "Bu kayıt bu cihazda yok. Paylaşım için yeni bir link oluşturuldu — düzenleyip Kaydet ile buluta yazın."
+    );
   }, [initialTacticId, loadTactic]);
 
   const onFormationChange = (key: string) => {
@@ -278,6 +291,7 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
       upsertLocalTactic(row);
       setTacticId(id);
       setShareId(sid);
+      setDidSaveOnce(true);
 
       const sb = getSupabase();
       if (sb) {
@@ -301,8 +315,8 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
 
       setMessage(
         isSupabaseConfigured()
-          ? "Kaydedildi (yerel + Supabase denemesi)."
-          : "Kaydedildi (tarayıcıda). Supabase için .env ekleyin."
+          ? "Kaydedildi. Paylaşım linki başka cihazlarda da açılabilir."
+          : "Kaydedildi (yalnız bu tarayıcı). Bulutta paylaşım için Supabase ortam değişkenlerini ekleyin."
       );
     } finally {
       setSaving(false);
@@ -320,7 +334,13 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
     if (!shareId) return;
     const url = shareUrl(shareId);
     await navigator.clipboard.writeText(url);
-    setMessage("Link panoya kopyalandı.");
+    if (isSupabaseConfigured() && !didSaveOnce) {
+      setMessage(
+        "Link kopyalandı. Başkalarının görmesi için önce Kaydet’e basın (Supabase’e yazılır)."
+      );
+    } else {
+      setMessage("Link panoya kopyalandı.");
+    }
   };
 
   const availableFormations = getFormationsByFormat(matchFormat);
@@ -436,6 +456,9 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
               onCopyShare={handleCopyShare}
               saving={saving}
               shareId={shareId}
+              shareReady={Boolean(shareId)}
+              supabaseConfigured={isSupabaseConfigured()}
+              didSaveOnce={didSaveOnce}
               message={message}
             />
           </div>

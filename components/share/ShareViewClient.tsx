@@ -91,44 +91,46 @@ export function ShareViewClient({ shareId }: ShareViewClientProps) {
   }
 
   return (
-    <div className="min-h-screen bg-pitch-night">
-    <div className="mx-auto max-w-2xl px-4 py-8">
-      <header className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1
-            className="text-xl font-semibold text-[var(--foreground)]"
-            style={{ fontFamily: "var(--font-display)" }}
-          >
-            {title || "Paylaşılan taktik"}
-          </h1>
-          <p className="text-sm text-[var(--muted)]">Salt okunur görünüm</p>
+    <div className="flex h-dvh min-h-0 flex-col overflow-hidden bg-pitch-night">
+      <div className="mx-auto flex h-full min-h-0 w-full max-w-[min(100%,1400px)] flex-1 flex-col px-3 pb-2 pt-3 sm:px-5 sm:pb-3 sm:pt-4">
+        <header className="mb-2 shrink-0 flex flex-col gap-2 sm:mb-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1
+              className="text-xl font-semibold text-[var(--foreground)] sm:text-2xl"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              {title || "Paylaşılan taktik"}
+            </h1>
+            <p className="text-sm text-[var(--muted)]">Salt okunur görünüm</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <ThemeToggle />
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                const stage = stageRef.current?.getStage();
+                if (!stage) return;
+                exportStageToPng(stage, "taktik.png");
+              }}
+            >
+              PNG indir
+            </Button>
+            <Button asChild variant="ghost">
+              <Link href="/">Ana sayfa</Link>
+            </Button>
+          </div>
+        </header>
+        <div className="min-h-0 w-full flex-1 pb-safe">
+          <PitchCanvas
+            ref={stageRef}
+            players={state.players}
+            activePlayerId={null}
+            onPlayerMove={() => {}}
+            interactive={false}
+          />
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <ThemeToggle />
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => {
-              const stage = stageRef.current?.getStage();
-              if (!stage) return;
-              exportStageToPng(stage, "taktik.png");
-            }}
-          >
-            PNG indir
-          </Button>
-          <Button asChild variant="ghost">
-            <Link href="/">Ana sayfa</Link>
-          </Button>
-        </div>
-      </header>
-      <PitchCanvas
-        ref={stageRef}
-        players={state.players}
-        activePlayerId={null}
-        onPlayerMove={() => {}}
-        interactive={false}
-      />
-    </div>
+      </div>
     </div>
   );
 }

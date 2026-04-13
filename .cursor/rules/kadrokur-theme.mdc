@@ -1,0 +1,13 @@
+---
+description: KadroKur "Gece Sahası" UI teması — kullanıcı KADROKUR-THEME.md, tema veya kadrokur teması dediğinde veya app/components stillerini değiştirirken uygula
+globs: "**/*.{tsx,css}"
+alwaysApply: false
+---
+
+# KadroKur tema kuralı
+
+- Proje kökündeki **`KADROKUR-THEME.md`** dosyası bu uygulamanın görsel doğruluk kaynağıdır (renk tokenları, fontlar, `.bg-pitch-night`, CTA kalıpları).
+- Kullanıcı **dosya adını** (`KADROKUR-THEME.md`) söylediğinde veya tema metnini yapıştırdığında, yeni UI’yi bu belgeye **aynen veya güncellenmiş token listesiyle** uyumlu tut.
+- Koyu (`:root`) ve açık (`html.light`) tema aynı CSS değişken isimlerini kullanır; yeni stillerde sabit hex yerine bu token’ları kullan (`--on-accent` dahil).
+- Stil değiştirirken önce `app/globals.css` ve `app/layout.tsx` ile tutarlılığı kontrol et; tek başına rastgele Tailwind renkleri ekleme; mümkünse `var(--accent)`, `var(--foreground)`, `var(--muted)`, `var(--bg-card)` kullan.
+- Tam sayfa görünümlerde sayfa kabuğu: `min-h-screen bg-pitch-night` (belgede açıklandığı gibi).

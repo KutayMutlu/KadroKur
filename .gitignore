@@ -1,0 +1,19 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+
+# next
+/.next/
+/out/
+
+# env
+.env
+.env*.local
+
+# misc
+*.pem
+.DS_Store
+npm-debug.log*
+tsconfig.tsbuildinfo

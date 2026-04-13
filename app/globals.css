@@ -1,0 +1,144 @@
+@import "tailwindcss";
+
+/* —— Varsayılan = koyu (Gece Sahası), FOUC önleme —— */
+:root {
+  --bg-deep: #060a0e;
+  --bg-elevated: #0e161c;
+  --bg-card: rgba(18, 32, 42, 0.75);
+  --border-subtle: rgba(120, 200, 160, 0.12);
+  --border-glow: rgba(190, 255, 80, 0.35);
+  --foreground: #e8f4ec;
+  --muted: #7a9e8c;
+  --accent: #bef264;
+  --accent-dim: #86a85c;
+  --accent-hot: #fde047;
+  --pitch-line: rgba(180, 255, 200, 0.15);
+  --pitch-radial: rgba(34, 90, 60, 0.45);
+  --pitch-grad-start: #0a1218;
+  --hero-glow-mid: rgba(190, 255, 100, 0.12);
+  --on-accent: #142018;
+  --mini-pitch-from: #0d2818;
+  --mini-pitch-to: #0a1f12;
+  --mini-pitch-ring: #142018;
+  --card-inset-glow: 0 0 0 1px rgba(190, 255, 100, 0.08) inset;
+  --font-display: var(--font-outfit), system-ui, sans-serif;
+  --font-body: var(--font-dm), system-ui, sans-serif;
+  --background: var(--bg-deep);
+  --card: var(--bg-card);
+}
+
+/* —— Açık tema (next-themes: html.light) —— */
+html.light {
+  --bg-deep: #edf2ee;
+  --bg-elevated: #e2eae4;
+  --bg-card: rgba(255, 255, 255, 0.92);
+  --border-subtle: rgba(45, 85, 55, 0.14);
+  --border-glow: rgba(60, 110, 30, 0.4);
+  --foreground: #0f1a14;
+  --muted: #5c6b62;
+  --accent: #4d7c0f;
+  --accent-dim: #3f6212;
+  --accent-hot: #b45309;
+  --pitch-line: rgba(35, 75, 50, 0.12);
+  --pitch-radial: rgba(70, 150, 95, 0.22);
+  --pitch-grad-start: #dce8df;
+  --hero-glow-mid: rgba(90, 160, 70, 0.2);
+  --on-accent: #f7fee7;
+  --mini-pitch-from: #1a4d2e;
+  --mini-pitch-to: #0f3320;
+  --mini-pitch-ring: #f0fdf4;
+  --card-inset-glow: 0 0 0 1px rgba(60, 100, 55, 0.12) inset;
+  --background: var(--bg-deep);
+  --card: var(--bg-card);
+}
+
+@layer base {
+  body {
+    background-color: var(--bg-deep);
+    color: var(--foreground);
+    font-family: var(--font-body);
+  }
+}
+
+.bg-pitch-night {
+  background-color: var(--bg-deep);
+  background-image:
+    radial-gradient(
+      ellipse 120% 80% at 50% -20%,
+      var(--pitch-radial) 0%,
+      transparent 55%
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 52px,
+      var(--pitch-line) 52px,
+      var(--pitch-line) 54px
+    ),
+    linear-gradient(180deg, var(--pitch-grad-start) 0%, var(--bg-deep) 45%);
+}
+
+.hero-glow {
+  background: radial-gradient(
+    circle at 70% 20%,
+    var(--hero-glow-mid) 0%,
+    transparent 45%
+  );
+}
+
+@keyframes float-soft {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.animate-float-soft {
+  animation: float-soft 5s ease-in-out infinite;
+}
+
+@keyframes pulse-line {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+.animate-pulse-line {
+  animation: pulse-line 3s ease-in-out infinite;
+}
+
+/* Oyuncu düzenle modalı — giriş animasyonu */
+@keyframes player-edit-modal-backdrop-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes player-edit-modal-panel-enter {
+  from {
+    opacity: 0;
+    transform: translateY(1.25rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-player-edit-backdrop {
+  animation: player-edit-modal-backdrop-enter 0.6s ease forwards;
+}
+
+.animate-player-edit-panel {
+  animation: player-edit-modal-panel-enter 0.6s ease forwards;
+}

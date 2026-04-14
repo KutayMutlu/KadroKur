@@ -3,15 +3,64 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { listLocalTactics, type StoredTactic } from "@/lib/local-tactics";
+import { getSupabase } from "@/lib/supabase";
+
+type CloudTactic = {
+  id: string;
+  title: string;
+  share_id: string;
+  updated_at: string;
+};
 
 export function ClientTactics() {
   const [items, setItems] = useState<StoredTactic[]>([]);
+  const [cloudItems, setCloudItems] = useState<CloudTactic[]>([]);
+  const [cloudReady, setCloudReady] = useState(false);
 
   useEffect(() => {
     setItems(listLocalTactics());
   }, []);
 
-  if (items.length === 0) {
+  useEffect(() => {
+    const sb = getSupabase();
+    if (!sb) {
+      setCloudReady(true);
+      return;
+    }
+    let disposed = false;
+
+    const loadCloud = async () => {
+      const { data } = await sb.auth.getUser();
+      const userId = data.user?.id;
+      if (!userId) {
+        if (!disposed) {
+          setCloudItems([]);
+          setCloudReady(true);
+        }
+        return;
+      }
+      const { data: rows } = await sb
+        .from("tactics")
+        .select("id, title, share_id, updated_at")
+        .eq("user_id", userId)
+        .order("updated_at", { ascending: false });
+      if (!disposed) {
+        setCloudItems((rows as CloudTactic[] | null) ?? []);
+        setCloudReady(true);
+      }
+    };
+
+    loadCloud();
+    const { data: sub } = sb.auth.onAuthStateChange(() => {
+      loadCloud();
+    });
+    return () => {
+      disposed = true;
+      sub.subscription.unsubscribe();
+    };
+  }, []);
+
+  if (items.length === 0 && cloudItems.length === 0 && cloudReady) {
     return (
       <section className="mt-16 rounded-2xl border border-dashed border-[var(--border-subtle)] bg-[var(--bg-card)] p-8 text-center backdrop-blur-sm">
         <p
@@ -19,7 +68,7 @@ export function ClientTactics() {
           style={{ fontFamily: "var(--font-body)" }}
         >
           Henüz kayıtlı taktik yok. Editörde bir diziliş kaydettiğinde burada
-          listelenecek — tamamen bu tarayıcıda saklanır.
+          listelenecek.
         </p>
         <Link
           href="/editor"
@@ -41,31 +90,63 @@ export function ClientTactics() {
           >
             Kayıtlı taktikler
           </h2>
-          <p className="mt-1 text-sm text-[var(--muted)]">
-            Bu cihazdaki kayıtlar — paylaşım linki aynı makinede açılır.
-          </p>
+          <p className="mt-1 text-sm text-[var(--muted)]">Bu cihaz + hesabınız</p>
         </div>
       </div>
-      <ul className="grid gap-3 sm:grid-cols-2">
-        {items.map((t) => (
-          <li key={t.id}>
-            <Link
-              href={`/editor?id=${encodeURIComponent(t.id)}`}
-              className="group flex flex-col rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-4 transition hover:border-[var(--border-glow)] hover:bg-[var(--bg-elevated)]/80"
-            >
-              <span
-                className="font-medium text-[var(--foreground)] group-hover:text-[var(--accent)]"
-                style={{ fontFamily: "var(--font-display)" }}
-              >
-                {t.title}
-              </span>
-              <span className="mt-1 font-mono text-xs text-[var(--muted)]">
-                /t/{t.share_id}
-              </span>
-            </Link>
-          </li>
-        ))}
-      </ul>
+      {cloudItems.length > 0 && (
+        <>
+          <h3 className="mb-2 text-sm font-medium text-[var(--accent)]">
+            Hesabımdaki taktikler
+          </h3>
+          <ul className="mb-4 grid gap-3 sm:grid-cols-2">
+            {cloudItems.map((t) => (
+              <li key={`cloud-${t.id}`}>
+                <Link
+                  href={`/editor?id=${encodeURIComponent(t.id)}`}
+                  className="group flex flex-col rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-4 transition hover:border-[var(--border-glow)] hover:bg-[var(--bg-elevated)]/80"
+                >
+                  <span
+                    className="font-medium text-[var(--foreground)] group-hover:text-[var(--accent)]"
+                    style={{ fontFamily: "var(--font-display)" }}
+                  >
+                    {t.title}
+                  </span>
+                  <span className="mt-1 font-mono text-xs text-[var(--muted)]">
+                    /t/{t.share_id}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+      {items.length > 0 && (
+        <>
+          <h3 className="mb-2 text-sm font-medium text-[var(--muted)]">
+            Bu cihazdaki kayıtlar
+          </h3>
+          <ul className="grid gap-3 sm:grid-cols-2">
+            {items.map((t) => (
+              <li key={t.id}>
+                <Link
+                  href={`/editor?id=${encodeURIComponent(t.id)}`}
+                  className="group flex flex-col rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-4 transition hover:border-[var(--border-glow)] hover:bg-[var(--bg-elevated)]/80"
+                >
+                  <span
+                    className="font-medium text-[var(--foreground)] group-hover:text-[var(--accent)]"
+                    style={{ fontFamily: "var(--font-display)" }}
+                  >
+                    {t.title}
+                  </span>
+                  <span className="mt-1 font-mono text-xs text-[var(--muted)]">
+                    /t/{t.share_id}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
     </section>
   );
 }

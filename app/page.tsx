@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ClientTactics } from "./client-tactics";
+import { AuthControls } from "@/components/auth/AuthControls";
 
 export default function HomePage() {
   return (
@@ -28,6 +29,7 @@ export default function HomePage() {
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-2">
+            <AuthControls />
             <ThemeToggle />
             <Link
               href="/editor"

@@ -44,7 +44,9 @@ import {
 import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import type { CanvasState } from "@/types/tactic";
 import type { Player } from "@/types/player";
+import { AuthControls } from "@/components/auth/AuthControls";
 import { Redo2, Undo2 } from "lucide-react";
+import type { User } from "@supabase/supabase-js";
 
 const DEFAULT_MATCH_FORMAT: MatchFormatKey = "7v7";
 const DEFAULT_FORMATION = "2-3-1";
@@ -100,6 +102,7 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
   );
   /** Yerelde veya bulutta en az bir kez kaydedildi (paylaşım linkinin başka cihazda açılması için gerekli) */
   const [didSaveOnce, setDidSaveOnce] = useState(false);
+  const [authUser, setAuthUser] = useState<User | null>(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [pastSnapshots, setPastSnapshots] = useState<BoardSnapshot[]>([]);
@@ -156,17 +159,65 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
   }, []);
 
   useEffect(() => {
+    const sb = getSupabase();
+    if (!sb) return;
+    sb.auth.getUser().then(({ data }) => {
+      setAuthUser(data.user ?? null);
+    });
+    const { data: sub } = sb.auth.onAuthStateChange((_event, session) => {
+      setAuthUser(session?.user ?? null);
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
     if (!initialTacticId) return;
     const t = getLocalTacticById(initialTacticId);
     if (t) {
       loadTactic(t);
       return;
     }
-    setShareId(generateShareId());
-    setDidSaveOnce(false);
-    setMessage(
-      "Bu kayıt bu cihazda yok. Paylaşım için yeni bir link oluşturuldu — düzenleyip Kaydet ile buluta yazın."
-    );
+    const sb = getSupabase();
+    if (!sb) {
+      setShareId(generateShareId());
+      setDidSaveOnce(false);
+      setMessage(
+        "Bu kayıt bu cihazda yok. Paylaşım için yeni bir link oluşturuldu — düzenleyip Kaydet ile buluta yazın."
+      );
+      return;
+    }
+    sb.auth.getUser().then(async ({ data }) => {
+      const userId = data.user?.id;
+      if (!userId) {
+        setShareId(generateShareId());
+        setDidSaveOnce(false);
+        setMessage(
+          "Bu kayıt bu cihazda yok. Google ile giriş yaparsanız hesabınızdaki taktikleri de açabilirsiniz."
+        );
+        return;
+      }
+      const { data: cloud } = await sb
+        .from("tactics")
+        .select("id, title, share_id, canvas_state, updated_at")
+        .eq("id", initialTacticId)
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (cloud?.canvas_state) {
+        loadTactic({
+          id: cloud.id,
+          title: cloud.title,
+          share_id: cloud.share_id,
+          canvas_state: cloud.canvas_state as CanvasState,
+          updated_at: cloud.updated_at,
+        });
+        return;
+      }
+      setShareId(generateShareId());
+      setDidSaveOnce(false);
+      setMessage(
+        "Bu kayıt bulunamadı. Yeni taktik olarak devam edebilirsiniz."
+      );
+    });
   }, [initialTacticId, loadTactic]);
 
   const onFormationChange = (key: string) => {
@@ -298,7 +349,7 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
         const { error } = await sb.from("tactics").upsert(
           {
             id,
-            user_id: null,
+            user_id: authUser?.id ?? null,
             team_id: null,
             title: row.title,
             formation_key: formationKey,
@@ -310,14 +361,24 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
           },
           { onConflict: "id" }
         );
-        if (error) console.warn("Supabase kayıt:", error.message);
+        if (error) {
+          console.warn("Supabase kayıt:", error.message);
+        }
       }
 
-      setMessage(
-        isSupabaseConfigured()
-          ? "Kaydedildi. Paylaşım linki başka cihazlarda da açılabilir."
-          : "Kaydedildi (yalnız bu tarayıcı). Bulutta paylaşım için Supabase ortam değişkenlerini ekleyin."
-      );
+      if (!isSupabaseConfigured()) {
+        setMessage(
+          "Kaydedildi (yalnız bu tarayıcı). Bulutta paylaşım için Supabase ortam değişkenlerini ekleyin."
+        );
+      } else if (!authUser) {
+        setMessage(
+          "Kaydedildi. Hesabınıza bağlamak için Google ile giriş yapın; sonraki kayıtlar hesabınıza yazılır."
+        );
+      } else {
+        setMessage(
+          "Kaydedildi. Bu taktik Google hesabınıza bağlandı ve başka cihazlarda açılabilir."
+        );
+      }
     } finally {
       setSaving(false);
     }
@@ -381,7 +442,8 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
             Halı saha dizilişi — sürükleyin, kaydedin, paylaşın.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <AuthControls />
           <Button
             type="button"
             variant="secondary"

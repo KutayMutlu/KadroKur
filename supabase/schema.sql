@@ -37,16 +37,27 @@ create index if not exists tactics_share_id_idx on public.tactics (share_id);
 
 alter table public.tactics enable row level security;
 
--- Demo: herkes okuyabilsin (is_public), anon insert/update (geliştirme için — üretimde sıkılaştırın)
+drop policy if exists "public read tactics" on public.tactics;
+drop policy if exists "anon insert tactics" on public.tactics;
+drop policy if exists "anon update tactics" on public.tactics;
+
+-- Herkes yalnızca public taktikleri okuyabilir
 create policy "public read tactics"
   on public.tactics for select
   using (is_public = true);
 
-create policy "anon insert tactics"
-  on public.tactics for insert
-  with check (true);
+-- Giriş yapan kullanıcı kendi taktiklerini okuyabilir
+create policy "owner read tactics"
+  on public.tactics for select
+  using (auth.uid() = user_id);
 
-create policy "anon update tactics"
+-- Giriş yapan kullanıcı yalnızca kendisi için insert yapabilir
+create policy "owner insert tactics"
+  on public.tactics for insert
+  with check (auth.uid() = user_id);
+
+-- Giriş yapan kullanıcı yalnızca kendi satırlarını güncelleyebilir
+create policy "owner update tactics"
   on public.tactics for update
-  using (true)
-  with check (true);
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);

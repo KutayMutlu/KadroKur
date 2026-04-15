@@ -4,7 +4,10 @@ import { useRef, useEffect, useState, forwardRef, useImperativeHandle } from "re
 import { Stage, Layer, Rect, Line, Circle, Group, Text } from "react-konva";
 import type Konva from "konva";
 import { PlayerNode } from "./PlayerNode";
-import { getPlayerVisualScale } from "@/lib/player-node-scale";
+import {
+  getAdaptiveNodeMetrics,
+  type AdaptiveDropConfig,
+} from "@/lib/player-node-scale";
 import type { Player } from "@/types/player";
 
 const PITCH_W = 760;
@@ -22,6 +25,8 @@ export interface PitchCanvasProps {
   attackFlip?: boolean;
   /** true: saha dikey (yukarı-aşağı), false: yatay (sağ-sol) */
   onLayoutChange?: (vertical: boolean) => void;
+  /** Editör için adaptif drop-time çakışma çözümleme metrikleri */
+  onAdaptiveDropChange?: (drop: AdaptiveDropConfig) => void;
 }
 
 export type PitchCanvasHandle = {
@@ -38,6 +43,7 @@ export const PitchCanvas = forwardRef<PitchCanvasHandle, PitchCanvasProps>(
       interactive = true,
       attackFlip = false,
       onLayoutChange,
+      onAdaptiveDropChange,
     },
     ref
   ) {
@@ -45,11 +51,18 @@ export const PitchCanvas = forwardRef<PitchCanvasHandle, PitchCanvasProps>(
     const containerRef = useRef<HTMLDivElement>(null);
     const [canvasSize, setCanvasSize] = useState({ w: PITCH_W, h: PITCH_H });
     const [verticalLayout, setVerticalLayout] = useState(false);
+    const [draggingPlayerId, setDraggingPlayerId] = useState<string | null>(null);
     const onLayoutChangeRef = useRef<PitchCanvasProps["onLayoutChange"]>(undefined);
+    const onAdaptiveDropChangeRef = useRef<PitchCanvasProps["onAdaptiveDropChange"]>(undefined);
+    const lastDropKeyRef = useRef<string>("");
 
     useEffect(() => {
       onLayoutChangeRef.current = onLayoutChange;
     }, [onLayoutChange]);
+
+    useEffect(() => {
+      onAdaptiveDropChangeRef.current = onAdaptiveDropChange;
+    }, [onAdaptiveDropChange]);
 
     useImperativeHandle(ref, () => ({
       getStage: () => stageRef.current,
@@ -94,8 +107,14 @@ export const PitchCanvas = forwardRef<PitchCanvasHandle, PitchCanvasProps>(
     const margin = 8;
     const innerW = canvasSize.w - margin * 2;
     const innerH = canvasSize.h - margin * 2;
-    const innerMin = Math.min(innerW, innerH);
-    const playerVisualScale = getPlayerVisualScale(innerMin);
+    const adaptive = getAdaptiveNodeMetrics(innerW, innerH);
+
+    useEffect(() => {
+      const key = JSON.stringify(adaptive.drop);
+      if (key === lastDropKeyRef.current) return;
+      lastDropKeyRef.current = key;
+      onAdaptiveDropChangeRef.current?.(adaptive.drop);
+    }, [adaptive.drop]);
 
     return (
       <div className="h-full w-full overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/80 via-slate-900/65 to-emerald-950/70 p-3 shadow-[0_20px_60px_-30px_rgba(16,185,129,0.45)] backdrop-blur-sm">
@@ -309,8 +328,30 @@ export const PitchCanvas = forwardRef<PitchCanvasHandle, PitchCanvasProps>(
           <Layer>
             <Group x={margin} y={margin}>
               {players.map((p) => (
+                p.id === draggingPlayerId ? null :
                 <PlayerNode
-                  key={p.id}
+                  key={`label-${p.id}`}
+                  player={p}
+                  pitchWidth={innerW}
+                  pitchHeight={innerH}
+                  verticalLayout={verticalLayout}
+                  attackFlip={attackFlip}
+                  selected={false}
+                  interactive={false}
+                  renderMode="label"
+                  visualScale={adaptive.visualScale}
+                  nameMaxChars={adaptive.nameMaxChars}
+                  onDragEnd={onPlayerMove}
+                  onEdit={onEditPlayer}
+                />
+              ))}
+            </Group>
+          </Layer>
+          <Layer>
+            <Group x={margin} y={margin}>
+              {players.map((p) => (
+                <PlayerNode
+                  key={`jersey-${p.id}`}
                   player={p}
                   pitchWidth={innerW}
                   pitchHeight={innerH}
@@ -318,8 +359,16 @@ export const PitchCanvas = forwardRef<PitchCanvasHandle, PitchCanvasProps>(
                   attackFlip={attackFlip}
                   selected={interactive && activePlayerId === p.id}
                   interactive={interactive}
-                  visualScale={playerVisualScale}
-                  onDragEnd={onPlayerMove}
+                  visualScale={adaptive.visualScale}
+                  nameMaxChars={adaptive.nameMaxChars}
+                  hitInsetX={adaptive.hitInsetX}
+                  hitInsetYTop={adaptive.hitInsetYTop}
+                  hitInsetYBottom={adaptive.hitInsetYBottom}
+                  onDragEnd={(id, x, y) => {
+                    setDraggingPlayerId(null);
+                    onPlayerMove(id, x, y);
+                  }}
+                  onDragStart={setDraggingPlayerId}
                   onEdit={onEditPlayer}
                 />
               ))}

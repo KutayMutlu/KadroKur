@@ -32,6 +32,13 @@ export interface PlayerNodeProps {
   onEdit?: (id: string) => void;
   /** Forma çizimi ölçeği (1 = referans); dokunma alanı bundan küçülmez */
   visualScale?: number;
+  /** jersey: forma katmanı (drag + etkileşim), label: isim etiketi katmanı */
+  renderMode?: "jersey" | "label";
+  onDragStart?: (id: string) => void;
+  nameMaxChars?: number;
+  hitInsetX?: number;
+  hitInsetYTop?: number;
+  hitInsetYBottom?: number;
 }
 
 export function PlayerNode({
@@ -45,50 +52,73 @@ export function PlayerNode({
   onDragEnd,
   onEdit,
   visualScale = 1,
+  renderMode = "jersey",
+  onDragStart,
+  nameMaxChars,
+  hitInsetX,
+  hitInsetYTop,
+  hitInsetYBottom,
 }: PlayerNodeProps) {
   const yVis = visualAttackY(player.y, attackFlip);
   const px = verticalLayout ? player.x * pitchWidth : yVis * pitchWidth;
   const py = verticalLayout
     ? (1 - yVis) * pitchHeight
     : (1 - player.x) * pitchHeight;
-  const nameMax = getPlayerNameMaxChars(visualScale);
+  const nameMax = nameMaxChars ?? getPlayerNameMaxChars(visualScale);
   const shortName =
     player.name.length > nameMax ? `${player.name.slice(0, nameMax)}` : player.name;
 
   const kit = resolveJerseyKit(player);
 
-  const hitInsetX = Math.max(DRAG_INSET_X * visualScale, MIN_HIT_HALF);
-  const hitInsetYTop = Math.max(DRAG_INSET_Y_TOP * visualScale, MIN_HIT_HALF);
-  const hitInsetYBottom = Math.max(DRAG_INSET_Y_BOTTOM * visualScale, MIN_HIT_HALF);
+  const insetX = hitInsetX ?? Math.max(DRAG_INSET_X * visualScale, MIN_HIT_HALF);
+  const insetYTop = hitInsetYTop ?? Math.max(DRAG_INSET_Y_TOP * visualScale, MIN_HIT_HALF);
+  const insetYBottom =
+    hitInsetYBottom ?? Math.max(DRAG_INSET_Y_BOTTOM * visualScale, MIN_HIT_HALF);
 
   return (
     <Group
       x={px}
       y={py}
-      draggable={interactive}
-      dragBoundFunc={(pos) => {
-        const minX = Math.min(hitInsetX, pitchWidth / 2);
-        const maxX = Math.max(pitchWidth - hitInsetX, pitchWidth / 2);
-        const minY = Math.min(hitInsetYTop, pitchHeight / 2);
-        const maxY = Math.max(pitchHeight - hitInsetYBottom, pitchHeight / 2);
-        return {
-          x: Math.max(minX, Math.min(maxX, pos.x)),
-          y: Math.max(minY, Math.min(maxY, pos.y)),
-        };
-      }}
-      onDragEnd={(e) => {
-        const node = e.target;
-        const nx = verticalLayout
-          ? node.x() / pitchWidth
-          : 1 - node.y() / pitchHeight;
-        const yVisual = verticalLayout
-          ? 1 - node.y() / pitchHeight
-          : node.x() / pitchWidth;
-        const ny = storedAttackYFromVisual(yVisual, attackFlip);
-        onDragEnd(player.id, nx, ny);
-      }}
-      onDblClick={() => interactive && onEdit?.(player.id)}
-      onDblTap={() => interactive && onEdit?.(player.id)}
+      draggable={interactive && renderMode === "jersey"}
+      dragBoundFunc={
+        renderMode === "jersey"
+          ? (pos) => {
+              const minX = Math.min(insetX, pitchWidth / 2);
+              const maxX = Math.max(pitchWidth - insetX, pitchWidth / 2);
+              const minY = Math.min(insetYTop, pitchHeight / 2);
+              const maxY = Math.max(pitchHeight - insetYBottom, pitchHeight / 2);
+              return {
+                x: Math.max(minX, Math.min(maxX, pos.x)),
+                y: Math.max(minY, Math.min(maxY, pos.y)),
+              };
+            }
+          : undefined
+      }
+      onDragEnd={
+        renderMode === "jersey"
+          ? (e) => {
+              const node = e.target;
+              const nx = verticalLayout
+                ? node.x() / pitchWidth
+                : 1 - node.y() / pitchHeight;
+              const yVisual = verticalLayout
+                ? 1 - node.y() / pitchHeight
+                : node.x() / pitchWidth;
+              const ny = storedAttackYFromVisual(yVisual, attackFlip);
+              onDragEnd(player.id, nx, ny);
+            }
+          : undefined
+      }
+      onDragStart={
+        renderMode === "jersey" ? () => interactive && onDragStart?.(player.id) : undefined
+      }
+      onDblClick={
+        renderMode === "jersey" ? () => interactive && onEdit?.(player.id) : undefined
+      }
+      onDblTap={
+        renderMode === "jersey" ? () => interactive && onEdit?.(player.id) : undefined
+      }
+      listening={renderMode === "jersey"}
     >
       <PlayerJerseyLayer
         kit={kit}
@@ -98,16 +128,20 @@ export function PlayerNode({
         shortName={shortName}
         isCaptain={Boolean(player.isCaptain)}
         visualScale={visualScale}
+        showJersey={renderMode === "jersey"}
+        showLabel={renderMode === "label"}
       />
       {/* Geniş dokunma / sürükleme alanı (görünmez, üstte) */}
-      <Rect
-        x={-hitInsetX}
-        y={-hitInsetYTop}
-        width={hitInsetX * 2}
-        height={hitInsetYTop + hitInsetYBottom}
-        fill="transparent"
-        listening={interactive}
-      />
+      {renderMode === "jersey" && (
+        <Rect
+          x={-insetX}
+          y={-insetYTop}
+          width={insetX * 2}
+          height={insetYTop + insetYBottom}
+          fill="transparent"
+          listening={interactive}
+        />
+      )}
     </Group>
   );
 }

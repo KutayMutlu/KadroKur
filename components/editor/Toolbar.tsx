@@ -12,9 +12,10 @@ export interface ToolbarProps {
   onExport: () => void;
   onCopyShare: () => void;
   saving: boolean;
-  /** Link üretildi (yükleme beklenmiyor) */
-  shareReady: boolean;
+  canCopyShare: boolean;
+  copyBlockedMessage: string;
   message: string | null;
+  messageTone: "success" | "warning";
 }
 
 export function Toolbar({
@@ -24,8 +25,10 @@ export function Toolbar({
   onExport,
   onCopyShare,
   saving,
-  shareReady,
+  canCopyShare,
+  copyBlockedMessage,
   message,
+  messageTone,
 }: ToolbarProps) {
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-white/10 bg-black/10 p-3">
@@ -57,12 +60,14 @@ export function Toolbar({
             type="button"
             variant="secondary"
             onClick={onCopyShare}
-            disabled={!shareReady}
-            className="min-h-[44px] w-full touch-manipulation sm:min-h-0"
+            aria-disabled={!canCopyShare}
+            className={`min-h-[44px] w-full touch-manipulation sm:min-h-0 ${
+              canCopyShare ? "" : "opacity-50"
+            }`}
             title={
-              shareReady
+              canCopyShare
                 ? "Tam paylaşım URL’sini panoya kopyala"
-                : "Paylaşım linki hazırlanıyor…"
+                : copyBlockedMessage
             }
           >
             <Link2 className="h-4 w-4" />
@@ -85,7 +90,12 @@ export function Toolbar({
       </div>
 
       {message && (
-        <p className="text-sm text-green-400" role="status">
+        <p
+          className={`text-sm ${
+            messageTone === "success" ? "text-green-400" : "text-red-400"
+          }`}
+          role="status"
+        >
           {message}
         </p>
       )}

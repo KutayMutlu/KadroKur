@@ -34,8 +34,10 @@ interface UseEditorSidebarPropsParams {
   onExport: () => void;
   onCopyShare: () => void;
   saving: boolean;
-  shareId: string | null;
+  canCopyShare: boolean;
+  copyBlockedMessage: string;
   message: string | null;
+  messageTone: "success" | "warning";
 }
 
 export function useEditorSidebarProps({
@@ -66,8 +68,10 @@ export function useEditorSidebarProps({
   onExport,
   onCopyShare,
   saving,
-  shareId,
+  canCopyShare,
+  copyBlockedMessage,
   message,
+  messageTone,
 }: UseEditorSidebarPropsParams): EditorSidebarProps {
   const availableFormations = getFormationsByFormat(matchFormat);
   const hasOpponentLineup = players.some((p) => p.side === "away");
@@ -102,8 +106,10 @@ export function useEditorSidebarProps({
       onExport,
       onCopyShare,
       saving,
-      shareReady: Boolean(shareId),
+      canCopyShare,
+      copyBlockedMessage,
       message,
+      messageTone,
     }),
     [
       attackFlip,
@@ -132,8 +138,10 @@ export function useEditorSidebarProps({
       onTeamNameChange,
       opponentTeamName,
       pitchVertical,
+      copyBlockedMessage,
+      canCopyShare,
+      messageTone,
       saving,
-      shareId,
       tacticTitle,
       teamName,
     ]

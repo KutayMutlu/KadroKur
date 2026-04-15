@@ -118,7 +118,15 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
     exportStageToPng(stage, `${safe}.png`);
   };
 
-  const { saving, message, handleSave, handleCopyShare } = useEditorPersistence({
+  const {
+    saving,
+    message,
+    messageTone,
+    canCopyShare,
+    copyBlockedMessage,
+    handleSave,
+    handleCopyShare,
+  } = useEditorPersistence({
     initialTacticId,
     authUser,
     teamName,
@@ -176,8 +184,10 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
     onExport: handleExport,
     onCopyShare: handleCopyShare,
     saving,
-    shareId,
+    canCopyShare,
+    copyBlockedMessage,
     message,
+    messageTone,
   });
 
   useUndoRedoHotkeys(editingId, onUndo, onRedo);

@@ -50,8 +50,10 @@ export interface EditorSidebarProps {
   onExport: () => void;
   onCopyShare: () => void;
   saving: boolean;
-  shareReady: boolean;
+  canCopyShare: boolean;
+  copyBlockedMessage: string;
   message: string | null;
+  messageTone: "success" | "warning";
 }
 
 export function EditorSidebar({
@@ -83,8 +85,10 @@ export function EditorSidebar({
   onExport,
   onCopyShare,
   saving,
-  shareReady,
+  canCopyShare,
+  copyBlockedMessage,
   message,
+  messageTone,
 }: EditorSidebarProps) {
   return (
     <div className="space-y-4">
@@ -226,8 +230,10 @@ export function EditorSidebar({
         onExport={onExport}
         onCopyShare={onCopyShare}
         saving={saving}
-        shareReady={shareReady}
+        canCopyShare={canCopyShare}
+        copyBlockedMessage={copyBlockedMessage}
         message={message}
+        messageTone={messageTone}
       />
     </div>
   );

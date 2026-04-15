@@ -13,6 +13,8 @@ import type { Player } from "@/types/player";
 import { DEFAULT_MATCH_FORMAT } from "../core/constants";
 import { buildCanvasState } from "../core/board-state";
 
+type MessageTone = "success" | "warning";
+
 interface UseEditorPersistenceParams {
   initialTacticId?: string | null;
   authUser: User | null;
@@ -72,6 +74,13 @@ export function useEditorPersistence({
 }: UseEditorPersistenceParams) {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [messageTone, setMessageTone] = useState<MessageTone>("warning");
+  const isAuthenticated = Boolean(authUser);
+  const canCopyShare = isAuthenticated && didSaveOnce && Boolean(shareId);
+
+  const copyBlockedMessage = !isAuthenticated
+    ? "Paylaşım linki için lütfen giriş yapın."
+    : "Paylaşım linkini kopyalamadan önce lütfen taktiği kaydedin.";
 
   const loadTactic = useCallback(
     (t: StoredTactic) => {
@@ -126,6 +135,7 @@ export function useEditorPersistence({
     if (!sb) {
       setShareId(generateShareId());
       setDidSaveOnce(false);
+      setMessageTone("warning");
       setMessage(
         "Bu kayıt bu cihazda yok. Paylaşım için yeni bir link oluşturuldu — düzenleyip Kaydet ile buluta yazın."
       );
@@ -136,6 +146,7 @@ export function useEditorPersistence({
       if (!userId) {
         setShareId(generateShareId());
         setDidSaveOnce(false);
+        setMessageTone("warning");
         setMessage(
           "Bu kayıt bu cihazda yok. Google ile giriş yaparsanız hesabınızdaki taktikleri de açabilirsiniz."
         );
@@ -159,11 +170,19 @@ export function useEditorPersistence({
       }
       setShareId(generateShareId());
       setDidSaveOnce(false);
+      setMessageTone("warning");
       setMessage("Bu kayıt bulunamadı. Yeni taktik olarak devam edebilirsiniz.");
     });
   }, [initialTacticId, loadTactic, setDidSaveOnce, setShareId]);
 
   const handleSave = useCallback(async () => {
+    const normalizedTitle = tacticTitle.trim();
+    if (!normalizedTitle) {
+      setMessageTone("warning");
+      setMessage("Lütfen önce taktik adını girin.");
+      return;
+    }
+
     setSaving(true);
     setMessage(null);
     try {
@@ -181,7 +200,7 @@ export function useEditorPersistence({
       );
       const row: StoredTactic = {
         id,
-        title: tacticTitle.trim() || "İsimsiz taktik",
+        title: normalizedTitle,
         share_id: sid,
         canvas_state,
         updated_at: new Date().toISOString(),
@@ -214,8 +233,10 @@ export function useEditorPersistence({
       }
 
       if (!isSupabaseConfigured()) {
+        setMessageTone("success");
         setMessage("Kaydedildi (yalnız bu cihaz).");
       } else if (!authUser) {
+        setMessageTone("warning");
         setMessage(
           "Kaydedildi (yalnız bu cihaz). Diğer cihazlarda görmek için giriş yapıp tekrar kaydedin."
         );
@@ -244,15 +265,29 @@ export function useEditorPersistence({
   ]);
 
   const handleCopyShare = useCallback(async () => {
-    if (!shareId) return;
+    if (!isAuthenticated) {
+      setMessageTone("warning");
+      setMessage("Paylaşım linki için lütfen giriş yapın.");
+      return;
+    }
+    if (!didSaveOnce || !shareId) {
+      setMessageTone("warning");
+      setMessage("Paylaşım linkini kopyalamadan önce lütfen taktiği kaydedin.");
+      return;
+    }
     const url = shareUrl(shareId);
     await navigator.clipboard.writeText(url);
-    if (isSupabaseConfigured() && !didSaveOnce) {
-      setMessage("Link kopyalandı. Paylaşım için önce Kaydet’e basın.");
-    } else {
-      setMessage("Link panoya kopyalandı.");
-    }
-  }, [didSaveOnce, shareId]);
+    setMessageTone("success");
+    setMessage("Link panoya kopyalandı.");
+  }, [didSaveOnce, isAuthenticated, shareId]);
 
-  return { saving, message, handleSave, handleCopyShare };
+  return {
+    saving,
+    message,
+    messageTone,
+    canCopyShare,
+    copyBlockedMessage,
+    handleSave,
+    handleCopyShare,
+  };
 }

@@ -10,32 +10,37 @@ export default function HomePage() {
 
       {/* Üst şerit — stadyum hissi */}
       <header className="relative z-10 border-b border-[var(--border-subtle)] bg-[var(--bg-elevated)]/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-4 sm:px-6">
-          <div className="flex items-center gap-3">
+        <div className="mx-auto flex max-w-5xl flex-row items-center justify-between gap-2 px-4 py-3 sm:gap-3 sm:px-6">
+          <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
             <span
-              className="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--border-glow)] bg-[var(--bg-card)] text-lg font-bold text-[var(--accent)]"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[var(--border-glow)] bg-[var(--bg-card)] text-base font-bold text-[var(--accent)] sm:h-10 sm:w-10 sm:text-lg"
               style={{ fontFamily: "var(--font-display)" }}
             >
               KK
             </span>
-            <div>
+            <div className="min-w-0">
               <p
-                className="text-sm font-semibold tracking-tight text-[var(--foreground)]"
+                className="text-sm font-semibold leading-tight tracking-tight text-[var(--foreground)]"
                 style={{ fontFamily: "var(--font-display)" }}
               >
                 KadroKur
               </p>
-              <p className="text-xs text-[var(--muted)]">Halı saha taktik tahtası</p>
+              <p
+                className="truncate text-[10px] leading-tight text-[var(--muted)] sm:text-[11px]"
+                title="Halı saha taktik tahtası"
+              >
+                Halı saha taktik tahtası
+              </p>
             </div>
           </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <AuthControls />
-            <ThemeToggle />
+          <div className="flex shrink-0 flex-nowrap items-center gap-1.5 sm:gap-2">
+            <AuthControls guestCompanion={<ThemeToggle />} />
             <Link
               href="/editor"
-              className="rounded-lg border border-[var(--accent)]/40 bg-[var(--accent)]/10 px-4 py-2 text-sm font-medium text-[var(--accent)] transition hover:bg-[var(--accent)]/20"
+              className="inline-flex shrink-0 items-center justify-center rounded-lg border border-[var(--accent)]/40 bg-[var(--accent)]/10 px-2.5 py-1.5 text-[11px] font-medium text-[var(--accent)] transition hover:bg-[var(--accent)]/20 sm:px-4 sm:py-2 sm:text-sm"
             >
-              Editöre git →
+              <span className="sm:hidden">Editör →</span>
+              <span className="hidden sm:inline">Editöre git →</span>
             </Link>
           </div>
         </div>
@@ -60,7 +65,7 @@ export default function HomePage() {
             </h1>
             <p className="mt-5 max-w-xl text-lg leading-relaxed text-[var(--muted)]">
               Dizilişini seç, oyuncuları sahaya diz, sürükleyerek düzelt; kaydet,
-              PNG al veya tek linkle paylaş — hepsi tarayıcıda.
+              PNG al veya tek linkle paylaş — maç öncesi son şekil sende.
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
@@ -82,7 +87,6 @@ export default function HomePage() {
             <ul className="mt-10 flex flex-wrap gap-4 text-sm text-[var(--muted)]">
               {[
                 "2-3-1 · 3-2-1 · 2-2-2 · 3-3",
-                "React Konva saha",
                 "PNG dışa aktar",
               ].map((label) => (
                 <li

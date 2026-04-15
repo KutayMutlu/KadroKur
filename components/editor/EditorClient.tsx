@@ -45,6 +45,7 @@ import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import type { CanvasState } from "@/types/tactic";
 import type { Player } from "@/types/player";
 import { AuthControls } from "@/components/auth/AuthControls";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Redo2, Undo2 } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 
@@ -367,17 +368,13 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
       }
 
       if (!isSupabaseConfigured()) {
-        setMessage(
-          "Kaydedildi (yalnız bu tarayıcı). Bulutta paylaşım için Supabase ortam değişkenlerini ekleyin."
-        );
+        setMessage("Kaydedildi (yalnız bu cihaz).");
       } else if (!authUser) {
         setMessage(
-          "Kaydedildi. Hesabınıza bağlamak için Google ile giriş yapın; sonraki kayıtlar hesabınıza yazılır."
+          "Kaydedildi (yalnız bu cihaz). Diğer cihazlarda görmek için giriş yapıp tekrar kaydedin."
         );
       } else {
-        setMessage(
-          "Kaydedildi. Bu taktik Google hesabınıza bağlandı ve başka cihazlarda açılabilir."
-        );
+        setMessage(null);
       }
     } finally {
       setSaving(false);
@@ -396,9 +393,7 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
     const url = shareUrl(shareId);
     await navigator.clipboard.writeText(url);
     if (isSupabaseConfigured() && !didSaveOnce) {
-      setMessage(
-        "Link kopyalandı. Başkalarının görmesi için önce Kaydet’e basın (Supabase’e yazılır)."
-      );
+      setMessage("Link kopyalandı. Paylaşım için önce Kaydet’e basın.");
     } else {
       setMessage("Link panoya kopyalandı.");
     }
@@ -430,20 +425,22 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
   return (
     <div className="min-h-screen overflow-x-hidden bg-pitch-night lg:h-dvh lg:overflow-hidden">
       <div className="mx-auto w-full max-w-none px-3 py-6 xl:px-4 lg:flex lg:h-full lg:flex-col">
-      <header className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div>
+      <header className="mb-6 min-w-0 space-y-2">
+        <div className="flex min-w-0 items-center justify-between gap-3">
           <h1
-            className="text-2xl font-semibold tracking-tight"
+            className="min-w-0 truncate text-xl font-semibold tracking-tight sm:text-2xl"
             style={{ fontFamily: "var(--font-display)" }}
           >
             Taktik editörü
           </h1>
-          <p className="text-sm text-[var(--muted)]">
-            Halı saha dizilişi — sürükleyin, kaydedin, paylaşın.
-          </p>
+          <div className="flex shrink-0 items-center gap-2">
+            <AuthControls guestCompanion={<ThemeToggle />} />
+          </div>
         </div>
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          <AuthControls />
+        <p className="text-xs text-[var(--muted)] sm:text-sm">
+          Halı saha dizilişi — sürükleyin, kaydedin, paylaşın.
+        </p>
+        <div className="flex justify-end gap-2">
           <Button
             type="button"
             variant="secondary"
@@ -517,10 +514,7 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
               onExport={handleExport}
               onCopyShare={handleCopyShare}
               saving={saving}
-              shareId={shareId}
               shareReady={Boolean(shareId)}
-              supabaseConfigured={isSupabaseConfigured()}
-              didSaveOnce={didSaveOnce}
               message={message}
             />
           </div>

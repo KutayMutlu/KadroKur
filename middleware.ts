@@ -1,7 +1,15 @@
-import { type NextRequest } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 
 export async function middleware(request: NextRequest) {
+  const url = request.nextUrl;
+  if (url.pathname === "/" && url.searchParams.has("code")) {
+    const dest = new URL("/auth/callback", request.url);
+    url.searchParams.forEach((value, key) => {
+      dest.searchParams.set(key, value);
+    });
+    return NextResponse.redirect(dest);
+  }
   return updateSession(request);
 }
 

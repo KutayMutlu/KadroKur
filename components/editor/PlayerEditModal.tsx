@@ -160,6 +160,11 @@ export function PlayerEditModal({
                 >
                   Oyuncu düzenle
                 </p>
+                {player.side === "away" && (
+                  <p className="mt-1 text-xs font-medium text-sky-400/90">
+                    Rakip takım
+                  </p>
+                )}
               </div>
               <Button
                 type="button"
@@ -239,8 +244,9 @@ export function PlayerEditModal({
                     Takım kaptanı
                   </Label>
                   <p className="mt-1 text-xs leading-snug text-[var(--muted)]">
-                    Aynı anda yalnızca bir kaptan olabilir; başka bir oyuncuyu
-                    işaretlediğinizde önceki seçim kalkar.
+                    Bu takımda yalnızca bir kaptan; başka bir oyuncuyu
+                    işaretlediğinizde aynı taraftaki önceki seçim kalkar (rakip
+                    takımda ayrı bir kaptan seçebilirsiniz).
                   </p>
                 </div>
               </div>

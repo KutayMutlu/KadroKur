@@ -3,9 +3,16 @@ import type { Player } from "./player";
 /** Persisted editor state (maps to DB `canvas_state` JSON) */
 export interface CanvasState {
   teamName: string;
+  /** Rakip takım adı (sahada rakip oyuncuları varken) */
+  opponentTeamName?: string;
   formation_key: string;
   preset_key: string | null;
   players: Player[];
+  /**
+   * true: atak ekseni görünümde ters (y ↔ 1−y). Kendi takım ve rakip aynı uzayda birlikte döner.
+   * Yoksa / false: önceki varsayılan yön.
+   */
+  attack_flip?: boolean;
   pitchVersion: 1;
 }
 

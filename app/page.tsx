@@ -37,7 +37,7 @@ export default function HomePage() {
             <AuthControls guestCompanion={<ThemeToggle />} />
             <Link
               href="/editor"
-              className="inline-flex shrink-0 items-center justify-center rounded-lg border border-[var(--accent)]/40 bg-[var(--accent)]/10 px-2.5 py-1.5 text-[11px] font-medium text-[var(--accent)] transition hover:bg-[var(--accent)]/20 sm:px-4 sm:py-2 sm:text-sm"
+              className="inline-flex min-h-[40px] shrink-0 touch-manipulation items-center justify-center rounded-lg border border-[var(--accent)]/40 bg-[var(--accent)]/10 px-2.5 py-1.5 text-[11px] font-medium text-[var(--accent)] transition hover:bg-[var(--accent)]/20 sm:min-h-0 sm:px-4 sm:py-2 sm:text-sm"
             >
               <span className="sm:hidden">Editör →</span>
               <span className="hidden sm:inline">Editöre git →</span>
@@ -46,15 +46,15 @@ export default function HomePage() {
         </div>
       </header>
 
-      <main className="relative z-10 mx-auto max-w-5xl px-4 pb-20 pt-12 sm:px-6 sm:pt-16">
-        <section className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:gap-12">
+      <main className="relative z-10 mx-auto max-w-5xl px-4 pb-16 pt-8 sm:px-6 sm:pb-20 sm:pt-12 md:pt-16">
+        <section className="grid gap-8 md:gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:gap-12">
           <div>
-            <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-[var(--border-subtle)] bg-[var(--bg-card)] px-3 py-1 text-xs font-medium uppercase tracking-wider text-[var(--muted)] backdrop-blur-sm">
+            <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-[var(--border-subtle)] bg-[var(--bg-card)] px-3 py-1 text-[10px] font-medium uppercase tracking-wider text-[var(--muted)] backdrop-blur-sm sm:mb-4 sm:text-xs">
               <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)] animate-pulse-line" />
               Faz 1 · Canlı demo
             </p>
             <h1
-              className="text-4xl font-bold leading-[1.1] tracking-tight text-[var(--foreground)] sm:text-5xl"
+              className="text-3xl font-bold leading-[1.12] tracking-tight text-[var(--foreground)] sm:text-4xl md:text-5xl"
               style={{ fontFamily: "var(--font-display)" }}
             >
               Taktik tahtası,
@@ -63,22 +63,22 @@ export default function HomePage() {
                 halı saha ritmiyle.
               </span>
             </h1>
-            <p className="mt-5 max-w-xl text-lg leading-relaxed text-[var(--muted)]">
+            <p className="mt-4 max-w-xl text-base leading-relaxed text-[var(--muted)] sm:mt-5 sm:text-lg">
               Dizilişini seç, oyuncuları sahaya diz, sürükleyerek düzelt; kaydet,
               PNG al veya tek linkle paylaş — maç öncesi son şekil sende.
             </p>
 
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="mt-6 flex flex-col gap-3 sm:mt-8 sm:flex-row sm:flex-wrap">
               <Link
                 href="/editor"
-                className="inline-flex items-center justify-center rounded-xl bg-[var(--accent)] px-6 py-3.5 text-sm font-semibold text-[var(--on-accent)] shadow-lg shadow-[var(--accent)]/25 transition hover:brightness-110"
+                className="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-[var(--accent)] px-6 py-3.5 text-sm font-semibold text-[var(--on-accent)] shadow-lg shadow-[var(--accent)]/25 transition hover:brightness-110 touch-manipulation"
                 style={{ fontFamily: "var(--font-display)" }}
               >
                 Taktik kurmaya başla
               </Link>
               <a
                 href="#kayitli"
-                className="inline-flex items-center justify-center rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)] px-6 py-3.5 text-sm font-medium text-[var(--foreground)] backdrop-blur-sm transition hover:border-[var(--border-glow)]"
+                className="inline-flex min-h-[48px] items-center justify-center rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)] px-6 py-3.5 text-sm font-medium text-[var(--foreground)] backdrop-blur-sm transition hover:border-[var(--border-glow)] touch-manipulation"
               >
                 Kayıtlı taktikler
               </a>

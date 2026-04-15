@@ -1,24 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { PitchCanvas, type PitchCanvasHandle } from "./PitchCanvas";
 import { PlayerEditModal } from "./PlayerEditModal";
-import { FormationSelector } from "./FormationSelector";
-import { MatchFormatSelector } from "./MatchFormatSelector";
-import { TeamPanel } from "./TeamPanel";
-import { Toolbar } from "./Toolbar";
+import { EditorSidebar } from "./EditorSidebar";
 import { createPlayersForFormation } from "@/lib/players-factory";
 import {
-  TACTIC_PRESETS,
   applyPresetToPlayers,
   normalizePresetKey,
   type TacticalPresetKey,
@@ -46,7 +35,7 @@ import type { CanvasState } from "@/types/tactic";
 import type { Player } from "@/types/player";
 import { AuthControls } from "@/components/auth/AuthControls";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Redo2, Undo2 } from "lucide-react";
+import { Home, Redo2, SlidersHorizontal, Undo2, X } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 
 const DEFAULT_MATCH_FORMAT: MatchFormatKey = "7v7";
@@ -58,7 +47,31 @@ type BoardSnapshot = {
   formationKey: string;
   presetKey: TacticalPresetKey;
   players: Player[];
+  opponentTeamName: string;
+  attackFlip: boolean;
 };
+
+function rebuildBoardPlayers(
+  formationKey: string,
+  presetKey: TacticalPresetKey,
+  prev: Player[],
+  includeOpponent: boolean
+): Player[] {
+  const homePrev = prev.filter((p) => (p.side ?? "home") === "home");
+  const awayPrev = includeOpponent ? prev.filter((p) => p.side === "away") : [];
+
+  const home = applyPresetToPlayers(
+    createPlayersForFormation(formationKey, homePrev, "home"),
+    presetKey
+  );
+  if (!includeOpponent) return home;
+
+  const away = applyPresetToPlayers(
+    createPlayersForFormation(formationKey, awayPrev, "away"),
+    presetKey
+  );
+  return [...home, ...away];
+}
 
 function snapshotsEqual(a: BoardSnapshot, b: BoardSnapshot): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
@@ -66,15 +79,20 @@ function snapshotsEqual(a: BoardSnapshot, b: BoardSnapshot): boolean {
 
 function buildCanvasState(
   teamName: string,
+  opponentTeamName: string,
   formationKey: string,
   presetKey: TacticalPresetKey,
-  players: Player[]
+  players: Player[],
+  attackFlip: boolean
 ): CanvasState {
+  const opp = opponentTeamName.trim();
   return {
     teamName,
+    ...(opp ? { opponentTeamName: opp } : {}),
     formation_key: formationKey,
     preset_key: presetKey === "default" ? null : presetKey,
     players,
+    ...(attackFlip ? { attack_flip: true } : {}),
     pitchVersion: 1,
   };
 }
@@ -90,6 +108,7 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
   const [formationKey, setFormationKey] = useState(DEFAULT_FORMATION);
   const [presetKey, setPresetKey] = useState<TacticalPresetKey>("default");
   const [teamName, setTeamName] = useState("");
+  const [opponentTeamName, setOpponentTeamName] = useState("");
   const [tacticTitle, setTacticTitle] = useState("");
   const [players, setPlayers] = useState<Player[]>(() =>
     createPlayersForFormation(DEFAULT_FORMATION)
@@ -108,6 +127,9 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
   const [message, setMessage] = useState<string | null>(null);
   const [pastSnapshots, setPastSnapshots] = useState<BoardSnapshot[]>([]);
   const [futureSnapshots, setFutureSnapshots] = useState<BoardSnapshot[]>([]);
+  const [attackFlip, setAttackFlip] = useState(false);
+  const [isLg, setIsLg] = useState(false);
+  const [mobileSettingsOpen, setMobileSettingsOpen] = useState(false);
 
   const makeSnapshot = useCallback(
     (): BoardSnapshot => ({
@@ -115,8 +137,10 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
       formationKey,
       presetKey,
       players: players.map((p) => ({ ...p })),
+      opponentTeamName,
+      attackFlip,
     }),
-    [formationKey, matchFormat, players, presetKey]
+    [attackFlip, formationKey, matchFormat, opponentTeamName, players, presetKey]
   );
 
   const pushHistory = useCallback((snapshot: BoardSnapshot) => {
@@ -133,11 +157,15 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
     setFormationKey(snapshot.formationKey);
     setPresetKey(snapshot.presetKey);
     setPlayers(snapshot.players.map((p) => ({ ...p })));
+    setOpponentTeamName(snapshot.opponentTeamName ?? "");
+    setAttackFlip(snapshot.attackFlip ?? false);
   }, []);
 
   const loadTactic = useCallback((t: StoredTactic) => {
     const s = t.canvas_state;
     setTeamName(s.teamName);
+    setOpponentTeamName(s.opponentTeamName ?? "");
+    setAttackFlip(Boolean(s.attack_flip));
     setMatchFormat(
       getMatchFormatForFormation(s.formation_key) ?? DEFAULT_MATCH_FORMAT
     );
@@ -148,6 +176,7 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
       normalizeCaptainFlags(
         s.players.map((p, i) => ({
           ...p,
+          side: p.side === "away" ? "away" : "home",
           name: sanitizePlayerName(String(p.name ?? `Oyuncu ${i + 1}`)),
           number: formatJerseyNumber(String(p.number ?? i + 1)),
           role: normalizePlayerRole(p.role),
@@ -170,6 +199,26 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
     });
     return () => sub.subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const apply = () => {
+      setIsLg(mq.matches);
+      if (mq.matches) setMobileSettingsOpen(false);
+    };
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+
+  useEffect(() => {
+    if (!mobileSettingsOpen || isLg) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [mobileSettingsOpen, isLg]);
 
   useEffect(() => {
     if (!initialTacticId) return;
@@ -226,7 +275,12 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
     pushHistory(makeSnapshot());
     setFormationKey(key);
     setPlayers((prev) =>
-      applyPresetToPlayers(createPlayersForFormation(key, prev), presetKey)
+      rebuildBoardPlayers(
+        key,
+        presetKey,
+        prev,
+        prev.some((p) => p.side === "away")
+      )
     );
   };
 
@@ -239,7 +293,12 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
     if (!nextFormation) return;
     setFormationKey(nextFormation);
     setPlayers((prev) =>
-      applyPresetToPlayers(createPlayersForFormation(nextFormation, prev), presetKey)
+      rebuildBoardPlayers(
+        nextFormation,
+        presetKey,
+        prev,
+        prev.some((p) => p.side === "away")
+      )
     );
   };
 
@@ -249,15 +308,50 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
     if (normalized === presetKey) return;
     setPresetKey(normalized);
     setPlayers((prev) =>
-      applyPresetToPlayers(createPlayersForFormation(formationKey, prev), normalized)
+      rebuildBoardPlayers(
+        formationKey,
+        normalized,
+        prev,
+        prev.some((p) => p.side === "away")
+      )
     );
   };
 
   const onResetPlayerPositions = () => {
     pushHistory(makeSnapshot());
     setPlayers((prev) =>
-      applyPresetToPlayers(createPlayersForFormation(formationKey, prev), presetKey)
+      rebuildBoardPlayers(
+        formationKey,
+        presetKey,
+        prev,
+        prev.some((p) => p.side === "away")
+      )
     );
+  };
+
+  const onAddOpponentLineup = () => {
+    if (players.some((p) => p.side === "away")) return;
+    pushHistory(makeSnapshot());
+    setPlayers((prev) => {
+      const home = prev.filter((p) => (p.side ?? "home") === "home");
+      const away = applyPresetToPlayers(
+        createPlayersForFormation(formationKey, undefined, "away"),
+        presetKey
+      );
+      return [...home, ...away];
+    });
+  };
+
+  const onRemoveOpponentLineup = () => {
+    if (!players.some((p) => p.side === "away")) return;
+    pushHistory(makeSnapshot());
+    setPlayers((prev) => prev.filter((p) => (p.side ?? "home") === "home"));
+    setOpponentTeamName("");
+  };
+
+  const onAttackDirectionToggle = () => {
+    pushHistory(makeSnapshot());
+    setAttackFlip((f) => !f);
   };
 
   const onUndo = useCallback(() => {
@@ -299,6 +393,7 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
     patch: Partial<Pick<Player, "name" | "number" | "role" | "isCaptain">>
   ) => {
     setPlayers((prev) => {
+      const targetSide = prev.find((x) => x.id === id)?.side ?? "home";
       const next = prev.map((p) => {
         if (p.id !== id) return p;
         return {
@@ -314,7 +409,11 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
       });
       if (patch.isCaptain === true) {
         return next.map((p) =>
-          p.id === id ? { ...p, isCaptain: true } : { ...p, isCaptain: false }
+          p.id === id
+            ? { ...p, isCaptain: true }
+            : (p.side ?? "home") === targetSide
+              ? { ...p, isCaptain: false }
+              : p
         );
       }
       return next;
@@ -329,9 +428,11 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
       const sid = shareId ?? generateShareId();
       const canvas_state = buildCanvasState(
         teamName,
+        opponentTeamName,
         formationKey,
         presetKey,
-        players
+        players,
+        attackFlip
       );
       const row: StoredTactic = {
         id,
@@ -402,6 +503,34 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
   const availableFormations = getFormationsByFormat(matchFormat);
   const editingPlayer = players.find((p) => p.id === editingId) ?? null;
 
+  const sidebarProps = {
+    teamName,
+    onTeamNameChange: setTeamName,
+    opponentTeamName,
+    onOpponentTeamNameChange: setOpponentTeamName,
+    hasOpponentLineup: players.some((p) => p.side === "away"),
+    onAddOpponentLineup,
+    onRemoveOpponentLineup,
+    matchFormat,
+    onMatchFormatChange,
+    formationKey,
+    onFormationChange,
+    availableFormations,
+    presetKey,
+    onPresetChange,
+    attackFlip,
+    onAttackDirectionToggle,
+    onResetPlayerPositions,
+    tacticTitle,
+    onTacticTitleChange: setTacticTitle,
+    onSave: handleSave,
+    onExport: handleExport,
+    onCopyShare: handleCopyShare,
+    saving,
+    shareReady: Boolean(shareId),
+    message,
+  };
+
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (editingId) return;
@@ -423,107 +552,131 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
   }, [editingId, onRedo, onUndo]);
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-pitch-night lg:h-dvh lg:overflow-hidden">
-      <div className="mx-auto w-full max-w-none px-3 py-6 xl:px-4 lg:flex lg:h-full lg:flex-col">
-      <header className="mb-6 min-w-0 space-y-2">
-        <div className="flex min-w-0 items-center justify-between gap-3">
+    <div className="flex min-h-[100dvh] flex-col overflow-x-hidden bg-pitch-night pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:h-dvh lg:overflow-hidden">
+      <div className="mx-auto flex min-h-0 w-full max-w-none flex-1 flex-col px-3 py-4 sm:px-4 sm:py-6 xl:px-4 lg:h-full">
+      <header className="mb-4 shrink-0 min-w-0 space-y-2 sm:mb-6">
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+          <Button
+            asChild
+            variant="secondary"
+            className="h-9 w-9 shrink-0 p-0"
+            title="Ana sayfa"
+          >
+            <Link href="/" aria-label="Ana sayfaya dön">
+              <Home className="h-4 w-4" aria-hidden />
+            </Link>
+          </Button>
           <h1
-            className="min-w-0 truncate text-xl font-semibold tracking-tight sm:text-2xl"
+            className="min-w-0 flex-1 truncate text-lg font-semibold tracking-tight sm:text-2xl"
             style={{ fontFamily: "var(--font-display)" }}
           >
             Taktik editörü
           </h1>
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={onUndo}
+              disabled={pastSnapshots.length === 0}
+              className="h-9 w-9 p-0 touch-manipulation"
+              title="Geri al (Ctrl/Cmd+Z)"
+              aria-label="Geri al"
+            >
+              <Undo2 className="h-4 w-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={onRedo}
+              disabled={futureSnapshots.length === 0}
+              className="h-9 w-9 p-0 touch-manipulation"
+              title="Yinele (Ctrl/Cmd+Shift+Z)"
+              aria-label="Yinele"
+            >
+              <Redo2 className="h-4 w-4" />
+            </Button>
             <AuthControls guestCompanion={<ThemeToggle />} />
           </div>
         </div>
-        <p className="text-xs text-[var(--muted)] sm:text-sm">
+        <p className="line-clamp-2 text-[11px] leading-snug text-[var(--muted)] sm:text-sm sm:leading-normal">
           Halı saha dizilişi — sürükleyin, kaydedin, paylaşın.
         </p>
-        <div className="flex justify-end gap-2">
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            onClick={onUndo}
-            disabled={pastSnapshots.length === 0}
-            className="h-9 w-9 p-0"
-            title="Geri al (Ctrl/Cmd+Z)"
-            aria-label="Geri al"
-          >
-            <Undo2 className="h-4 w-4" />
-          </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            onClick={onRedo}
-            disabled={futureSnapshots.length === 0}
-            className="h-9 w-9 p-0"
-            title="Yinele (Ctrl/Cmd+Shift+Z)"
-            aria-label="Yinele"
-          >
-            <Redo2 className="h-4 w-4" />
-          </Button>
-        </div>
       </header>
 
-      <div className="grid items-stretch gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[350px_minmax(0,1fr)]">
-        <aside className="order-2 h-fit rounded-2xl border border-white/10 bg-[var(--card)]/85 p-4 shadow-[0_20px_50px_-30px_rgba(15,23,42,0.9)] backdrop-blur lg:order-1 lg:h-full lg:overflow-auto">
-          <div className="space-y-4">
-            <TeamPanel
-              teamName={teamName}
-              onTeamNameChange={setTeamName}
-            />
-            <div className="space-y-3 rounded-xl border border-white/10 bg-black/10 p-3">
-              <MatchFormatSelector value={matchFormat} onChange={onMatchFormatChange} />
-              <FormationSelector
-                value={formationKey}
-                onChange={onFormationChange}
-                options={availableFormations}
-              />
-              <div>
-                <Label>Preset taktik</Label>
-                <Select value={presetKey} onValueChange={onPresetChange}>
-                  <SelectTrigger className="mt-1 w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.values(TACTIC_PRESETS).map((p) => (
-                      <SelectItem key={p.key} value={p.key}>
-                        {p.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  onClick={onResetPlayerPositions}
-                  className="mt-2 w-full"
-                >
-                  Oyuncu konumlarını sıfırla
-                </Button>
-              </div>
-            </div>
-            <Toolbar
-              tacticTitle={tacticTitle}
-              onTacticTitleChange={setTacticTitle}
-              onSave={handleSave}
-              onExport={handleExport}
-              onCopyShare={handleCopyShare}
-              saving={saving}
-              shareReady={Boolean(shareId)}
-              message={message}
-            />
+      {!isLg && mobileSettingsOpen && (
+        <button
+          type="button"
+          className="fixed inset-0 z-40 bg-black/55 backdrop-blur-[2px]"
+          aria-label="Ayarları kapat"
+          onClick={() => setMobileSettingsOpen(false)}
+        />
+      )}
+
+      {!isLg && (
+        <aside
+          id="editor-settings-drawer"
+          className={`fixed inset-y-0 right-0 z-50 flex w-[min(100vw-1rem,22rem)] max-w-[calc(100vw-0.5rem)] flex-col border-l border-white/10 bg-[var(--card)]/95 shadow-[-12px_0_40px_-20px_rgba(0,0,0,0.85)] backdrop-blur transition-transform duration-200 ease-out pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-[max(0.5rem,env(safe-area-inset-top))] ${
+            mobileSettingsOpen ? "translate-x-0" : "translate-x-full pointer-events-none"
+          }`}
+          aria-hidden={!mobileSettingsOpen}
+        >
+          <div className="flex shrink-0 items-center justify-between gap-2 border-b border-white/10 px-3 py-2">
+            <span className="text-sm font-semibold tracking-tight">Ayarlar</span>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              className="h-9 w-9 shrink-0 p-0"
+              onClick={() => setMobileSettingsOpen(false)}
+              aria-label="Kapat"
+            >
+              <X className="h-4 w-4" aria-hidden />
+            </Button>
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3">
+            <EditorSidebar {...sidebarProps} />
           </div>
         </aside>
-        <div className="order-1 relative min-w-0 overflow-hidden h-[72dvh] lg:order-2 lg:h-full">
+      )}
+
+      {!isLg && (
+        <Button
+          type="button"
+          size="lg"
+          className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] right-4 z-30 h-14 w-14 rounded-full p-0 shadow-lg touch-manipulation"
+          onClick={() => setMobileSettingsOpen((o) => !o)}
+          aria-expanded={mobileSettingsOpen}
+          aria-controls="editor-settings-drawer"
+          title="Takım ve taktik ayarları"
+        >
+          <SlidersHorizontal className="h-6 w-6" aria-hidden />
+        </Button>
+      )}
+
+      <div
+        className={
+          isLg
+            ? "grid min-h-0 flex-1 items-stretch gap-4 sm:gap-6 lg:grid-cols-[350px_minmax(0,1fr)]"
+            : "flex min-h-0 flex-1 flex-col"
+        }
+      >
+        {isLg && (
+          <aside className="h-fit max-h-full overflow-auto rounded-xl border border-white/10 bg-[var(--card)]/85 p-3 shadow-[0_20px_50px_-30px_rgba(15,23,42,0.9)] backdrop-blur sm:rounded-2xl sm:p-4 lg:h-full">
+            <EditorSidebar {...sidebarProps} />
+          </aside>
+        )}
+        <div
+          className={`relative min-h-0 min-w-0 overflow-hidden ${
+            isLg ? "lg:h-full" : "flex-1"
+          }`}
+        >
           <PitchCanvas
             ref={stageRef}
             players={players}
             activePlayerId={editingId}
+            attackFlip={attackFlip}
             onPlayerMove={onPlayerMove}
             onEditPlayer={(id) => {
               setEditingId(id);

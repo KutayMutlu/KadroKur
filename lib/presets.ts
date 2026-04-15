@@ -73,12 +73,12 @@ export function normalizePresetKey(value: string | null | undefined): TacticalPr
   return value in TACTIC_PRESETS ? (value as TacticalPresetKey) : "default";
 }
 
-export function applyPresetToPlayers(
+/** Tek takım dilimi — kaleci (indeks 0) preset kaydırmaya girmez. */
+function applyPresetTeamSlice(
   players: Player[],
   presetKey: TacticalPresetKey
 ): Player[] {
   const preset = TACTIC_PRESETS[presetKey];
-  /* "Özel" preset konumu değiştirmez; rolleri burada tahmin etmek çoğu formasyonda herkesi orta yapıyordu. */
   if (!preset || preset.key === "default") {
     return players;
   }
@@ -97,7 +97,6 @@ export function applyPresetToPlayers(
       : { kaleci: 0, defans: 0.2, orta: 0.55, forvet: 0.85 };
 
   return players.map((p, i) => {
-    /* Kaleci slotu (dizilişte her zaman 1. oyuncu) veya rolü kaleci: preset konum kaydırmasına dahil olmasın */
     if (p.role === "kaleci" || i === 0) {
       return p;
     }
@@ -118,4 +117,30 @@ export function applyPresetToPlayers(
 
     return { ...p, x: nextX, y: nextY };
   });
+}
+
+export function applyPresetToPlayers(
+  players: Player[],
+  presetKey: TacticalPresetKey
+): Player[] {
+  const preset = TACTIC_PRESETS[presetKey];
+  if (!preset || preset.key === "default") {
+    return players;
+  }
+
+  const home = players.filter((p) => (p.side ?? "home") === "home");
+  const away = players.filter((p) => p.side === "away");
+
+  const homeOut = applyPresetTeamSlice(home, presetKey);
+  /* Rakip: önce “ev koordinatına” çevir, preset uygula, tekrar sahaya yansıt */
+  const awayVirtual = away.map((p) => ({ ...p, y: 1 - p.y }));
+  const awayVirtOut = applyPresetTeamSlice(awayVirtual, presetKey);
+  const awayOut = awayVirtOut.map((p, i) => ({
+    ...away[i],
+    ...p,
+    y: 1 - p.y,
+    side: "away" as const,
+  }));
+
+  return [...homeOut, ...awayOut];
 }

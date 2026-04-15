@@ -44,7 +44,12 @@ export function Toolbar({
 
       <div className="grid w-full gap-2">
         <div className="grid grid-cols-2 gap-2">
-          <Button type="button" variant="secondary" onClick={onExport} className="w-full">
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={onExport}
+            className="min-h-[44px] w-full touch-manipulation sm:min-h-0"
+          >
             <Download className="h-4 w-4" />
             PNG indir
           </Button>
@@ -53,7 +58,7 @@ export function Toolbar({
             variant="secondary"
             onClick={onCopyShare}
             disabled={!shareReady}
-            className="w-full"
+            className="min-h-[44px] w-full touch-manipulation sm:min-h-0"
             title={
               shareReady
                 ? "Tam paylaşım URL’sini panoya kopyala"
@@ -68,7 +73,7 @@ export function Toolbar({
           type="button"
           onClick={onSave}
           disabled={saving}
-          className="w-full bg-green-800 text-white hover:bg-lime-600"
+          className="min-h-[48px] w-full touch-manipulation bg-green-800 text-white hover:bg-lime-600 sm:min-h-0"
         >
           {saving ? (
             <Loader2 className="h-4 w-4 animate-spin" />

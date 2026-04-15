@@ -15,7 +15,7 @@ export function ThemeToggle() {
   if (!mounted) {
     return (
       <span
-        className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-card)]"
+        className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-card)] sm:h-9 sm:w-9"
         aria-hidden
       />
     );
@@ -27,7 +27,7 @@ export function ThemeToggle() {
     <button
       type="button"
       onClick={() => setTheme(isDark ? "light" : "dark")}
-      className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-card)] text-[var(--foreground)] transition hover:border-[var(--border-glow)] hover:text-[var(--accent)]"
+      className="inline-flex h-10 w-10 touch-manipulation items-center justify-center rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-card)] text-[var(--foreground)] transition hover:border-[var(--border-glow)] hover:text-[var(--accent)] sm:h-9 sm:w-9"
       title={isDark ? "Açık temaya geç" : "Koyu temaya geç"}
       aria-label={isDark ? "Açık temaya geç" : "Koyu temaya geç"}
     >

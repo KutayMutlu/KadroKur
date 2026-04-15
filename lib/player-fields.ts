@@ -10,14 +10,21 @@ export function normalizePlayerRole(value: unknown): PlayerRole {
   return "orta";
 }
 
-/** En fazla bir kaptan; birden fazla true ise yalnızca ilkini korur */
+/** Takım başına en fazla bir kaptan (kendi takım / rakip ayrı). */
 export function normalizeCaptainFlags(players: Player[]): Player[] {
-  let assigned = false;
+  let homeCaptain = false;
+  let awayCaptain = false;
   return players.map((p) => {
+    const side = p.side ?? "home";
     const wants = Boolean(p.isCaptain);
     if (!wants) return { ...p, isCaptain: false };
-    if (assigned) return { ...p, isCaptain: false };
-    assigned = true;
+    if (side === "away") {
+      if (awayCaptain) return { ...p, isCaptain: false };
+      awayCaptain = true;
+      return { ...p, isCaptain: true };
+    }
+    if (homeCaptain) return { ...p, isCaptain: false };
+    homeCaptain = true;
     return { ...p, isCaptain: true };
   });
 }

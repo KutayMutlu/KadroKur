@@ -4,6 +4,7 @@ import { useRef, useEffect, useState, forwardRef, useImperativeHandle } from "re
 import { Stage, Layer, Rect, Line, Circle, Group, Text } from "react-konva";
 import type Konva from "konva";
 import { PlayerNode } from "./PlayerNode";
+import { getPlayerVisualScale } from "@/lib/player-node-scale";
 import type { Player } from "@/types/player";
 
 const PITCH_W = 760;
@@ -17,6 +18,8 @@ export interface PitchCanvasProps {
   onEditPlayer?: (id: string) => void;
   /** Salt okunur (paylaşım sayfası) */
   interactive?: boolean;
+  /** Atak eksenini görünümde çevir (kayıtlı koordinatlar aynı; home+away birlikte) */
+  attackFlip?: boolean;
 }
 
 export type PitchCanvasHandle = {
@@ -31,6 +34,7 @@ export const PitchCanvas = forwardRef<PitchCanvasHandle, PitchCanvasProps>(
       onPlayerMove,
       onEditPlayer,
       interactive = true,
+      attackFlip = false,
     },
     ref
   ) {
@@ -81,6 +85,8 @@ export const PitchCanvas = forwardRef<PitchCanvasHandle, PitchCanvasProps>(
     const margin = 8;
     const innerW = canvasSize.w - margin * 2;
     const innerH = canvasSize.h - margin * 2;
+    const innerMin = Math.min(innerW, innerH);
+    const playerVisualScale = getPlayerVisualScale(innerMin);
 
     return (
       <div className="h-full w-full overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/80 via-slate-900/65 to-emerald-950/70 p-3 shadow-[0_20px_60px_-30px_rgba(16,185,129,0.45)] backdrop-blur-sm">
@@ -260,9 +266,29 @@ export const PitchCanvas = forwardRef<PitchCanvasHandle, PitchCanvasProps>(
             )}
             <Group x={margin} y={margin}>
               <Text
-                text={verticalLayout ? "ATAK ↑" : "ATAK →"}
-                x={verticalLayout ? innerW / 2 - 36 : innerW - 72}
-                y={verticalLayout ? 10 : innerH / 2 - 8}
+                text={
+                  verticalLayout
+                    ? attackFlip
+                      ? "ATAK ↓"
+                      : "ATAK ↑"
+                    : attackFlip
+                      ? "ATAK ←"
+                      : "ATAK →"
+                }
+                x={
+                  verticalLayout
+                    ? innerW / 2 - 36
+                    : attackFlip
+                      ? 10
+                      : innerW - 72
+                }
+                y={
+                  verticalLayout
+                    ? attackFlip
+                      ? innerH - 26
+                      : 10
+                    : innerH / 2 - 8
+                }
                 width={verticalLayout ? 72 : undefined}
                 align={verticalLayout ? "center" : undefined}
                 fontSize={11}
@@ -280,8 +306,10 @@ export const PitchCanvas = forwardRef<PitchCanvasHandle, PitchCanvasProps>(
                   pitchWidth={innerW}
                   pitchHeight={innerH}
                   verticalLayout={verticalLayout}
+                  attackFlip={attackFlip}
                   selected={interactive && activePlayerId === p.id}
                   interactive={interactive}
+                  visualScale={playerVisualScale}
                   onDragEnd={onPlayerMove}
                   onEdit={onEditPlayer}
                 />

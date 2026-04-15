@@ -2,14 +2,17 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { formatTeamMatchupLine } from "@/lib/tactic-display";
 import { listLocalTactics, type StoredTactic } from "@/lib/local-tactics";
 import { getSupabase } from "@/lib/supabase";
+import type { CanvasState } from "@/types/tactic";
 
 type CloudTactic = {
   id: string;
   title: string;
   share_id: string;
   updated_at: string;
+  canvas_state?: CanvasState | null;
 };
 
 export function ClientTactics() {
@@ -41,7 +44,7 @@ export function ClientTactics() {
       }
       const { data: rows } = await sb
         .from("tactics")
-        .select("id, title, share_id, updated_at")
+        .select("id, title, share_id, updated_at, canvas_state")
         .eq("user_id", userId)
         .order("updated_at", { ascending: false });
       if (!disposed) {
@@ -99,11 +102,13 @@ export function ClientTactics() {
             Hesabımdaki taktikler
           </h3>
           <ul className="mb-4 grid gap-3 sm:grid-cols-2">
-            {cloudItems.map((t) => (
+            {cloudItems.map((t) => {
+              const matchup = formatTeamMatchupLine(t.canvas_state);
+              return (
               <li key={`cloud-${t.id}`}>
                 <Link
                   href={`/editor?id=${encodeURIComponent(t.id)}`}
-                  className="group flex flex-col rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-4 transition hover:border-[var(--border-glow)] hover:bg-[var(--bg-elevated)]/80"
+                  className="group flex min-h-[72px] touch-manipulation flex-col rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-4 transition active:bg-[var(--bg-elevated)]/60 hover:border-[var(--border-glow)] hover:bg-[var(--bg-elevated)]/80"
                 >
                   <span
                     className="font-medium text-[var(--foreground)] group-hover:text-[var(--accent)]"
@@ -111,12 +116,13 @@ export function ClientTactics() {
                   >
                     {t.title}
                   </span>
-                  <span className="mt-1 font-mono text-xs text-[var(--muted)]">
-                    /t/{t.share_id}
-                  </span>
+                  {matchup ? (
+                    <span className="mt-1 text-xs text-[var(--muted)]">{matchup}</span>
+                  ) : null}
                 </Link>
               </li>
-            ))}
+            );
+            })}
           </ul>
         </>
       )}
@@ -126,11 +132,13 @@ export function ClientTactics() {
             Bu cihazdaki kayıtlar
           </h3>
           <ul className="grid gap-3 sm:grid-cols-2">
-            {items.map((t) => (
+            {items.map((t) => {
+              const matchup = formatTeamMatchupLine(t.canvas_state);
+              return (
               <li key={t.id}>
                 <Link
                   href={`/editor?id=${encodeURIComponent(t.id)}`}
-                  className="group flex flex-col rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-4 transition hover:border-[var(--border-glow)] hover:bg-[var(--bg-elevated)]/80"
+                  className="group flex min-h-[72px] touch-manipulation flex-col rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-4 transition active:bg-[var(--bg-elevated)]/60 hover:border-[var(--border-glow)] hover:bg-[var(--bg-elevated)]/80"
                 >
                   <span
                     className="font-medium text-[var(--foreground)] group-hover:text-[var(--accent)]"
@@ -138,12 +146,13 @@ export function ClientTactics() {
                   >
                     {t.title}
                   </span>
-                  <span className="mt-1 font-mono text-xs text-[var(--muted)]">
-                    /t/{t.share_id}
-                  </span>
+                  {matchup ? (
+                    <span className="mt-1 text-xs text-[var(--muted)]">{matchup}</span>
+                  ) : null}
                 </Link>
               </li>
-            ))}
+            );
+            })}
           </ul>
         </>
       )}

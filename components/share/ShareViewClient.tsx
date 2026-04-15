@@ -9,6 +9,7 @@ import { getSupabase } from "@/lib/supabase";
 import type { CanvasState } from "@/types/tactic";
 import { Button } from "@/components/ui/button";
 import { exportStageToPng } from "@/lib/canvas-export";
+import { Download, Home } from "lucide-react";
 
 interface ShareViewClientProps {
   shareId: string;
@@ -91,41 +92,59 @@ export function ShareViewClient({ shareId }: ShareViewClientProps) {
   }
 
   return (
-    <div className="flex h-dvh min-h-0 flex-col overflow-hidden bg-pitch-night">
-      <div className="mx-auto flex h-full min-h-0 w-full max-w-[min(100%,1400px)] flex-1 flex-col px-3 pb-2 pt-3 sm:px-5 sm:pb-3 sm:pt-4">
-        <header className="mb-2 shrink-0 flex flex-col gap-2 sm:mb-2 sm:flex-row sm:items-center sm:justify-between">
-          <div>
+    <div className="flex h-dvh min-h-0 flex-col overflow-hidden bg-pitch-night pb-[env(safe-area-inset-bottom,0px)]">
+      <div className="mx-auto flex h-full min-h-0 w-full max-w-[min(100%,1400px)] flex-1 flex-col px-3 pb-2 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-5 sm:pb-3 sm:pt-4">
+        <header className="mb-2 shrink-0 flex flex-col gap-3 sm:mb-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+          <div className="min-w-0">
             <h1
-              className="text-xl font-semibold text-[var(--foreground)] sm:text-2xl"
+              className="text-lg font-semibold leading-snug text-[var(--foreground)] sm:text-2xl"
               style={{ fontFamily: "var(--font-display)" }}
             >
               {title || "Paylaşılan taktik"}
             </h1>
-            <p className="text-sm text-[var(--muted)]">Salt okunur görünüm</p>
+            {(state.teamName || state.opponentTeamName) && (
+              <p className="mt-1 text-xs text-[var(--muted)] sm:text-sm">
+                {[state.teamName?.trim(), state.opponentTeamName?.trim()]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </p>
+            )}
+            <p className="mt-0.5 text-[11px] text-[var(--muted)] sm:text-sm">
+              Salt okunur görünüm
+            </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 sm:justify-start">
             <ThemeToggle />
             <Button
               type="button"
               variant="secondary"
+              size="sm"
+              className="touch-manipulation min-h-[40px] min-w-[40px] px-0 sm:min-h-0 sm:min-w-0 sm:px-3"
               onClick={() => {
                 const stage = stageRef.current?.getStage();
                 if (!stage) return;
                 exportStageToPng(stage, "taktik.png");
               }}
+              title="PNG indir"
+              aria-label="PNG indir"
             >
-              PNG indir
+              <Download className="h-4 w-4 sm:mr-1.5" aria-hidden />
+              <span className="hidden sm:inline">PNG indir</span>
             </Button>
-            <Button asChild variant="ghost">
-              <Link href="/">Ana sayfa</Link>
+            <Button asChild variant="ghost" size="sm" className="touch-manipulation">
+              <Link href="/" className="inline-flex min-h-[40px] items-center gap-1.5 sm:min-h-0">
+                <Home className="h-4 w-4 shrink-0 sm:hidden" aria-hidden />
+                <span>Ana sayfa</span>
+              </Link>
             </Button>
           </div>
         </header>
-        <div className="min-h-0 w-full flex-1 pb-safe">
+        <div className="min-h-0 w-full flex-1">
           <PitchCanvas
             ref={stageRef}
             players={state.players}
             activePlayerId={null}
+            attackFlip={Boolean(state.attack_flip)}
             onPlayerMove={() => {}}
             interactive={false}
           />

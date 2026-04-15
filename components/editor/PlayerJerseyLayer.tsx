@@ -2,6 +2,7 @@
 
 import { Circle, Group, Path, Ellipse, Text, Rect } from "react-konva";
 import type { ResolvedJerseyKit } from "@/types/jersey";
+import { contrastAccentForPrimary } from "@/lib/jersey-kit";
 
 const shortSleevePath =
   "M 75,25 C 85,20 115,20 125,25 C 145,25 160,35 175,45 C 185,55 200,85 190,105 " +
@@ -13,9 +14,10 @@ const collarPath =
 
 const hemPath = "M 50,85 C 60,80 140,80 150,85";
 
-const JERSEY_FILL = "#ffffff";
-const COLLAR_FILL = "#2d3436";
-const HEM_STROKE = "#f0f0f0";
+const HOME_JERSEY_FILL = "#ffffff";
+const HOME_COLLAR_FILL = "#2d3436";
+const HEM_STROKE_LIGHT = "#f0f0f0";
+const HOME_NUMBER_FILL = "#0a0a0a";
 const NAME_TAG_BG = "#141414";
 const NAME_TAG_TEXT = "#fafafa";
 
@@ -35,24 +37,45 @@ const CENTER_Y = PATH_OFF + 113 * PATH_SCALE;
 
 type Props = {
   kit: ResolvedJerseyKit;
+  /** Kendi takım: klasik beyaz forma. Rakip: renkli kit (siyah vb.). */
+  variant: "home" | "away";
   selected: boolean;
   number: string;
   shortName: string;
   /** İsim bandının sağında K rozeti; bant genişliği buna göre artar */
   isCaptain?: boolean;
+  /** Saha boyutuna göre tüm forma + etiket (1 = tasarım referansı) */
+  visualScale?: number;
 };
 
 const CAPTAIN_BADGE = 14;
 const CAPTAIN_GAP = 5;
 
 export function PlayerJerseyLayer({
-  kit: _kit,
+  kit,
+  variant,
   selected,
   number,
   shortName,
   isCaptain = false,
+  visualScale = 1,
 }: Props) {
-  void _kit;
+  const isAwayKit = variant === "away";
+  /** Sadece rakip formasında: koyu gövde + açık numara */
+  const isDarkJersey =
+    isAwayKit && contrastAccentForPrimary(kit.primary) === "#f8fafc";
+
+  const bodyFill = isAwayKit ? kit.primary : HOME_JERSEY_FILL;
+  const collarFill = isAwayKit ? kit.secondary : HOME_COLLAR_FILL;
+  const hemStroke = isAwayKit
+    ? isDarkJersey
+      ? "rgba(255,255,255,0.32)"
+      : HEM_STROKE_LIGHT
+    : HEM_STROKE_LIGHT;
+  const numberFill = isAwayKit ? kit.accent : HOME_NUMBER_FILL;
+  const numberShadowColor =
+    isAwayKit && isDarkJersey ? "rgba(0,0,0,0.55)" : "rgba(0,0,0,0.22)";
+  const jerseyShadowOpacity = isAwayKit ? (isDarkJersey ? 0.35 : 0.1) : 0.1;
 
   const tagH = 22;
   const tagRadius = 9;
@@ -73,11 +96,17 @@ export function PlayerJerseyLayer({
   const bottomInner = PATH_OFF + 200 * PATH_SCALE;
   const nameTagY = (bottomInner - CENTER_Y) * OUTER_SCALE + 4;
 
-  const stroke = selected ? "rgba(245, 200, 60, 0.98)" : "#333";
+  const stroke = selected
+    ? "rgba(245, 200, 60, 0.98)"
+    : isAwayKit
+      ? isDarkJersey
+        ? "rgba(255,255,255,0.38)"
+        : "rgba(15, 23, 42, 0.45)"
+      : "#333";
   const strokeW = selected ? 2.4 : 2;
 
   return (
-    <Group listening={false}>
+    <Group listening={false} scaleX={visualScale} scaleY={visualScale}>
       <Ellipse
         x={0}
         y={14}
@@ -103,20 +132,20 @@ export function PlayerJerseyLayer({
         >
           <Path
             data={shortSleevePath}
-            fill={JERSEY_FILL}
+            fill={bodyFill}
             stroke={stroke}
             strokeWidth={strokeW}
             lineJoin="round"
             shadowColor="black"
             shadowBlur={10}
-            shadowOpacity={0.1}
+            shadowOpacity={jerseyShadowOpacity}
             listening={false}
           />
-          <Path data={collarPath} fill={COLLAR_FILL} listening={false} />
+          <Path data={collarPath} fill={collarFill} listening={false} />
           <Path
             data={hemPath}
             fill="transparent"
-            stroke={HEM_STROKE}
+            stroke={hemStroke}
             strokeWidth={1}
             lineCap="round"
             listening={false}
@@ -132,8 +161,8 @@ export function PlayerJerseyLayer({
             fontSize={54}
             fontFamily="'Segoe UI', system-ui, sans-serif"
             fontStyle="bold"
-            fill="#0a0a0a"
-            shadowColor="rgba(0,0,0,0.22)"
+            fill={numberFill}
+            shadowColor={numberShadowColor}
             shadowBlur={3}
             shadowOffset={{ x: 0, y: 2 }}
             listening={false}

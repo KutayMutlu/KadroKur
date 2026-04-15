@@ -134,7 +134,7 @@ export function AuthControls({ guestCompanion }: AuthControlsProps) {
           type="button"
           variant="secondary"
           size="sm"
-          className="shrink-0 text-xs sm:text-sm"
+          className="min-h-[40px] shrink-0 touch-manipulation text-xs sm:min-h-0 sm:text-sm"
           onClick={signInWithGoogle}
           disabled={loading}
         >

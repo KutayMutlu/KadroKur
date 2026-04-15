@@ -69,7 +69,7 @@ export function PlayerJerseyLayer({
   const collarFill = isAwayKit ? kit.secondary : HOME_COLLAR_FILL;
   const hemStroke = isAwayKit
     ? isDarkJersey
-      ? "rgba(255,255,255,0.32)"
+      ? bodyFill
       : HEM_STROKE_LIGHT
     : HEM_STROKE_LIGHT;
   const numberFill = isAwayKit ? kit.accent : HOME_NUMBER_FILL;
@@ -98,11 +98,11 @@ export function PlayerJerseyLayer({
 
   const stroke = selected
     ? "rgba(245, 200, 60, 0.98)"
-    : isAwayKit
-      ? isDarkJersey
-        ? "rgba(255,255,255,0.38)"
-        : "rgba(15, 23, 42, 0.45)"
-      : "#333";
+    : isAwayKit && isDarkJersey
+      ? bodyFill
+      : isAwayKit
+        ? "rgba(15, 23, 42, 0.45)"
+        : "#333";
   const strokeW = selected ? 2.4 : 2;
 
   return (
@@ -162,9 +162,9 @@ export function PlayerJerseyLayer({
             fontFamily="'Segoe UI', system-ui, sans-serif"
             fontStyle="bold"
             fill={numberFill}
-            shadowColor={numberShadowColor}
-            shadowBlur={3}
-            shadowOffset={{ x: 0, y: 2 }}
+            shadowColor={isDarkJersey ? "transparent" : numberShadowColor}
+            shadowBlur={isDarkJersey ? 0 : 3}
+            shadowOffset={isDarkJersey ? { x: 0, y: 0 } : { x: 0, y: 2 }}
             listening={false}
           />
         </Group>

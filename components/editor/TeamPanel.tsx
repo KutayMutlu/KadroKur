@@ -12,6 +12,8 @@ export interface TeamPanelProps {
   hasOpponentLineup: boolean;
   onAddOpponentLineup: () => void;
   onRemoveOpponentLineup: () => void;
+  showTeamName?: boolean;
+  showOpponentSection?: boolean;
 }
 
 export function TeamPanel({
@@ -22,21 +24,26 @@ export function TeamPanel({
   hasOpponentLineup,
   onAddOpponentLineup,
   onRemoveOpponentLineup,
+  showTeamName = true,
+  showOpponentSection = true,
 }: TeamPanelProps) {
   return (
     <div className="flex flex-col gap-4 rounded-xl border border-white/10 bg-black/10 p-3">
-      <div>
-        <Label htmlFor="teamName">Takım adı</Label>
-        <Input
-          id="teamName"
-          className="mt-1"
-          value={teamName}
-          onChange={(e) => onTeamNameChange(e.target.value)}
-          placeholder="Takımınızın adını giriniz"
-        />
-      </div>
+      {showTeamName && (
+        <div>
+          <Label htmlFor="teamName">Takım adı</Label>
+          <Input
+            id="teamName"
+            className="mt-1"
+            value={teamName}
+            onChange={(e) => onTeamNameChange(e.target.value)}
+            placeholder="Takımınızın adını giriniz"
+          />
+        </div>
+      )}
 
-      <div className="space-y-2 border-t border-white/10 pt-3">
+      {showOpponentSection && (
+        <div className={`space-y-2 ${showTeamName ? "border-t border-white/10 pt-3" : ""}`}>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <Label className="text-[var(--foreground)]">Rakip takım</Label>
           {hasOpponentLineup ? (
@@ -72,7 +79,8 @@ export function TeamPanel({
             />
           </>
         )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -20,6 +20,8 @@ export interface PitchCanvasProps {
   interactive?: boolean;
   /** Atak eksenini görünümde çevir (kayıtlı koordinatlar aynı; home+away birlikte) */
   attackFlip?: boolean;
+  /** true: saha dikey (yukarı-aşağı), false: yatay (sağ-sol) */
+  onLayoutChange?: (vertical: boolean) => void;
 }
 
 export type PitchCanvasHandle = {
@@ -35,6 +37,7 @@ export const PitchCanvas = forwardRef<PitchCanvasHandle, PitchCanvasProps>(
       onEditPlayer,
       interactive = true,
       attackFlip = false,
+      onLayoutChange,
     },
     ref
   ) {
@@ -42,6 +45,11 @@ export const PitchCanvas = forwardRef<PitchCanvasHandle, PitchCanvasProps>(
     const containerRef = useRef<HTMLDivElement>(null);
     const [canvasSize, setCanvasSize] = useState({ w: PITCH_W, h: PITCH_H });
     const [verticalLayout, setVerticalLayout] = useState(false);
+    const onLayoutChangeRef = useRef<PitchCanvasProps["onLayoutChange"]>(undefined);
+
+    useEffect(() => {
+      onLayoutChangeRef.current = onLayoutChange;
+    }, [onLayoutChange]);
 
     useImperativeHandle(ref, () => ({
       getStage: () => stageRef.current,
@@ -59,6 +67,7 @@ export const PitchCanvas = forwardRef<PitchCanvasHandle, PitchCanvasProps>(
 
         const isMobile = window.innerWidth < MOBILE_BREAKPOINT;
         setVerticalLayout(isMobile);
+        onLayoutChangeRef.current?.(isMobile);
 
         setCanvasSize({
           w: Math.floor(Math.max(1, availableW)),

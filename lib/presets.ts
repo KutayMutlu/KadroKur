@@ -38,7 +38,7 @@ const ROLE_Y_BOUNDS: Record<Player["role"], { min: number; max: number }> = {
 export const TACTIC_PRESETS: Record<TacticalPresetKey, TacticalPresetDefinition> = {
   default: {
     key: "default",
-    label: "Özel",
+    label: "Standart",
     description: "Dengeli ve manuel düzenlenebilir yerleşim.",
     style: { lineDepthBias: 0, widthCompactnessBias: 0, transitionDepthBias: 0 },
   },

@@ -51,9 +51,10 @@ export function sanitizeJerseyInput(value: string): string {
 
 export function formatJerseyNumber(value: string): string {
   const digits = sanitizeJerseyInput(value);
-  if (!digits) return "01";
-  if (digits.length === 1) return `0${digits}`;
-  return digits === "00" ? "01" : digits;
+  if (!digits) return "1";
+  const normalized = String(Number.parseInt(digits, 10));
+  if (!normalized || normalized === "NaN") return "1";
+  return normalized;
 }
 
 export function sanitizePlayerName(value: string): string {

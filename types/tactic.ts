@@ -6,7 +6,11 @@ export interface CanvasState {
   /** Rakip takım adı (sahada rakip oyuncuları varken) */
   opponentTeamName?: string;
   formation_key: string;
+  /** Rakip takım dizilişi (opsiyonel; yoksa `formation_key` ile aynı kabul edilir). */
+  opponent_formation_key?: string;
   preset_key: string | null;
+  /** Rakip takım preset'i (opsiyonel; yoksa "default"). */
+  opponent_preset_key?: string | null;
   players: Player[];
   /**
    * true: atak ekseni görünümde ters (y ↔ 1−y). Kendi takım ve rakip aynı uzayda birlikte döner.

@@ -95,11 +95,11 @@ export function PlayerEditModal({
     const formatted = formatJerseyNumber(jerseyDraftRef.current);
     const raw = sanitizeJerseyInput(jerseyDraftRef.current);
     if (!raw) {
-      setJerseyError("01-99 arası forma numarası girin.");
+      setJerseyError("1-99 arası forma numarası girin.");
       return;
     }
     if (raw === "00") {
-      setJerseyError("00 kullanılamaz.");
+      setJerseyError("0 ile başlayan numara kullanılamaz.");
       return;
     }
     const name = sanitizePlayerName(nameDraft);
@@ -256,17 +256,19 @@ export function PlayerEditModal({
                   id="player-edit-number"
                   type="text"
                   inputMode="numeric"
-                  placeholder="Örn: 07"
+                  placeholder="Örn: 7"
                   className="mt-1.5"
                   value={jerseyDraft}
                   onChange={(e) => {
                     const next = sanitizeJerseyInput(e.target.value);
                     setJerseyDraftBoth(next);
                     if (!next) {
-                      setJerseyError("01-99 arası forma numarası girin.");
+                      setJerseyError("1-99 arası forma numarası girin.");
                       return;
                     }
-                    setJerseyError(next === "00" ? "00 kullanılamaz." : null);
+                    setJerseyError(
+                      next === "00" ? "0 ile başlayan numara kullanılamaz." : null
+                    );
                   }}
                   onBlur={() => {
                     const formatted = formatJerseyNumber(jerseyDraftRef.current);
@@ -276,7 +278,7 @@ export function PlayerEditModal({
                   }}
                 />
                 <p className="mt-1.5 text-xs text-[var(--muted)]">
-                  {jerseyError ?? "01-99 (tek haneli otomatik 0 ile tamamlanır)."}
+                  {jerseyError ?? "1-99 (başında 0 olmadan)."}
                 </p>
               </div>
             </div>

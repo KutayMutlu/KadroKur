@@ -15,12 +15,14 @@ const COLORS = [
 
 /** Rakip varsayılan forma — tek siyah ton (ayrıştırma isim/numara ile). */
 const OPPONENT_DEFAULT_JERSEY = "#171717";
+const HOME_GK_START_Y = 0.04;
 
 function normalizeJerseyNumber(value: unknown, fallbackIndex: number): string {
   const raw = String(value ?? "").replace(/\D/g, "").slice(0, 2);
-  if (raw.length === 0) return String(fallbackIndex + 1).padStart(2, "0");
-  if (raw.length === 1) return `0${raw}`;
-  return raw === "00" ? "01" : raw;
+  if (raw.length === 0) return String(fallbackIndex + 1);
+  const normalized = String(Number.parseInt(raw, 10));
+  if (!normalized || normalized === "NaN") return String(fallbackIndex + 1);
+  return normalized;
 }
 
 /**
@@ -39,7 +41,11 @@ export function createPlayersForFormation(
   return normalizeCaptainFlags(
     def.player_positions.map((pos, i) => {
       const prev = existing?.[i];
-      const y = side === "away" ? 1 - pos.y : pos.y;
+      let y = side === "away" ? 1 - pos.y : pos.y;
+      // Kaleci (1. oyuncu) kale tarafına yakın dursun; iç çizgi içinde kalacak başlangıç bandı.
+      if (i === 0) {
+        y = side === "away" ? Math.max(1 - HOME_GK_START_Y, y) : Math.min(HOME_GK_START_Y, y);
+      }
       const fallback =
         side === "away" ? OPPONENT_DEFAULT_JERSEY : COLORS[i % COLORS.length];
       const color = normalizeHex(prev?.color) ?? fallback;

@@ -44,14 +44,16 @@ const HISTORY_LIMIT = 50;
 
 type BoardSnapshot = {
   matchFormat: MatchFormatKey;
-  formationKey: string;
-  presetKey: TacticalPresetKey;
+  homeFormationKey: string;
+  awayFormationKey: string;
+  homePresetKey: TacticalPresetKey;
+  awayPresetKey: TacticalPresetKey;
   players: Player[];
   opponentTeamName: string;
   attackFlip: boolean;
 };
 
-function rebuildBoardPlayers(
+function rebuildHomePlayers(
   formationKey: string,
   presetKey: TacticalPresetKey,
   prev: Player[],
@@ -59,18 +61,25 @@ function rebuildBoardPlayers(
 ): Player[] {
   const homePrev = prev.filter((p) => (p.side ?? "home") === "home");
   const awayPrev = includeOpponent ? prev.filter((p) => p.side === "away") : [];
-
   const home = applyPresetToPlayers(
     createPlayersForFormation(formationKey, homePrev, "home"),
     presetKey
   );
-  if (!includeOpponent) return home;
+  return includeOpponent ? [...home, ...awayPrev] : home;
+}
 
+function rebuildAwayPlayers(
+  formationKey: string,
+  presetKey: TacticalPresetKey,
+  prev: Player[]
+): Player[] {
+  const homePrev = prev.filter((p) => (p.side ?? "home") === "home");
+  const awayPrev = prev.filter((p) => p.side === "away");
   const away = applyPresetToPlayers(
     createPlayersForFormation(formationKey, awayPrev, "away"),
     presetKey
   );
-  return [...home, ...away];
+  return [...homePrev, ...away];
 }
 
 function snapshotsEqual(a: BoardSnapshot, b: BoardSnapshot): boolean {
@@ -80,8 +89,10 @@ function snapshotsEqual(a: BoardSnapshot, b: BoardSnapshot): boolean {
 function buildCanvasState(
   teamName: string,
   opponentTeamName: string,
-  formationKey: string,
-  presetKey: TacticalPresetKey,
+  homeFormationKey: string,
+  awayFormationKey: string,
+  homePresetKey: TacticalPresetKey,
+  awayPresetKey: TacticalPresetKey,
   players: Player[],
   attackFlip: boolean
 ): CanvasState {
@@ -89,8 +100,10 @@ function buildCanvasState(
   return {
     teamName,
     ...(opp ? { opponentTeamName: opp } : {}),
-    formation_key: formationKey,
-    preset_key: presetKey === "default" ? null : presetKey,
+    formation_key: homeFormationKey,
+    ...(awayFormationKey === homeFormationKey ? {} : { opponent_formation_key: awayFormationKey }),
+    preset_key: homePresetKey === "default" ? null : homePresetKey,
+    ...(awayPresetKey === "default" ? {} : { opponent_preset_key: awayPresetKey }),
     players,
     ...(attackFlip ? { attack_flip: true } : {}),
     pitchVersion: 1,
@@ -103,10 +116,13 @@ export interface EditorClientProps {
 
 export function EditorClient({ initialTacticId }: EditorClientProps) {
   const stageRef = useRef<PitchCanvasHandle>(null);
+  const [pitchVertical, setPitchVertical] = useState(false);
   const [matchFormat, setMatchFormat] =
     useState<MatchFormatKey>(DEFAULT_MATCH_FORMAT);
-  const [formationKey, setFormationKey] = useState(DEFAULT_FORMATION);
-  const [presetKey, setPresetKey] = useState<TacticalPresetKey>("default");
+  const [homeFormationKey, setHomeFormationKey] = useState(DEFAULT_FORMATION);
+  const [awayFormationKey, setAwayFormationKey] = useState(DEFAULT_FORMATION);
+  const [homePresetKey, setHomePresetKey] = useState<TacticalPresetKey>("default");
+  const [awayPresetKey, setAwayPresetKey] = useState<TacticalPresetKey>("default");
   const [teamName, setTeamName] = useState("");
   const [opponentTeamName, setOpponentTeamName] = useState("");
   const [tacticTitle, setTacticTitle] = useState("");
@@ -134,13 +150,24 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
   const makeSnapshot = useCallback(
     (): BoardSnapshot => ({
       matchFormat,
-      formationKey,
-      presetKey,
+      homeFormationKey,
+      awayFormationKey,
+      homePresetKey,
+      awayPresetKey,
       players: players.map((p) => ({ ...p })),
       opponentTeamName,
       attackFlip,
     }),
-    [attackFlip, formationKey, matchFormat, opponentTeamName, players, presetKey]
+    [
+      attackFlip,
+      awayFormationKey,
+      awayPresetKey,
+      homeFormationKey,
+      homePresetKey,
+      matchFormat,
+      opponentTeamName,
+      players,
+    ]
   );
 
   const pushHistory = useCallback((snapshot: BoardSnapshot) => {
@@ -154,8 +181,10 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
 
   const restoreSnapshot = useCallback((snapshot: BoardSnapshot) => {
     setMatchFormat(snapshot.matchFormat);
-    setFormationKey(snapshot.formationKey);
-    setPresetKey(snapshot.presetKey);
+    setHomeFormationKey(snapshot.homeFormationKey);
+    setAwayFormationKey(snapshot.awayFormationKey);
+    setHomePresetKey(snapshot.homePresetKey);
+    setAwayPresetKey(snapshot.awayPresetKey);
     setPlayers(snapshot.players.map((p) => ({ ...p })));
     setOpponentTeamName(snapshot.opponentTeamName ?? "");
     setAttackFlip(snapshot.attackFlip ?? false);
@@ -169,8 +198,10 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
     setMatchFormat(
       getMatchFormatForFormation(s.formation_key) ?? DEFAULT_MATCH_FORMAT
     );
-    setFormationKey(s.formation_key);
-    setPresetKey(normalizePresetKey(s.preset_key));
+    setHomeFormationKey(s.formation_key);
+    setAwayFormationKey(s.opponent_formation_key ?? s.formation_key);
+    setHomePresetKey(normalizePresetKey(s.preset_key));
+    setAwayPresetKey(normalizePresetKey(s.opponent_preset_key));
     setTacticTitle(t.title);
     setPlayers(
       normalizeCaptainFlags(
@@ -270,18 +301,20 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
     });
   }, [initialTacticId, loadTactic]);
 
-  const onFormationChange = (key: string) => {
-    if (key === formationKey) return;
+  const onHomeFormationChange = (key: string) => {
+    if (key === homeFormationKey) return;
     pushHistory(makeSnapshot());
-    setFormationKey(key);
+    setHomeFormationKey(key);
     setPlayers((prev) =>
-      rebuildBoardPlayers(
-        key,
-        presetKey,
-        prev,
-        prev.some((p) => p.side === "away")
-      )
+      rebuildHomePlayers(key, homePresetKey, prev, prev.some((p) => p.side === "away"))
     );
+  };
+
+  const onAwayFormationChange = (key: string) => {
+    if (key === awayFormationKey) return;
+    pushHistory(makeSnapshot());
+    setAwayFormationKey(key);
+    setPlayers((prev) => rebuildAwayPlayers(key, awayPresetKey, prev));
   };
 
   const onMatchFormatChange = (format: MatchFormatKey) => {
@@ -291,25 +324,30 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
     const formations = getFormationsByFormat(format);
     const nextFormation = formations[0]?.key;
     if (!nextFormation) return;
-    setFormationKey(nextFormation);
+    setHomeFormationKey(nextFormation);
+    setAwayFormationKey(nextFormation);
     setPlayers((prev) =>
-      rebuildBoardPlayers(
+      rebuildAwayPlayers(
         nextFormation,
-        presetKey,
-        prev,
-        prev.some((p) => p.side === "away")
+        awayPresetKey,
+        rebuildHomePlayers(
+          nextFormation,
+          homePresetKey,
+          prev,
+          prev.some((p) => p.side === "away")
+        )
       )
     );
   };
 
-  const onPresetChange = (nextPresetKey: string) => {
+  const onHomePresetChange = (nextPresetKey: string) => {
     pushHistory(makeSnapshot());
     const normalized = normalizePresetKey(nextPresetKey);
-    if (normalized === presetKey) return;
-    setPresetKey(normalized);
+    if (normalized === homePresetKey) return;
+    setHomePresetKey(normalized);
     setPlayers((prev) =>
-      rebuildBoardPlayers(
-        formationKey,
+      rebuildHomePlayers(
+        homeFormationKey,
         normalized,
         prev,
         prev.some((p) => p.side === "away")
@@ -317,26 +355,34 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
     );
   };
 
+  const onAwayPresetChange = (nextPresetKey: string) => {
+    pushHistory(makeSnapshot());
+    const normalized = normalizePresetKey(nextPresetKey);
+    if (normalized === awayPresetKey) return;
+    setAwayPresetKey(normalized);
+    setPlayers((prev) =>
+      rebuildAwayPlayers(awayFormationKey, normalized, prev)
+    );
+  };
+
   const onResetPlayerPositions = () => {
     pushHistory(makeSnapshot());
-    setPlayers((prev) =>
-      rebuildBoardPlayers(
-        formationKey,
-        presetKey,
-        prev,
-        prev.some((p) => p.side === "away")
-      )
-    );
+    setPlayers((prev) => {
+      const includeOpponent = prev.some((p) => p.side === "away");
+      const homeBuilt = rebuildHomePlayers(homeFormationKey, homePresetKey, prev, includeOpponent);
+      return includeOpponent ? rebuildAwayPlayers(awayFormationKey, awayPresetKey, homeBuilt) : homeBuilt;
+    });
   };
 
   const onAddOpponentLineup = () => {
     if (players.some((p) => p.side === "away")) return;
     pushHistory(makeSnapshot());
+    setAwayFormationKey(homeFormationKey);
     setPlayers((prev) => {
       const home = prev.filter((p) => (p.side ?? "home") === "home");
       const away = applyPresetToPlayers(
-        createPlayersForFormation(formationKey, undefined, "away"),
-        presetKey
+        createPlayersForFormation(homeFormationKey, undefined, "away"),
+        awayPresetKey
       );
       return [...home, ...away];
     });
@@ -429,8 +475,10 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
       const canvas_state = buildCanvasState(
         teamName,
         opponentTeamName,
-        formationKey,
-        presetKey,
+        homeFormationKey,
+        awayFormationKey,
+        homePresetKey,
+        awayPresetKey,
         players,
         attackFlip
       );
@@ -454,8 +502,8 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
             user_id: authUser?.id ?? null,
             team_id: null,
             title: row.title,
-            formation_key: formationKey,
-            preset_key: presetKey === "default" ? null : presetKey,
+            formation_key: homeFormationKey,
+            preset_key: homePresetKey === "default" ? null : homePresetKey,
             canvas_state,
             share_id: sid,
             is_public: true,
@@ -513,12 +561,17 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
     onRemoveOpponentLineup,
     matchFormat,
     onMatchFormatChange,
-    formationKey,
-    onFormationChange,
+    homeFormationKey,
+    awayFormationKey,
+    onHomeFormationChange,
+    onAwayFormationChange,
     availableFormations,
-    presetKey,
-    onPresetChange,
+    homePresetKey,
+    awayPresetKey,
+    onHomePresetChange,
+    onAwayPresetChange,
     attackFlip,
+    pitchVertical,
     onAttackDirectionToggle,
     onResetPlayerPositions,
     tacticTitle,
@@ -677,6 +730,7 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
             players={players}
             activePlayerId={editingId}
             attackFlip={attackFlip}
+            onLayoutChange={setPitchVertical}
             onPlayerMove={onPlayerMove}
             onEditPlayer={(id) => {
               setEditingId(id);

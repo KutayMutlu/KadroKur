@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -30,12 +31,17 @@ export interface EditorSidebarProps {
   onRemoveOpponentLineup: () => void;
   matchFormat: MatchFormatKey;
   onMatchFormatChange: (f: MatchFormatKey) => void;
-  formationKey: string;
-  onFormationChange: (key: string) => void;
+  homeFormationKey: string;
+  awayFormationKey: string;
+  onHomeFormationChange: (key: string) => void;
+  onAwayFormationChange: (key: string) => void;
   availableFormations: FormationDefinition[];
-  presetKey: TacticalPresetKey;
-  onPresetChange: (key: string) => void;
+  homePresetKey: TacticalPresetKey;
+  awayPresetKey: TacticalPresetKey;
+  onHomePresetChange: (key: string) => void;
+  onAwayPresetChange: (key: string) => void;
   attackFlip: boolean;
+  pitchVertical: boolean;
   onAttackDirectionToggle: () => void;
   onResetPlayerPositions: () => void;
   tacticTitle: string;
@@ -58,12 +64,17 @@ export function EditorSidebar({
   onRemoveOpponentLineup,
   matchFormat,
   onMatchFormatChange,
-  formationKey,
-  onFormationChange,
+  homeFormationKey,
+  awayFormationKey,
+  onHomeFormationChange,
+  onAwayFormationChange,
   availableFormations,
-  presetKey,
-  onPresetChange,
+  homePresetKey,
+  awayPresetKey,
+  onHomePresetChange,
+  onAwayPresetChange,
   attackFlip,
+  pitchVertical,
   onAttackDirectionToggle,
   onResetPlayerPositions,
   tacticTitle,
@@ -85,6 +96,7 @@ export function EditorSidebar({
         hasOpponentLineup={hasOpponentLineup}
         onAddOpponentLineup={onAddOpponentLineup}
         onRemoveOpponentLineup={onRemoveOpponentLineup}
+        showOpponentSection={false}
       />
       <div className="space-y-3 rounded-xl border border-white/10 bg-black/10 p-3">
         <MatchFormatSelector value={matchFormat} onChange={onMatchFormatChange} />
@@ -92,8 +104,8 @@ export function EditorSidebar({
           Oyuncuları düzenlemek için çift tıklayın, taşımak için sürükleyin.
         </p>
         <FormationSelector
-          value={formationKey}
-          onChange={onFormationChange}
+          value={homeFormationKey}
+          onChange={onHomeFormationChange}
           options={availableFormations}
         />
         <div>
@@ -106,7 +118,13 @@ export function EditorSidebar({
             onClick={onAttackDirectionToggle}
             title="Takımınız ve rakip aynı anda döner; paylaşılan linkte de bu görünüm kullanılır."
           >
-            {attackFlip ? "← Sola atak" : "Sağa atak →"}
+            {pitchVertical
+              ? attackFlip
+                ? "↓ Aşağı atak"
+                : "Yukarı atak ↑"
+              : attackFlip
+                ? "← Sola atak"
+                : "Sağa atak →"}
           </Button>
           <p className="mt-1.5 text-[10px] leading-snug text-[var(--muted)]">
             Sahayı hangi yönden görmek istediğinizi seçin. Kendi oyuncularınız ve
@@ -114,8 +132,8 @@ export function EditorSidebar({
           </p>
         </div>
         <div>
-          <Label>Preset taktik</Label>
-          <Select value={presetKey} onValueChange={onPresetChange}>
+          <Label>Hazır taktikler</Label>
+          <Select value={homePresetKey} onValueChange={onHomePresetChange}>
             <SelectTrigger className="mt-1 w-full">
               <SelectValue />
             </SelectTrigger>
@@ -137,6 +155,69 @@ export function EditorSidebar({
             Oyuncu konumlarını sıfırla
           </Button>
         </div>
+      </div>
+      <div className="space-y-3 rounded-xl border border-white/10 bg-black/10 p-3">
+        <div className="flex items-center justify-between gap-2">
+          <Label>Rakip takım</Label>
+          {hasOpponentLineup ? (
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              className="h-8 px-2 text-xs"
+              onClick={onRemoveOpponentLineup}
+            >
+              Rakibi kaldır
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              className="h-8 w-8 rounded-full p-0 text-lg leading-none"
+              onClick={onAddOpponentLineup}
+              title="Rakip dizilişi ekle"
+              aria-label="Rakip dizilişi ekle"
+            >
+              +
+            </Button>
+          )}
+        </div>
+        {hasOpponentLineup && (
+          <Input
+            id="opponentTeamName"
+            value={opponentTeamName}
+            onChange={(e) => onOpponentTeamNameChange(e.target.value)}
+            placeholder="Rakip takım adı (isteğe bağlı)"
+            aria-label="Rakip takım adı"
+          />
+        )}
+        {hasOpponentLineup && (
+          <div>
+            <FormationSelector
+              value={awayFormationKey}
+              onChange={onAwayFormationChange}
+              options={availableFormations}
+            />
+          </div>
+        )}
+        {hasOpponentLineup && (
+          <div>
+            <Label>Hazır taktikler</Label>
+            <Select value={awayPresetKey} onValueChange={onAwayPresetChange}>
+              <SelectTrigger className="mt-1 w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.values(TACTIC_PRESETS).map((p) => (
+                  <SelectItem key={`away-${p.key}`} value={p.key}>
+                    {p.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
       <Toolbar
         tacticTitle={tacticTitle}

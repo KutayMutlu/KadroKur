@@ -217,6 +217,8 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
           players={players}
           activePlayerId={editingId}
           attackFlip={attackFlip}
+          homeTeamName={teamName}
+          opponentTeamName={opponentTeamName}
           onLayoutChange={setPitchVertical}
           onAdaptiveDropChange={setDropConfig}
           onPlayerMove={onPlayerMove}

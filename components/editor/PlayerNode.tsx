@@ -3,7 +3,6 @@
 import { Group, Rect } from "react-konva";
 import type { Player } from "@/types/player";
 import { visualAttackY, storedAttackYFromVisual } from "@/lib/attack-direction";
-import { getPlayerNameMaxChars } from "@/lib/player-node-scale";
 import { resolveJerseyKit } from "@/lib/jersey-kit";
 import { PlayerJerseyLayer } from "./PlayerJerseyLayer";
 
@@ -35,7 +34,6 @@ export interface PlayerNodeProps {
   /** jersey: forma katmanı (drag + etkileşim), label: isim etiketi katmanı */
   renderMode?: "jersey" | "label";
   onDragStart?: (id: string) => void;
-  nameMaxChars?: number;
   hitInsetX?: number;
   hitInsetYTop?: number;
   hitInsetYBottom?: number;
@@ -54,7 +52,6 @@ export function PlayerNode({
   visualScale = 1,
   renderMode = "jersey",
   onDragStart,
-  nameMaxChars,
   hitInsetX,
   hitInsetYTop,
   hitInsetYBottom,
@@ -64,9 +61,6 @@ export function PlayerNode({
   const py = verticalLayout
     ? (1 - yVis) * pitchHeight
     : (1 - player.x) * pitchHeight;
-  const nameMax = nameMaxChars ?? getPlayerNameMaxChars(visualScale);
-  const shortName =
-    player.name.length > nameMax ? `${player.name.slice(0, nameMax)}` : player.name;
 
   const kit = resolveJerseyKit(player);
 
@@ -125,7 +119,7 @@ export function PlayerNode({
         variant={(player.side ?? "home") === "away" ? "away" : "home"}
         selected={selected}
         number={player.number}
-        shortName={shortName}
+        name={player.name}
         isCaptain={Boolean(player.isCaptain)}
         visualScale={visualScale}
         showJersey={renderMode === "jersey"}

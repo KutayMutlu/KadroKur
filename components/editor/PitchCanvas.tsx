@@ -27,6 +27,10 @@ export interface PitchCanvasProps {
   onLayoutChange?: (vertical: boolean) => void;
   /** Editör için adaptif drop-time çakışma çözümleme metrikleri */
   onAdaptiveDropChange?: (drop: AdaptiveDropConfig) => void;
+
+  /** Pitch üstünde bilgi amaçlı (interaktif olmayan) taktik etiketleri */
+  homeTeamName?: string;
+  opponentTeamName?: string;
 }
 
 export type PitchCanvasHandle = {
@@ -117,7 +121,7 @@ export const PitchCanvas = forwardRef<PitchCanvasHandle, PitchCanvasProps>(
     }, [adaptive.drop]);
 
     return (
-      <div className="h-full w-full overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/80 via-slate-900/65 to-emerald-950/70 p-3 shadow-[0_20px_60px_-30px_rgba(16,185,129,0.45)] backdrop-blur-sm">
+      <div className="relative h-full w-full overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/80 via-slate-900/65 to-emerald-950/70 p-3 shadow-[0_20px_60px_-30px_rgba(16,185,129,0.45)] backdrop-blur-sm">
         <div
           ref={containerRef}
           className="h-full w-full max-w-full overflow-hidden"
@@ -340,7 +344,6 @@ export const PitchCanvas = forwardRef<PitchCanvasHandle, PitchCanvasProps>(
                   interactive={false}
                   renderMode="label"
                   visualScale={adaptive.visualScale}
-                  nameMaxChars={adaptive.nameMaxChars}
                   onDragEnd={onPlayerMove}
                   onEdit={onEditPlayer}
                 />
@@ -360,7 +363,6 @@ export const PitchCanvas = forwardRef<PitchCanvasHandle, PitchCanvasProps>(
                   selected={interactive && activePlayerId === p.id}
                   interactive={interactive}
                   visualScale={adaptive.visualScale}
-                  nameMaxChars={adaptive.nameMaxChars}
                   hitInsetX={adaptive.hitInsetX}
                   hitInsetYTop={adaptive.hitInsetYTop}
                   hitInsetYBottom={adaptive.hitInsetYBottom}

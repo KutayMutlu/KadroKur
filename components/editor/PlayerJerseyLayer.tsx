@@ -41,7 +41,7 @@ type Props = {
   variant: "home" | "away";
   selected: boolean;
   number: string;
-  shortName: string;
+  name: string;
   /** İsim bandının sağında K rozeti; bant genişliği buna göre artar */
   isCaptain?: boolean;
   /** Saha boyutuna göre tüm forma + etiket (1 = tasarım referansı) */
@@ -60,7 +60,7 @@ export function PlayerJerseyLayer({
   variant,
   selected,
   number,
-  shortName,
+  name,
   isCaptain = false,
   visualScale = 1,
   showJersey = true,
@@ -87,7 +87,7 @@ export function PlayerJerseyLayer({
   const tagRadius = 9;
   const tagPadX = 16;
   const approxChar = 6.8;
-  const nameInnerW = Math.ceil(shortName.length * approxChar);
+  const nameInnerW = Math.ceil(name.length * approxChar);
   const captainExtra = isCaptain ? CAPTAIN_GAP + CAPTAIN_BADGE : 0;
   const tagW = Math.min(
     isCaptain ? 172 : 136,
@@ -97,6 +97,12 @@ export function PlayerJerseyLayer({
   const nameSlotW = isCaptain
     ? tagW - tagPadX * 2 - CAPTAIN_GAP - CAPTAIN_BADGE
     : tagW;
+
+  // Slot genişliğine göre prefix kısaltma:
+  // - ellipsis kullanılmaz
+  // - kaptan ikonu gelince slot daralacağı için otomatik olarak daha kısa olur
+  const maxChars = Math.max(1, Math.floor(nameSlotW / approxChar));
+  const displayName = name.length > maxChars ? name.slice(0, maxChars) : name;
   const captainCenterX = nameTagX + tagW - tagPadX - CAPTAIN_BADGE / 2;
 
   const bottomInner = PATH_OFF + 200 * PATH_SCALE;
@@ -194,7 +200,7 @@ export function PlayerJerseyLayer({
             listening={false}
           />
           <Text
-            text={shortName}
+            text={displayName}
             x={isCaptain ? nameTagX + tagPadX : nameTagX}
             y={nameTagY}
             width={nameSlotW}

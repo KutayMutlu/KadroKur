@@ -145,6 +145,8 @@ export function ShareViewClient({ shareId }: ShareViewClientProps) {
             players={state.players}
             activePlayerId={null}
             attackFlip={Boolean(state.attack_flip)}
+            homeTeamName={state.teamName}
+            opponentTeamName={state.opponentTeamName}
             onPlayerMove={() => {}}
             interactive={false}
           />

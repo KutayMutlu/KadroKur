@@ -11,7 +11,7 @@ import {
 import { ThemeToggle } from "@/components/theme-toggle";
 import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
-import { ChevronDown, LogOut, UserCircle2 } from "lucide-react";
+import { ChevronDown, List, LogOut, UserCircle2 } from "lucide-react";
 import { pickAvatarUrl, pickInitials } from "./user-helpers";
 
 type Props = {
@@ -70,6 +70,12 @@ export function AccountDropdown({ user, loading, onSignOut }: Props) {
           <Link href="/kullanici-paneli">
             <UserCircle2 className="h-4 w-4" />
             Kullanıcı Paneli
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild className="cursor-pointer gap-2">
+          <Link href="/taktiklerim">
+            <List className="h-4 w-4" />
+            Taktiklerim
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />

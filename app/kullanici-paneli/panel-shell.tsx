@@ -28,13 +28,6 @@ function PanelLinks({ onNavigate }: { onNavigate?: () => void }) {
         Kişisel Bilgiler
       </Link>
       <Link
-        href="/kullanici-paneli/taktikler"
-        onClick={onNavigate}
-        className="block rounded-lg px-3 py-2 text-sm font-medium text-[var(--foreground)] transition hover:bg-[var(--accent)]/10"
-      >
-        Taktikler
-      </Link>
-      <Link
         href="/kullanici-paneli/ayarlar"
         onClick={onNavigate}
         className="block rounded-lg px-3 py-2 text-sm font-medium text-[var(--foreground)] transition hover:bg-[var(--accent)]/10"
@@ -62,7 +55,6 @@ export function UserPanelShell({ children }: Props) {
   useEffect(() => {
     router.prefetch("/kullanici-paneli/profil");
     router.prefetch("/kullanici-paneli/kisisel-bilgiler");
-    router.prefetch("/kullanici-paneli/taktikler");
     router.prefetch("/kullanici-paneli/ayarlar");
   }, [router]);
 

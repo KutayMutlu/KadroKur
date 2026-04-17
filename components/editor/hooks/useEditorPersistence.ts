@@ -154,7 +154,7 @@ export function useEditorPersistence({
       }
       const { data: cloud } = await sb
         .from("tactics")
-        .select("id, title, share_id, canvas_state, updated_at")
+        .select("id, title, share_id, canvas_state, updated_at, home_team_name, away_team_name")
         .eq("id", initialTacticId)
         .eq("user_id", userId)
         .maybeSingle();
@@ -218,6 +218,8 @@ export function useEditorPersistence({
             user_id: authUser?.id ?? null,
             team_id: null,
             title: row.title,
+            home_team_name: teamName.trim(),
+            away_team_name: opponentTeamName.trim(),
             formation_key: homeFormationKey,
             preset_key: homePresetKey === "default" ? null : homePresetKey,
             canvas_state,

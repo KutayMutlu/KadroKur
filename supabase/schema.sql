@@ -55,6 +55,8 @@ create table if not exists public.tactics (
   user_id uuid references auth.users (id) on delete set null,
   team_id uuid references public.teams (id) on delete set null,
   title text not null default '',
+  home_team_name text not null default '',
+  away_team_name text not null default '',
   formation_key text not null,
   preset_key text,
   canvas_state jsonb not null,
@@ -64,7 +66,27 @@ create table if not exists public.tactics (
   updated_at timestamptz not null default now()
 );
 
+alter table public.tactics add column if not exists home_team_name text not null default '';
+alter table public.tactics add column if not exists away_team_name text not null default '';
+alter table public.tactics add column if not exists updated_at timestamptz not null default now();
+
 create index if not exists tactics_share_id_idx on public.tactics (share_id);
+
+create or replace function public.set_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists set_tactics_updated_at on public.tactics;
+create trigger set_tactics_updated_at
+before update on public.tactics
+for each row
+execute function public.set_updated_at();
 
 alter table public.tactics enable row level security;
 alter table public.user_profiles enable row level security;
@@ -72,6 +94,7 @@ alter table public.user_profiles enable row level security;
 drop policy if exists "public read tactics" on public.tactics;
 drop policy if exists "anon insert tactics" on public.tactics;
 drop policy if exists "anon update tactics" on public.tactics;
+drop policy if exists "owner delete tactics" on public.tactics;
 drop policy if exists "owner read profile" on public.user_profiles;
 drop policy if exists "owner upsert profile" on public.user_profiles;
 drop policy if exists "owner update profile" on public.user_profiles;
@@ -96,6 +119,10 @@ create policy "owner update tactics"
   on public.tactics for update
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
+
+create policy "owner delete tactics"
+  on public.tactics for delete
+  using (auth.uid() = user_id);
 
 create policy "owner read profile"
   on public.user_profiles for select

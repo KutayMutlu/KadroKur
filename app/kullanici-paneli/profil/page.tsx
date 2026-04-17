@@ -3,23 +3,6 @@ import { createClient } from "@/lib/supabase/server";
 import { ProfileFeedback } from "./profile-feedback";
 import { SaveProfileButton } from "./save-profile-button";
 
-function toOptionalInt(value: FormDataEntryValue | null): number | null {
-  if (typeof value !== "string") return null;
-  const trimmed = value.trim();
-  if (!trimmed) return null;
-  const parsed = Number.parseInt(trimmed, 10);
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
-function parseRoleList(value: FormDataEntryValue | null): string[] {
-  if (typeof value !== "string") return [];
-  return value
-    .split(",")
-    .map((v) => v.trim())
-    .filter((v) => v.length > 0)
-    .slice(0, 12);
-}
-
 export default async function UserPanelProfilePage() {
   const supabase = await createClient();
   const { data: authData } = await supabase.auth.getUser();
@@ -27,55 +10,6 @@ export default async function UserPanelProfilePage() {
 
   if (!user) {
     redirect("/");
-  }
-
-  async function saveProfile(formData: FormData) {
-    "use server";
-
-    const supabaseServer = await createClient();
-    const { data: auth } = await supabaseServer.auth.getUser();
-    const currentUser = auth.user;
-
-    if (!currentUser) {
-      redirect("/");
-    }
-
-    const { data: currentProfile } = await supabaseServer
-      .from("user_profiles")
-      .select("updated_at")
-      .eq("user_id", currentUser.id)
-      .maybeSingle();
-
-    if (currentProfile?.updated_at) {
-      const lastUpdate = new Date(currentProfile.updated_at);
-      const secondsSinceLastSave = (Date.now() - lastUpdate.getTime()) / 1000;
-      if (secondsSinceLastSave < 8) {
-        redirect("/kullanici-paneli/profil?rate=1");
-      }
-    }
-
-    const payload = {
-      user_id: currentUser.id,
-      position: String(formData.get("position") ?? "").trim(),
-      preferred_foot: String(formData.get("preferred_foot") ?? "").trim(),
-      dominant_roles: parseRoleList(formData.get("dominant_roles")),
-      avatar_url: String(formData.get("avatar_url") ?? "").trim(),
-      social_link: String(formData.get("social_link") ?? "").trim(),
-      privacy_level: String(formData.get("privacy_level") ?? "").trim(),
-      favorite_team: String(formData.get("favorite_team") ?? "").trim(),
-      city: String(formData.get("city") ?? "").trim(),
-      district: String(formData.get("district") ?? "").trim(),
-      updated_at: new Date().toISOString(),
-    };
-
-    const { error } = await supabaseServer.from("user_profiles").upsert(payload, { onConflict: "user_id" });
-
-    if (error) {
-      const msg = encodeURIComponent(error.message.slice(0, 180));
-      redirect(`/kullanici-paneli/profil?error=1&msg=${msg}`);
-    }
-
-    redirect("/kullanici-paneli/profil?saved=1");
   }
 
   const { data: profile } = await supabase
@@ -93,7 +27,7 @@ export default async function UserPanelProfilePage() {
 
       <ProfileFeedback />
 
-      <form action={saveProfile} className="space-y-4">
+      <form action="/kullanici-paneli/profil/save" method="post" className="space-y-4">
         <div className="grid gap-4 md:grid-cols-2">
           <label className="space-y-1.5">
             <span className="text-sm text-[var(--muted)]">Tuttuğu Takım</span>

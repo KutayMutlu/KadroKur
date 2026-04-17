@@ -3,14 +3,6 @@ import { createClient } from "@/lib/supabase/server";
 import { ProfileFeedback } from "../profil/profile-feedback";
 import { SaveProfileButton } from "../profil/save-profile-button";
 
-function toOptionalInt(value: FormDataEntryValue | null): number | null {
-  if (typeof value !== "string") return null;
-  const trimmed = value.trim();
-  if (!trimmed) return null;
-  const parsed = Number.parseInt(trimmed, 10);
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
 function calculateAgeFromBirthDate(birthDate: string | null | undefined): number | null {
   if (!birthDate) return null;
   const date = new Date(birthDate);
@@ -33,52 +25,6 @@ export default async function UserPanelPersonalInfoPage() {
     redirect("/");
   }
 
-  async function savePersonalInfo(formData: FormData) {
-    "use server";
-
-    const supabaseServer = await createClient();
-    const { data: auth } = await supabaseServer.auth.getUser();
-    const currentUser = auth.user;
-
-    if (!currentUser) {
-      redirect("/");
-    }
-
-    const { data: currentProfile } = await supabaseServer
-      .from("user_profiles")
-      .select("updated_at")
-      .eq("user_id", currentUser.id)
-      .maybeSingle();
-
-    if (currentProfile?.updated_at) {
-      const lastUpdate = new Date(currentProfile.updated_at);
-      const secondsSinceLastSave = (Date.now() - lastUpdate.getTime()) / 1000;
-      if (secondsSinceLastSave < 8) {
-        redirect("/kullanici-paneli/kisisel-bilgiler?rate=1");
-      }
-    }
-
-    const payload = {
-      user_id: currentUser.id,
-      first_name: String(formData.get("first_name") ?? "").trim(),
-      last_name: String(formData.get("last_name") ?? "").trim(),
-      bio: String(formData.get("bio") ?? "").trim(),
-      phone: String(formData.get("phone") ?? "").trim(),
-      birth_date: String(formData.get("birth_date") ?? "").trim() || null,
-      height_cm: toOptionalInt(formData.get("height_cm")),
-      weight_kg: toOptionalInt(formData.get("weight_kg")),
-      updated_at: new Date().toISOString(),
-    };
-
-    const { error } = await supabaseServer.from("user_profiles").upsert(payload, { onConflict: "user_id" });
-
-    if (error) {
-      redirect("/kullanici-paneli/kisisel-bilgiler?error=1");
-    }
-
-    redirect("/kullanici-paneli/kisisel-bilgiler?saved=1");
-  }
-
   const { data: profile } = await supabase
     .from("user_profiles")
     .select("first_name, last_name, bio, phone, birth_date, height_cm, weight_kg")
@@ -99,7 +45,7 @@ export default async function UserPanelPersonalInfoPage() {
 
       <ProfileFeedback />
 
-      <form action={savePersonalInfo} className="space-y-4">
+      <form action="/kullanici-paneli/kisisel-bilgiler/save" method="post" className="space-y-4">
         <div className="grid gap-4 md:grid-cols-2">
           <label className="space-y-1.5">
             <span className="text-sm text-[var(--muted)]">Ad</span>

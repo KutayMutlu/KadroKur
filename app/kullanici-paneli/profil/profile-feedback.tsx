@@ -1,12 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 
 export function ProfileFeedback() {
   const params = useSearchParams();
-  const router = useRouter();
-  const pathname = usePathname();
   const [visible, setVisible] = useState(true);
 
   const saved = params.get("saved") === "1";
@@ -22,19 +20,10 @@ export function ProfileFeedback() {
   useEffect(() => {
     if (!saved && !error && !rate) return;
 
-    // Başarı mesajı kısa süre gösterilir; hata/rate kullanıcı görebilsin diye kalıcıdır.
     if (!saved) return;
-
     const hideTimer = window.setTimeout(() => setVisible(false), 3000);
-    const clearQueryTimer = window.setTimeout(() => {
-      router.replace(pathname, { scroll: false });
-    }, 3200);
-
-    return () => {
-      window.clearTimeout(hideTimer);
-      window.clearTimeout(clearQueryTimer);
-    };
-  }, [saved, error, rate, pathname, router]);
+    return () => window.clearTimeout(hideTimer);
+  }, [saved, error, rate]);
 
   if (!shouldShow) return null;
 

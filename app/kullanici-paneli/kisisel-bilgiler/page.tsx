@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { ProfileFeedback } from "../profil/profile-feedback";
-import { SaveProfileButton } from "../profil/save-profile-button";
+import { SubmitButton } from "../profil/save-profile-button";
 
 function calculateAgeFromBirthDate(birthDate: string | null | undefined): number | null {
   if (!birthDate) return null;
@@ -34,7 +34,9 @@ export default async function UserPanelPersonalInfoPage() {
 
       <ProfileFeedback />
 
-      <form action="/kullanici-paneli/kisisel-bilgiler/save" method="post" className="space-y-4">
+      <form action="/kullanici-paneli/save" method="post" className="space-y-4">
+        <input type="hidden" name="return_to" value="/kullanici-paneli/kisisel-bilgiler" />
+        <input type="hidden" name="section" value="kisisel" />
         <div className="grid gap-4 md:grid-cols-2">
           <label className="space-y-1.5">
             <span className="text-sm text-[var(--muted)]">Ad</span>
@@ -111,7 +113,7 @@ export default async function UserPanelPersonalInfoPage() {
           </label>
         </div>
 
-        <SaveProfileButton />
+        <SubmitButton />
       </form>
     </section>
   );

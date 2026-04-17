@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { ProfileFeedback } from "./profile-feedback";
-import { SaveProfileButton } from "./save-profile-button";
+import { SubmitButton } from "./save-profile-button";
 
 export default async function UserPanelProfilePage() {
   const supabase = await createClient();
@@ -19,7 +19,9 @@ export default async function UserPanelProfilePage() {
 
       <ProfileFeedback />
 
-      <form action="/kullanici-paneli/profil/save" method="post" className="space-y-4">
+      <form action="/kullanici-paneli/save" method="post" className="space-y-4">
+        <input type="hidden" name="return_to" value="/kullanici-paneli/profil" />
+        <input type="hidden" name="section" value="profil" />
         <div className="grid gap-4 md:grid-cols-2">
           <label className="space-y-1.5">
             <span className="text-sm text-[var(--muted)]">Tuttuğu Takım</span>
@@ -111,7 +113,7 @@ export default async function UserPanelProfilePage() {
           </label>
         </div>
 
-        <SaveProfileButton />
+        <SubmitButton />
       </form>
     </section>
   );

@@ -1,58 +1,17 @@
 import Link from "next/link";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { SiteHeader } from "@/components/site-header";
 import { ClientTactics } from "./client-tactics";
-import { AuthControls } from "@/components/auth/AuthControls";
 
 export default function HomePage() {
   return (
     <div className="relative min-h-screen bg-pitch-night">
       <div className="pointer-events-none absolute inset-0 hero-glow" aria-hidden />
 
-      {/* Üst şerit — stadyum hissi */}
-      <header className="relative z-10 border-b border-[var(--border-subtle)] bg-[var(--bg-elevated)]/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-5xl flex-row items-center justify-between gap-2 px-4 py-3 sm:gap-3 sm:px-6">
-          <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
-            <span
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[var(--border-glow)] bg-[var(--bg-card)] text-base font-bold text-[var(--accent)] sm:h-10 sm:w-10 sm:text-lg"
-              style={{ fontFamily: "var(--font-display)" }}
-            >
-              KK
-            </span>
-            <div className="min-w-0">
-              <p
-                className="text-sm font-semibold leading-tight tracking-tight text-[var(--foreground)]"
-                style={{ fontFamily: "var(--font-display)" }}
-              >
-                KadroKur
-              </p>
-              <p
-                className="truncate text-[10px] leading-tight text-[var(--muted)] sm:text-[11px]"
-                title="Halı saha taktik tahtası"
-              >
-                Halı saha taktik tahtası
-              </p>
-            </div>
-          </div>
-          <div className="flex shrink-0 flex-nowrap items-center gap-1.5 sm:gap-2">
-            <AuthControls guestCompanion={<ThemeToggle />} />
-            <Link
-              href="/editor"
-              className="inline-flex min-h-[40px] shrink-0 touch-manipulation items-center justify-center rounded-lg border border-[var(--accent)]/40 bg-[var(--accent)]/10 px-2.5 py-1.5 text-[11px] font-medium text-[var(--accent)] transition hover:bg-[var(--accent)]/20 sm:min-h-0 sm:px-4 sm:py-2 sm:text-sm"
-            >
-              <span className="sm:hidden">Editör →</span>
-              <span className="hidden sm:inline">Editöre git →</span>
-            </Link>
-          </div>
-        </div>
-      </header>
+      <SiteHeader />
 
       <main className="relative z-10 mx-auto max-w-5xl px-4 pb-16 pt-8 sm:px-6 sm:pb-20 sm:pt-12 md:pt-16">
         <section className="grid gap-8 md:gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:gap-12">
           <div>
-            <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-[var(--border-subtle)] bg-[var(--bg-card)] px-3 py-1 text-[10px] font-medium uppercase tracking-wider text-[var(--muted)] backdrop-blur-sm sm:mb-4 sm:text-xs">
-              <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)] animate-pulse-line" />
-              Faz 1 · Canlı demo
-            </p>
             <h1
               className="text-3xl font-bold leading-[1.12] tracking-tight text-[var(--foreground)] sm:text-4xl md:text-5xl"
               style={{ fontFamily: "var(--font-display)" }}
@@ -76,12 +35,12 @@ export default function HomePage() {
               >
                 Taktik kurmaya başla
               </Link>
-              <a
-                href="#kayitli"
+              <Link
+                href="/taktiklerim"
                 className="inline-flex min-h-[48px] items-center justify-center rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)] px-6 py-3.5 text-sm font-medium text-[var(--foreground)] backdrop-blur-sm transition hover:border-[var(--border-glow)] touch-manipulation"
               >
                 Kayıtlı taktikler
-              </a>
+              </Link>
             </div>
 
             <ul className="mt-10 flex flex-wrap gap-4 text-sm text-[var(--muted)]">

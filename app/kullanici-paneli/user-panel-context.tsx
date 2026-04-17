@@ -5,6 +5,10 @@ import { createContext, useContext } from "react";
 export type PanelUser = {
   id: string;
   email: string | null;
+  /** Profil adı veya e-posta öneki */
+  displayName: string;
+  /** `user_profiles.avatar_url` — yoksa baş harf avatar */
+  avatarUrl?: string | null;
 };
 
 const UserPanelContext = createContext<PanelUser | null>(null);

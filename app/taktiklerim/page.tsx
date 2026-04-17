@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { PlusCircle } from "lucide-react";
 import { redirect } from "next/navigation";
+import { SiteHeader } from "@/components/site-header";
 import { createClient } from "@/lib/supabase/server";
 import { TacticsGrid } from "./tactics-grid";
 
@@ -39,6 +40,7 @@ export default async function MyTacticsPage() {
 
   return (
     <div className="min-h-screen bg-pitch-night">
+      <SiteHeader showEditorLink={false} />
       <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
         <section className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-5 sm:p-6">
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3">

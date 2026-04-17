@@ -92,6 +92,14 @@ export function EditorSidebar({
 }: EditorSidebarProps) {
   return (
     <div className="space-y-4">
+      <header className="border-b border-white/10 pb-3 text-center">
+        <h2
+          className="text-base font-semibold leading-tight tracking-[0.12em] text-[var(--foreground)]"
+          style={{ fontFamily: "var(--font-display)" }}
+        >
+          EDİTÖR
+        </h2>
+      </header>
       <TeamPanel
         teamName={teamName}
         onTeamNameChange={onTeamNameChange}

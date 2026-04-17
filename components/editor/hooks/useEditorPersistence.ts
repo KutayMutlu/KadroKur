@@ -254,7 +254,8 @@ export function useEditorPersistence({
         let { error } = await sb.from("tactics").upsert(fullRow, { onConflict: "id" });
 
         if (error && isMissingOwnerNameColumnError(error.message)) {
-          const { owner_name: _omit, ...withoutOwner } = fullRow;
+          const { owner_name, ...withoutOwner } = fullRow;
+          void owner_name;
           ({ error } = await sb.from("tactics").upsert(withoutOwner, { onConflict: "id" }));
         }
 

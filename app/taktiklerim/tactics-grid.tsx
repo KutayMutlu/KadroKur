@@ -55,8 +55,7 @@ async function stageToPngBlob(stage: Konva.Stage): Promise<Blob> {
 
 export function TacticsGrid({ tactics }: { tactics: TacticRow[] }) {
   const router = useRouter();
-  const shareStageRef = useRef<PitchCanvasHandle>(null);
-  const downloadStageRef = useRef<PitchCanvasHandle>(null);
+  const exportStageRef = useRef<PitchCanvasHandle>(null);
   const [items, setItems] = useState<TacticRow[]>(tactics);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
@@ -64,7 +63,9 @@ export function TacticsGrid({ tactics }: { tactics: TacticRow[] }) {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastVariant, setToastVariant] = useState<"success" | "destructive">("success");
   const [selectedTacticForShare, setSelectedTacticForShare] = useState<string | null>(null);
-  const [shareLoading, setShareLoading] = useState(false);
+  /** Yeşil buton: görsel üretilirken + paylaşım API çağrısı bitene kadar */
+  const [shareImageLoading, setShareImageLoading] = useState(false);
+  /** İndir: sanal sahne mount + export */
   const [isDownloading, setIsDownloading] = useState(false);
 
   useEffect(() => {
@@ -100,22 +101,17 @@ export function TacticsGrid({ tactics }: { tactics: TacticRow[] }) {
     setToastMessage(message);
   };
 
-  const buildPngBlob = async (tactic: TacticRow) => {
-    const canvasState = tactic.canvas_state as CanvasState | null;
-    if (!canvasState) throw new Error("missing_canvas_state");
-
+  /** Editör ile aynı 1473×740 / scale 1 sanal sahne üzerinden stage al */
+  const getExportStage = async () => {
     const getStage = async () => {
-      // ShareSheet açıldıktan sonra gizli stage'in mount olması için kısa bekleme.
-      for (let i = 0; i < 8; i += 1) {
-        const stage = shareStageRef.current?.getStage();
+      for (let i = 0; i < 24; i += 1) {
+        const stage = exportStageRef.current?.getStage();
         if (stage) return stage;
         await new Promise((resolve) => window.requestAnimationFrame(resolve));
       }
-      throw new Error("share_stage_not_ready");
+      throw new Error("export_stage_not_ready");
     };
-
-    const stage = await withTimeout(getStage(), 5000, "share_stage_timeout");
-    return stageToPngBlob(stage);
+    return withTimeout(getStage(), 8000, "export_stage_timeout");
   };
 
   const handleCopyLink = async () => {
@@ -130,50 +126,74 @@ export function TacticsGrid({ tactics }: { tactics: TacticRow[] }) {
 
   const handleShareImage = async () => {
     if (!shareTactic || shareDisabled) return;
-    setShareLoading(true);
+    const canvasState = shareTactic.canvas_state as CanvasState | null;
+    if (!canvasState) {
+      showToast("Taktik verisi bulunamadı.", "destructive");
+      return;
+    }
+
+    setShareImageLoading(true);
     try {
-      const blob = await buildPngBlob(shareTactic);
+      // Sanal canvas mount + Konva draw döngüsü
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      const stage = await getExportStage();
+      const blob = await stageToPngBlob(stage);
       const filename = `${sanitizeFileName(shareTactic.title || "taktik")}.png`;
       const file = new File([blob], filename, { type: "image/png" });
 
-      if (navigator.share) {
-        if (navigator.canShare?.({ files: [file] })) {
-          await navigator.share({ files: [file], title: shareTactic.title || "Taktik Görseli" });
-        } else if (shareUrl) {
+      // navigator.share en sonda — önce PNG hazır; görsel + public link birlikte
+      if (!shareUrl) {
+        throw new Error("missing_share_url");
+      }
+
+      const shareData: ShareData = {
+        files: [file],
+        title: "Taktik Paylaşımı",
+        text: "Taktik görselime göz at! Kendi taktiğini oluşturmak için:",
+        url: shareUrl,
+      };
+
+      if (typeof navigator !== "undefined" && navigator.share) {
+        if (navigator.canShare?.(shareData)) {
+          await navigator.share(shareData);
+        } else if (navigator.canShare?.({ files: [file] })) {
           await navigator.share({
-            title: shareTactic.title || "Taktik",
-            text: "KadroKur taktiği",
+            files: [file],
+            title: shareData.title,
+            text: `${shareData.text}\n${shareUrl}`,
             url: shareUrl,
           });
         } else {
-          throw new Error("missing_share_url");
+          await navigator.share({
+            title: shareData.title,
+            text: `${shareData.text}\n${shareUrl}`,
+            url: shareUrl,
+          });
         }
+        showToast("Paylaşım menüsü açıldı", "success");
+      } else if (shareUrl) {
+        await navigator.clipboard.writeText(shareUrl);
+        showToast("İşlem tamam", "success");
       } else {
-        if (shareUrl) {
-          await navigator.clipboard.writeText(shareUrl);
-          showToast("Paylaşım desteklenmiyor, link kopyalandı.", "success");
-        } else {
-          throw new Error("missing_share_url");
-        }
+        throw new Error("missing_share_url");
       }
-
-      showToast("Taktik görseli hazırlandı.", "success");
-      setSelectedTacticForShare(null);
-    } catch {
-      showToast("Görsel oluşturulamadı", "destructive");
+    } catch (err: unknown) {
+      const name = err && typeof err === "object" && "name" in err ? (err as { name?: string }).name : "";
+      if (name === "AbortError") {
+        return;
+      }
+      showToast("Görsel oluşturulamadı veya paylaşılamadı.", "destructive");
     } finally {
-      setShareLoading(false);
+      setShareImageLoading(false);
     }
   };
 
   const handleDownloadImage = async () => {
     if (!shareTactic || shareDisabled) return;
-    setShareLoading(true);
     try {
       setIsDownloading(true);
       await new Promise((resolve) => setTimeout(resolve, 250));
-      const stage = downloadStageRef.current?.getStage();
-      if (!stage) throw new Error("download_stage_not_ready");
+      const stage = await getExportStage();
       const safe = (shareTactic.title || "taktik").replace(/[^\w\-]+/g, "_");
       exportStageToPng(stage, `${safe}.png`, { pixelRatio: 2 });
       showToast("Görsel indirildi.", "success");
@@ -181,7 +201,6 @@ export function TacticsGrid({ tactics }: { tactics: TacticRow[] }) {
       showToast("Görsel oluşturulamadı", "destructive");
     } finally {
       setIsDownloading(false);
-      setShareLoading(false);
     }
   };
 
@@ -276,36 +295,21 @@ export function TacticsGrid({ tactics }: { tactics: TacticRow[] }) {
         }
       />
 
-      {shareTactic ? (
-      <div className="pointer-events-none fixed -left-[9999px] top-0 h-[560px] w-[760px] opacity-0">
-        <PitchCanvas
-          ref={shareStageRef}
-          players={(shareTactic.canvas_state as CanvasState)?.players ?? []}
-          activePlayerId={null}
-          attackFlip={Boolean((shareTactic.canvas_state as CanvasState)?.attack_flip)}
-          homeTeamName={(shareTactic.canvas_state as CanvasState)?.teamName}
-          opponentTeamName={(shareTactic.canvas_state as CanvasState)?.opponentTeamName}
-          onPlayerMove={() => {}}
-          interactive={false}
-        />
-      </div>
-      ) : null}
-
-      {shareTactic && isDownloading ? (
-      <div className="pointer-events-none fixed -left-[9999px] top-0 h-[740px] w-[1473px] opacity-0">
-        <PitchCanvas
-          ref={downloadStageRef}
-          players={(shareTactic.canvas_state as CanvasState)?.players ?? []}
-          activePlayerId={null}
-          attackFlip={Boolean((shareTactic.canvas_state as CanvasState)?.attack_flip)}
-          homeTeamName={(shareTactic.canvas_state as CanvasState)?.teamName}
-          opponentTeamName={(shareTactic.canvas_state as CanvasState)?.opponentTeamName}
-          onPlayerMove={() => {}}
-          interactive={false}
-          dimensions={{ width: 1473, height: 740 }}
-          scale={1}
-        />
-      </div>
+      {shareTactic && (shareImageLoading || isDownloading) ? (
+        <div className="pointer-events-none fixed -left-[9999px] top-0 h-[740px] w-[1473px] opacity-0">
+          <PitchCanvas
+            ref={exportStageRef}
+            players={(shareTactic.canvas_state as CanvasState)?.players ?? []}
+            activePlayerId={null}
+            attackFlip={Boolean((shareTactic.canvas_state as CanvasState)?.attack_flip)}
+            homeTeamName={(shareTactic.canvas_state as CanvasState)?.teamName}
+            opponentTeamName={(shareTactic.canvas_state as CanvasState)?.opponentTeamName}
+            onPlayerMove={() => {}}
+            interactive={false}
+            dimensions={{ width: 1473, height: 740 }}
+            scale={1}
+          />
+        </div>
       ) : null}
 
       {shareTactic ? (
@@ -321,22 +325,22 @@ export function TacticsGrid({ tactics }: { tactics: TacticRow[] }) {
             <button
               type="button"
               onClick={handleShareImage}
-              disabled={shareDisabled || shareLoading}
+              disabled={shareDisabled || shareImageLoading || isDownloading}
               title={shareDisabled ? shareDisabledTitle : undefined}
               className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-emerald-400/45 bg-emerald-500/20 px-3 py-2 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-500/30 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {shareLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4" />}
-              Görseli Paylaş / Kaydet
+              {shareImageLoading ? <Loader2 className="h-4 w-4 shrink-0 animate-spin" /> : <Share2 className="h-4 w-4 shrink-0" />}
+              {shareImageLoading ? "Hazırlanıyor..." : "Görseli Paylaş / Kaydet"}
             </button>
             <button
               type="button"
               onClick={handleDownloadImage}
-              disabled={shareDisabled || shareLoading}
+              disabled={shareDisabled || shareImageLoading || isDownloading}
               title={shareDisabled ? shareDisabledTitle : undefined}
               className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-[var(--border-subtle)] bg-slate-800/80 px-3 py-2 text-sm font-semibold text-slate-100 transition hover:border-emerald-400/45 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <Download className="h-4 w-4" />
-              Görseli İndir
+              {isDownloading ? <Loader2 className="h-4 w-4 shrink-0 animate-spin" /> : <Download className="h-4 w-4 shrink-0" />}
+              {isDownloading ? "İndiriliyor..." : "Görseli İndir"}
             </button>
           </div>
         </div>

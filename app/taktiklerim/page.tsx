@@ -7,6 +7,9 @@ import { TacticsGrid } from "./tactics-grid";
 type TacticRow = {
   id: string;
   title: string;
+  share_id: string;
+  is_public: boolean;
+  canvas_state: unknown;
   home_team_name: string;
   away_team_name: string;
   formation_key: string;
@@ -25,7 +28,9 @@ export default async function MyTacticsPage() {
 
   const { data, error } = await supabase
     .from("tactics")
-    .select("id, title, home_team_name, away_team_name, formation_key, created_at, updated_at")
+    .select(
+      "id, title, share_id, is_public, canvas_state, home_team_name, away_team_name, formation_key, created_at, updated_at"
+    )
     .eq("user_id", user.id)
     .order("updated_at", { ascending: false });
 

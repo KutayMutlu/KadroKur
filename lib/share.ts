@@ -11,5 +11,5 @@ export function shareUrl(shareId: string, origin?: string): string {
     typeof window !== "undefined"
       ? window.location.origin
       : origin ?? "";
-  return `${base}/t/${shareId}`;
+  return `${base}/view/${shareId}`;
 }

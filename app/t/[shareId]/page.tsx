@@ -1,4 +1,4 @@
-import { ShareViewClient } from "@/components/share/ShareViewClient";
+import { redirect } from "next/navigation";
 
 export default async function SharePage({
   params,
@@ -6,5 +6,5 @@ export default async function SharePage({
   params: Promise<{ shareId: string }>;
 }) {
   const { shareId } = await params;
-  return <ShareViewClient shareId={shareId} />;
+  redirect(`/view/${encodeURIComponent(shareId)}`);
 }

@@ -54,6 +54,7 @@ create table if not exists public.tactics (
   id uuid primary key,
   user_id uuid references auth.users (id) on delete set null,
   team_id uuid references public.teams (id) on delete set null,
+  owner_name text not null default 'KadroKur kullanıcısı',
   title text not null default '',
   home_team_name text not null default '',
   away_team_name text not null default '',
@@ -68,6 +69,7 @@ create table if not exists public.tactics (
 
 alter table public.tactics add column if not exists home_team_name text not null default '';
 alter table public.tactics add column if not exists away_team_name text not null default '';
+alter table public.tactics add column if not exists owner_name text not null default 'KadroKur kullanıcısı';
 alter table public.tactics add column if not exists updated_at timestamptz not null default now();
 
 create index if not exists tactics_share_id_idx on public.tactics (share_id);

@@ -31,6 +31,8 @@ export interface PitchCanvasProps {
   /** Pitch üstünde bilgi amaçlı (interaktif olmayan) taktik etiketleri */
   homeTeamName?: string;
   opponentTeamName?: string;
+  /** Paylaşım görüntüleme için sahada gezinme/zoom */
+  enablePanZoom?: boolean;
 }
 
 export type PitchCanvasHandle = {
@@ -48,12 +50,16 @@ export const PitchCanvas = forwardRef<PitchCanvasHandle, PitchCanvasProps>(
       attackFlip = false,
       onLayoutChange,
       onAdaptiveDropChange,
+      enablePanZoom = false,
     },
     ref
   ) {
     const stageRef = useRef<Konva.Stage>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [canvasSize, setCanvasSize] = useState({ w: PITCH_W, h: PITCH_H });
+    const [stageScale, setStageScale] = useState(1);
+    const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
+    const [pinchDistance, setPinchDistance] = useState<number | null>(null);
     const [verticalLayout, setVerticalLayout] = useState(false);
     const [draggingPlayerId, setDraggingPlayerId] = useState<string | null>(null);
     const onLayoutChangeRef = useRef<PitchCanvasProps["onLayoutChange"]>(undefined);
@@ -108,6 +114,33 @@ export const PitchCanvas = forwardRef<PitchCanvasHandle, PitchCanvasProps>(
       };
     }, []);
 
+    const clampScale = (value: number) => Math.min(2.2, Math.max(0.8, value));
+
+    const handleWheelZoom = (event: Konva.KonvaEventObject<WheelEvent>) => {
+      if (!enablePanZoom) return;
+      event.evt.preventDefault();
+      const direction = event.evt.deltaY > 0 ? -1 : 1;
+      const nextScale = clampScale(stageScale + direction * 0.08);
+      setStageScale(nextScale);
+    };
+
+    const handleTouchMove = (event: Konva.KonvaEventObject<TouchEvent>) => {
+      if (!enablePanZoom) return;
+      if (event.evt.touches.length < 2) {
+        if (pinchDistance !== null) setPinchDistance(null);
+        return;
+      }
+      const [a, b] = [event.evt.touches[0], event.evt.touches[1]];
+      const dist = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+      if (pinchDistance === null) {
+        setPinchDistance(dist);
+        return;
+      }
+      const nextScale = clampScale(stageScale * (dist / pinchDistance));
+      setStageScale(nextScale);
+      setPinchDistance(dist);
+    };
+
     const margin = 8;
     const innerW = canvasSize.w - margin * 2;
     const innerH = canvasSize.h - margin * 2;
@@ -131,6 +164,17 @@ export const PitchCanvas = forwardRef<PitchCanvasHandle, PitchCanvasProps>(
             height={canvasSize.h}
             ref={stageRef}
             className="rounded-xl"
+            draggable={enablePanZoom}
+            scaleX={stageScale}
+            scaleY={stageScale}
+            x={stagePos.x}
+            y={stagePos.y}
+            onDragEnd={(e) => setStagePos({ x: e.target.x(), y: e.target.y() })}
+            onWheel={handleWheelZoom}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={() => {
+              if (pinchDistance !== null) setPinchDistance(null);
+            }}
           >
           <Layer>
             <Rect

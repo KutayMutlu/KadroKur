@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+html {
+  scrollbar-gutter: stable !important;
+}
+
 /* —— Varsayılan = koyu (Gece Sahası), FOUC önleme —— */
 :root {
   --bg-deep: #060a0e;

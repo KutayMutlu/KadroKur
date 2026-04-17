@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { getMatchFormatForFormation, type MatchFormatKey } from "@/lib/formations";
 import { formatJerseyNumber, normalizeCaptainFlags, normalizePlayerRole, sanitizePlayerName } from "@/lib/player-fields";
@@ -77,6 +77,17 @@ export function useEditorPersistence({
   const [messageTone, setMessageTone] = useState<MessageTone>("warning");
   const isAuthenticated = Boolean(authUser);
   const canCopyShare = isAuthenticated && didSaveOnce && Boolean(shareId);
+  const ownerName = useMemo(() => {
+    const metadata = (authUser?.user_metadata ?? {}) as Record<string, unknown>;
+    const fromMeta =
+      (typeof metadata.full_name === "string" && metadata.full_name.trim()) ||
+      (typeof metadata.name === "string" && metadata.name.trim()) ||
+      null;
+    if (fromMeta) return fromMeta;
+    const email = authUser?.email?.trim();
+    if (email && email.includes("@")) return email.split("@")[0];
+    return "KadroKur kullanıcısı";
+  }, [authUser]);
 
   const copyBlockedMessage = !isAuthenticated
     ? "Paylaşım linki için lütfen giriş yapın."
@@ -217,6 +228,7 @@ export function useEditorPersistence({
             id,
             user_id: authUser?.id ?? null,
             team_id: null,
+            owner_name: ownerName,
             title: row.title,
             home_team_name: teamName.trim(),
             away_team_name: opponentTeamName.trim(),
@@ -264,6 +276,7 @@ export function useEditorPersistence({
     tacticId,
     tacticTitle,
     teamName,
+    ownerName,
   ]);
 
   const handleCopyShare = useCallback(async () => {

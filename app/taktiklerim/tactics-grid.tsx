@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Download, Facebook, Link2, Loader2, MessageCircle, Share2, Twitter } from "lucide-react";
+import { Download, Link2, Loader2, Share2 } from "lucide-react";
 import type Konva from "konva";
 import { TacticCard } from "@/components/kullanici-paneli/tactic-card";
 import { Modal } from "@/components/ui/modal";
@@ -136,17 +136,25 @@ export function TacticsGrid({ tactics }: { tactics: TacticRow[] }) {
       const filename = `${sanitizeFileName(shareTactic.title || "taktik")}.png`;
       const file = new File([blob], filename, { type: "image/png" });
 
-      if (navigator.share && navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], title: shareTactic.title || "Taktik Görseli" });
+      if (navigator.share) {
+        if (navigator.canShare?.({ files: [file] })) {
+          await navigator.share({ files: [file], title: shareTactic.title || "Taktik Görseli" });
+        } else if (shareUrl) {
+          await navigator.share({
+            title: shareTactic.title || "Taktik",
+            text: "KadroKur taktiği",
+            url: shareUrl,
+          });
+        } else {
+          throw new Error("missing_share_url");
+        }
       } else {
-        const blobUrl = URL.createObjectURL(blob);
-        const anchor = document.createElement("a");
-        anchor.href = blobUrl;
-        anchor.download = filename;
-        document.body.appendChild(anchor);
-        anchor.click();
-        anchor.remove();
-        URL.revokeObjectURL(blobUrl);
+        if (shareUrl) {
+          await navigator.clipboard.writeText(shareUrl);
+          showToast("Paylaşım desteklenmiyor, link kopyalandı.", "success");
+        } else {
+          throw new Error("missing_share_url");
+        }
       }
 
       showToast("Taktik görseli hazırlandı.", "success");
@@ -175,18 +183,6 @@ export function TacticsGrid({ tactics }: { tactics: TacticRow[] }) {
       setIsDownloading(false);
       setShareLoading(false);
     }
-  };
-
-  const openSocialShare = (platform: "whatsapp" | "x" | "facebook") => {
-    if (!shareTactic || shareDisabled || !shareUrl) return;
-    const encoded = encodeURIComponent(shareUrl);
-    const text = encodeURIComponent(`${shareTactic.title || "Taktik"} - KadroKur`);
-    const map = {
-      whatsapp: `https://wa.me/?text=${text}%20${encoded}`,
-      x: `https://twitter.com/intent/tweet?text=${text}&url=${encoded}`,
-      facebook: `https://www.facebook.com/sharer/sharer.php?u=${encoded}`,
-    };
-    window.open(map[platform], "_blank", "noopener,noreferrer");
   };
 
   const handleDelete = async () => {
@@ -321,13 +317,13 @@ export function TacticsGrid({ tactics }: { tactics: TacticRow[] }) {
         title="Paylaş"
       >
         <div className="rounded-xl border border-[var(--border-subtle)] bg-slate-950/70 p-3">
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div className="flex gap-2">
             <button
               type="button"
               onClick={handleShareImage}
               disabled={shareDisabled || shareLoading}
               title={shareDisabled ? shareDisabledTitle : undefined}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-emerald-400/40 bg-emerald-500/15 px-3 py-2 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-emerald-400/45 bg-emerald-500/20 px-3 py-2 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-500/30 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {shareLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4" />}
               Görseli Paylaş / Kaydet
@@ -337,36 +333,16 @@ export function TacticsGrid({ tactics }: { tactics: TacticRow[] }) {
               onClick={handleDownloadImage}
               disabled={shareDisabled || shareLoading}
               title={shareDisabled ? shareDisabledTitle : undefined}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-[var(--border-subtle)] bg-slate-800/80 px-3 py-2 text-sm font-semibold text-slate-100 transition hover:border-emerald-400/45 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-[var(--border-subtle)] bg-slate-800/80 px-3 py-2 text-sm font-semibold text-slate-100 transition hover:border-emerald-400/45 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Download className="h-4 w-4" />
               Görseli İndir
             </button>
           </div>
         </div>
-
-        <div className="mt-4 grid grid-cols-3 gap-2">
-          {[
-            { id: "whatsapp", label: "WhatsApp", icon: MessageCircle, onClick: () => openSocialShare("whatsapp") },
-            { id: "x", label: "X", icon: Twitter, onClick: () => openSocialShare("x") },
-            { id: "facebook", label: "Facebook", icon: Facebook, onClick: () => openSocialShare("facebook") },
-          ].map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              disabled={shareDisabled}
-              title={shareDisabled ? shareDisabledTitle : item.label}
-              onClick={item.onClick}
-              className="rounded-xl border border-[var(--border-subtle)] bg-slate-950/70 px-2 py-3 text-slate-200 transition hover:border-emerald-400/45 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <item.icon className="mx-auto h-5 w-5" />
-              <span className="mt-1 block text-[11px] text-slate-300">{item.label}</span>
-            </button>
-          ))}
-        </div>
-
-        <div className="mt-4 rounded-xl border border-[var(--border-subtle)] bg-slate-950/70 p-2">
-          <div className="flex items-center gap-2">
+        <div className="mt-4 border-t border-[var(--border-subtle)] pt-4">
+          <div className="rounded-xl border border-[var(--border-subtle)] bg-slate-950/70 p-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <div className="flex h-[40px] w-full min-h-10 flex-1 items-center rounded-lg border border-[var(--border-subtle)] bg-slate-900/90 px-3 text-xs text-slate-200">
               <Link2 className="mr-2 h-3.5 w-3.5 shrink-0 text-slate-400" />
               <span className="truncate">{shareUrl || "Paylaşım linki yok"}</span>
@@ -376,11 +352,12 @@ export function TacticsGrid({ tactics }: { tactics: TacticRow[] }) {
               onClick={handleCopyLink}
               disabled={shareDisabled}
               title={shareDisabled ? shareDisabledTitle : "Bağlantıyı kopyala"}
-              className="inline-flex h-[40px] min-h-10 items-center justify-center rounded-lg border border-emerald-400/50 bg-emerald-500/25 px-4 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-500/35 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex h-[40px] min-h-10 w-full items-center justify-center rounded-lg border border-emerald-400/50 bg-emerald-500/25 px-4 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-500/35 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
             >
               Kopyala
             </button>
           </div>
+        </div>
         </div>
       </ShareSheet>
       ) : null}

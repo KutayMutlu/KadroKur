@@ -15,6 +15,13 @@ import { buildCanvasState } from "../core/board-state";
 
 type MessageTone = "success" | "warning";
 
+/** Eski projelerde tactics.owner_name yokken PostgREST şema hatası */
+function isMissingOwnerNameColumnError(msg: string | undefined): boolean {
+  if (!msg) return false;
+  const m = msg.toLowerCase();
+  return m.includes("owner_name") && (m.includes("schema cache") || m.includes("column"));
+}
+
 interface UseEditorPersistenceParams {
   initialTacticId?: string | null;
   authUser: User | null;
@@ -221,28 +228,39 @@ export function useEditorPersistence({
       setShareId(sid);
       setDidSaveOnce(true);
 
+      let cloudAttempted = false;
+      let cloudSaveFailed = false;
       const sb = getSupabase();
-      if (sb) {
-        const { error } = await sb.from("tactics").upsert(
-          {
-            id,
-            user_id: authUser?.id ?? null,
-            team_id: null,
-            owner_name: ownerName,
-            title: row.title,
-            home_team_name: teamName.trim(),
-            away_team_name: opponentTeamName.trim(),
-            formation_key: homeFormationKey,
-            preset_key: homePresetKey === "default" ? null : homePresetKey,
-            canvas_state,
-            share_id: sid,
-            is_public: true,
-            updated_at: row.updated_at,
-          },
-          { onConflict: "id" }
-        );
+      const uid = authUser?.id;
+
+      if (sb && uid) {
+        cloudAttempted = true;
+        const fullRow = {
+          id,
+          user_id: uid,
+          team_id: null as string | null,
+          owner_name: ownerName,
+          title: row.title,
+          home_team_name: teamName.trim(),
+          away_team_name: opponentTeamName.trim(),
+          formation_key: homeFormationKey,
+          preset_key: homePresetKey === "default" ? null : homePresetKey,
+          canvas_state,
+          share_id: sid,
+          is_public: true,
+          updated_at: row.updated_at,
+        };
+
+        let { error } = await sb.from("tactics").upsert(fullRow, { onConflict: "id" });
+
+        if (error && isMissingOwnerNameColumnError(error.message)) {
+          const { owner_name: _omit, ...withoutOwner } = fullRow;
+          ({ error } = await sb.from("tactics").upsert(withoutOwner, { onConflict: "id" }));
+        }
+
         if (error) {
-          console.warn("Supabase kayıt:", error.message);
+          cloudSaveFailed = true;
+          console.warn("Supabase kayıt:", error.message, error);
         }
       }
 
@@ -254,9 +272,22 @@ export function useEditorPersistence({
         setMessage(
           "Kaydedildi (yalnız bu cihaz). Diğer cihazlarda görmek için giriş yapıp tekrar kaydedin."
         );
+      } else if (cloudAttempted && cloudSaveFailed) {
+        setMessageTone("warning");
+        setMessage(
+          "Bu cihazda kaydedildi; buluta yazılamadı. Bağlantınızı ve oturumunuzu kontrol edip yeniden deneyin."
+        );
+      } else if (cloudAttempted && !cloudSaveFailed) {
+        setMessageTone("success");
+        setMessage("Taktik kaydedildi ve hesabınıza yazıldı.");
       } else {
-        setMessage(null);
+        setMessageTone("success");
+        setMessage("Taktik bu cihazda kaydedildi.");
       }
+    } catch (err) {
+      console.error("handleSave:", err);
+      setMessageTone("warning");
+      setMessage("Kaydedilirken bir hata oluştu. Lütfen tekrar deneyin.");
     } finally {
       setSaving(false);
     }

@@ -53,6 +53,18 @@ async function stageToPngBlob(stage: Konva.Stage): Promise<Blob> {
   return blob;
 }
 
+function downloadBlobAsFile(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.rel = "noopener";
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+}
+
 export function TacticsGrid({ tactics }: { tactics: TacticRow[] }) {
   const router = useRouter();
   const exportStageRef = useRef<PitchCanvasHandle>(null);
@@ -146,36 +158,55 @@ export function TacticsGrid({ tactics }: { tactics: TacticRow[] }) {
         throw new Error("missing_share_url");
       }
 
+      const title = "Taktik Paylaşımı";
+      const textBody = "Taktik görselime göz at! Kendi taktiğini oluşturmak için:";
       const shareData: ShareData = {
         files: [file],
-        title: "Taktik Paylaşımı",
-        text: "Taktik görselime göz at! Kendi taktiğini oluşturmak için:",
+        title,
+        text: textBody,
         url: shareUrl,
       };
 
-      if (typeof navigator !== "undefined" && navigator.share) {
-        if (navigator.canShare?.(shareData)) {
-          await navigator.share(shareData);
-        } else if (navigator.canShare?.({ files: [file] })) {
-          await navigator.share({
-            files: [file],
-            title: shareData.title,
-            text: `${shareData.text}\n${shareUrl}`,
-            url: shareUrl,
-          });
-        } else {
-          await navigator.share({
-            title: shareData.title,
-            text: `${shareData.text}\n${shareUrl}`,
-            url: shareUrl,
-          });
+      /** Çoğu masaüstü tarayıcıda yalnızca mobilde true; dosya yoksa buraya girme */
+      const canShareFiles =
+        typeof navigator !== "undefined" &&
+        typeof navigator.canShare === "function" &&
+        navigator.canShare({ files: [file] });
+
+      if (canShareFiles && typeof navigator.share === "function") {
+        try {
+          if (navigator.canShare?.(shareData)) {
+            await navigator.share(shareData);
+          } else {
+            await navigator.share({
+              files: [file],
+              title,
+              text: `${textBody}\n${shareUrl}`,
+              url: shareUrl,
+            });
+          }
+          showToast("Paylaşım menüsü açıldı", "success");
+        } catch (err: unknown) {
+          const name = err && typeof err === "object" && "name" in err ? (err as { name?: string }).name : "";
+          if (name === "AbortError") {
+            return;
+          }
+          downloadBlobAsFile(blob, filename);
+          try {
+            await navigator.clipboard.writeText(`${textBody}\n\n${shareUrl}`);
+            showToast("Görsel indirildi; metin ve taktik linki panoya kopyalandı.", "success");
+          } catch {
+            showToast("Görsel indirildi. Linki aşağıdaki kutudan kopyalayabilirsin.", "success");
+          }
         }
-        showToast("Paylaşım menüsü açıldı", "success");
-      } else if (shareUrl) {
-        await navigator.clipboard.writeText(shareUrl);
-        showToast("İşlem tamam", "success");
       } else {
-        throw new Error("missing_share_url");
+        downloadBlobAsFile(blob, filename);
+        try {
+          await navigator.clipboard.writeText(`${textBody}\n\n${shareUrl}`);
+          showToast("Görsel indirildi; metin ve taktik linki panoya kopyalandı.", "success");
+        } catch {
+          showToast("Görsel indirildi. Linki aşağıdaki kutudan kopyalayabilirsin.", "success");
+        }
       }
     } catch (err: unknown) {
       const name = err && typeof err === "object" && "name" in err ? (err as { name?: string }).name : "";

@@ -23,7 +23,7 @@ export function MobileSettingsDrawer({
         <button
           type="button"
           className="fixed inset-0 z-40 bg-black/55 backdrop-blur-[2px]"
-          aria-label="Ayarları kapat"
+          aria-label="Editör panelini kapat"
           onClick={onClose}
         />
       )}
@@ -35,13 +35,18 @@ export function MobileSettingsDrawer({
         }`}
         aria-hidden={!open}
       >
-        <div className="flex shrink-0 items-center justify-between gap-2 border-b border-white/10 px-3 py-2">
-          <span className="text-sm font-semibold tracking-tight">Ayarlar</span>
+        <div className="relative flex shrink-0 items-center justify-center border-b border-white/10 px-10 py-3">
+          <h2
+            className="text-center text-sm font-semibold tracking-[0.14em] text-[var(--foreground)]"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
+            EDİTÖR
+          </h2>
           <Button
             type="button"
             variant="secondary"
             size="sm"
-            className="h-9 w-9 shrink-0 p-0"
+            className="absolute right-2 top-1/2 h-9 w-9 shrink-0 -translate-y-1/2 p-0"
             onClick={onClose}
             aria-label="Kapat"
           >
@@ -49,7 +54,7 @@ export function MobileSettingsDrawer({
           </Button>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3">
-          <EditorSidebar {...sidebarProps} />
+          <EditorSidebar {...sidebarProps} embeddedInDrawer />
         </div>
       </aside>
 

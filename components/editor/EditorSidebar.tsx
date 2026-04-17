@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { EditorPanelHeader } from "./EditorPanelHeader";
 import { FormationSelector } from "./FormationSelector";
 import { MatchFormatSelector } from "./MatchFormatSelector";
 import { TeamPanel } from "./TeamPanel";
@@ -54,6 +55,8 @@ export interface EditorSidebarProps {
   copyBlockedMessage: string;
   message: string | null;
   messageTone: "success" | "warning";
+  /** Mobil ayar çekmecesinde üst başlık drawer’da olduğu için iç panel başlığını gizle */
+  embeddedInDrawer?: boolean;
 }
 
 export function EditorSidebar({
@@ -89,17 +92,11 @@ export function EditorSidebar({
   copyBlockedMessage,
   message,
   messageTone,
+  embeddedInDrawer = false,
 }: EditorSidebarProps) {
   return (
-    <div className="space-y-4">
-      <header className="border-b border-white/10 pb-3 text-center">
-        <h2
-          className="text-base font-semibold leading-tight tracking-[0.12em] text-[var(--foreground)]"
-          style={{ fontFamily: "var(--font-display)" }}
-        >
-          EDİTÖR
-        </h2>
-      </header>
+    <div className="space-y-4 sm:space-y-5">
+      {!embeddedInDrawer && <EditorPanelHeader />}
       <TeamPanel
         teamName={teamName}
         onTeamNameChange={onTeamNameChange}

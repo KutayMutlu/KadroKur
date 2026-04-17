@@ -1,46 +1,71 @@
 "use client";
 
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { AccountDropdown } from "@/components/auth/auth-controls/account-dropdown";
+import { AuthModal } from "@/components/auth/auth-controls/auth-modal";
+import { AuthNotConfigured } from "@/components/auth/auth-controls/not-configured";
+import type { AuthControlsProps, AuthModalProps } from "@/components/auth/auth-controls/types";
+import { isLikelyValidEmail } from "@/components/auth/auth-controls/user-helpers";
 import { Button } from "@/components/ui/button";
 import { getOAuthRedirectOrigin } from "@/lib/site-origin";
 import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import type { User } from "@supabase/supabase-js";
-import { ChevronDown, LogOut } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 
-function pickAvatarUrl(user: User): string | null {
-  const m = user.user_metadata as Record<string, unknown> | undefined;
-  if (!m) return null;
-  const a = m.avatar_url;
-  const p = m.picture;
-  if (typeof a === "string" && a.length > 0) return a;
-  if (typeof p === "string" && p.length > 0) return p;
-  return null;
+export type { AuthControlsProps };
+
+function mapAuthErrorMessage(rawMessage: string, action: "signIn" | "signUp" | "reset" | "google"): string {
+  const message = rawMessage.toLowerCase();
+
+  if (message.includes("email rate limit exceeded") || message.includes("rate limit")) {
+    return "Çok fazla deneme yapıldı. Lütfen biraz bekleyip tekrar deneyin.";
+  }
+  if (message.includes("invalid login credentials")) {
+    return "E-posta veya şifre hatalı.";
+  }
+  if (message.includes("email not confirmed")) {
+    return "E-posta adresinizi doğruladıktan sonra giriş yapabilirsiniz.";
+  }
+  if (message.includes("user already registered")) {
+    return "Bu e-posta ile zaten bir hesap var. Giriş yapmayı deneyin.";
+  }
+  if (message.includes("password should be at least")) {
+    return "Şifre en az 6 karakter olmalıdır.";
+  }
+  if (message.includes("signup is disabled")) {
+    return "Kayıt olma şu anda kullanılamıyor. Lütfen daha sonra tekrar deneyin.";
+  }
+  if (message.includes("network") || message.includes("failed to fetch")) {
+    return "Bağlantı sorunu oluştu. İnternetinizi kontrol edip tekrar deneyin.";
+  }
+
+  if (action === "reset") return "Şifre sıfırlama işlemi tamamlanamadı. Lütfen tekrar deneyin.";
+  if (action === "signUp") return "Kayıt işlemi tamamlanamadı. Bilgileri kontrol edip tekrar deneyin.";
+  if (action === "signIn") return "Giriş işlemi başarısız oldu. Bilgilerinizi kontrol edip tekrar deneyin.";
+  return "Google ile giriş başlatılamadı. Lütfen tekrar deneyin.";
 }
-
-function pickInitials(user: User): string {
-  const email = user.email ?? "?";
-  const ch = email.charAt(0).toUpperCase();
-  const ch2 = email.split("@")[0]?.charAt(1);
-  return ch2 ? `${ch}${ch2.toUpperCase()}` : ch;
-}
-
-export type AuthControlsProps = {
-  /** Giriş yokken gösterilir (ör. tema); giriş yapılınca tema hesap menüsüne taşınır. */
-  guestCompanion?: ReactNode;
-};
 
 export function AuthControls({ guestCompanion }: AuthControlsProps) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<"signIn" | "signUp">("signIn");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [passwordConfirm, setPasswordConfirm] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [birthDate, setBirthDate] = useState("");
+  const [firstNameInvalid, setFirstNameInvalid] = useState(false);
+  const [lastNameInvalid, setLastNameInvalid] = useState(false);
+  const [birthInvalid, setBirthInvalid] = useState(false);
+  const [passwordMainInvalid, setPasswordMainInvalid] = useState(false);
+  const [passwordConfirmInvalid, setPasswordConfirmInvalid] = useState(false);
+  const [authMessage, setAuthMessage] = useState("");
+  const [authMessageTone, setAuthMessageTone] = useState<"success" | "warning">("warning");
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarTone, setSnackbarTone] = useState<"success" | "warning">("success");
+  const [emailInvalid, setEmailInvalid] = useState(false);
+  const emailInputRef = useRef<HTMLInputElement | null>(null);
   const configured = isSupabaseConfigured();
 
   useEffect(() => {
@@ -53,14 +78,111 @@ export function AuthControls({ guestCompanion }: AuthControlsProps) {
     return () => sub.subscription.unsubscribe();
   }, []);
 
+  useEffect(() => {
+    if (!user) return;
+    setAuthModalOpen(false);
+    setAuthMode("signIn");
+    setAuthMessage("");
+    setEmail("");
+    setPassword("");
+    setPasswordConfirm("");
+    setFirstName("");
+    setLastName("");
+    setBirthDate("");
+    setEmailInvalid(false);
+    setFirstNameInvalid(false);
+    setLastNameInvalid(false);
+    setBirthInvalid(false);
+    setPasswordMainInvalid(false);
+    setPasswordConfirmInvalid(false);
+  }, [user]);
+
+  useEffect(() => {
+    if (!authModalOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setAuthModalOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    const timer = window.setTimeout(() => {
+      emailInputRef.current?.focus();
+    }, 80);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.clearTimeout(timer);
+    };
+  }, [authModalOpen]);
+
+  useEffect(() => {
+    if (!authModalOpen) {
+      setEmailInvalid(false);
+      setFirstNameInvalid(false);
+      setLastNameInvalid(false);
+      setBirthInvalid(false);
+      setPasswordMainInvalid(false);
+      setPasswordConfirmInvalid(false);
+      setFirstName("");
+      setLastName("");
+      setBirthDate("");
+      setPassword("");
+      setPasswordConfirm("");
+    }
+  }, [authModalOpen]);
+
+  useEffect(() => {
+    if (!snackbarMessage) return;
+    const timer = window.setTimeout(() => setSnackbarMessage(""), 2600);
+    return () => window.clearTimeout(timer);
+  }, [snackbarMessage]);
+
+  useEffect(() => {
+    setEmailInvalid(false);
+    setFirstNameInvalid(false);
+    setLastNameInvalid(false);
+    setBirthInvalid(false);
+    setPasswordMainInvalid(false);
+    setPasswordConfirmInvalid(false);
+    if (authMode === "signIn") {
+      setEmail("");
+      setFirstName("");
+      setLastName("");
+      setBirthDate("");
+      setPassword("");
+      setPasswordConfirm("");
+      setFirstNameInvalid(false);
+      setLastNameInvalid(false);
+      setBirthInvalid(false);
+      setPasswordMainInvalid(false);
+      setPasswordConfirmInvalid(false);
+    } else {
+      setEmail("");
+      setPassword("");
+      setPasswordConfirm("");
+      setPasswordMainInvalid(false);
+      setPasswordConfirmInvalid(false);
+    }
+  }, [authMode]);
+
+  useEffect(() => {
+    if (!authModalOpen || authMode !== "signUp") return;
+    const timer = window.setTimeout(() => {
+      const narrow = window.matchMedia("(max-width: 639px)").matches;
+      if (narrow) {
+        document.getElementById("kadrokur-signup-firstname-sm")?.focus();
+      } else {
+        document.getElementById("kadrokur-signup-firstname-lg")?.focus();
+      }
+    }, 80);
+    return () => window.clearTimeout(timer);
+  }, [authModalOpen, authMode]);
+
   const signInWithGoogle = async () => {
     const sb = getSupabase();
     if (!sb) {
-      window.alert(
-        "Supabase ayarlari yok veya yuklenemedi. Vercel / .env.local icinde NEXT_PUBLIC_SUPABASE_URL ve NEXT_PUBLIC_SUPABASE_ANON_KEY (veya PUBLISHABLE_KEY) tanimlayip yeniden deploy edin."
-      );
+      setAuthMessageTone("warning");
+      setAuthMessage("Sistem ayarları eksik. Lütfen daha sonra tekrar deneyin.");
       return;
     }
+    setAuthMessage("");
     setLoading(true);
     try {
       const origin = getOAuthRedirectOrigin();
@@ -82,7 +204,8 @@ export function AuthControls({ guestCompanion }: AuthControlsProps) {
         options: { redirectTo, skipBrowserRedirect: false },
       });
       if (error) {
-        window.alert(error.message);
+        setAuthMessageTone("warning");
+        setAuthMessage(mapAuthErrorMessage(error.message, "google"));
         setLoading(false);
         return;
       }
@@ -90,9 +213,192 @@ export function AuthControls({ guestCompanion }: AuthControlsProps) {
         window.location.assign(data.url);
       }
     } catch (e) {
-      window.alert(e instanceof Error ? e.message : "Giris baslatilamadi.");
+      const fallback = e instanceof Error ? e.message : "Google ile giriş başlatılamadı.";
+      setAuthMessageTone("warning");
+      setAuthMessage(mapAuthErrorMessage(fallback, "google"));
       setLoading(false);
     }
+  };
+
+  const signInWithEmail = async () => {
+    const sb = getSupabase();
+    if (!sb) return;
+    setAuthMessage("");
+    setEmailInvalid(false);
+    setPasswordMainInvalid(false);
+
+    const em = email.trim();
+    const pwEmpty = password.trim().length === 0;
+    const emailMissing = em.length === 0;
+    const emailBadFormat = em.length > 0 && !isLikelyValidEmail(em);
+
+    if (emailMissing) setEmailInvalid(true);
+    if (emailBadFormat) setEmailInvalid(true);
+    if (pwEmpty) setPasswordMainInvalid(true);
+
+    if (emailMissing || emailBadFormat || pwEmpty) {
+      setAuthMessageTone("warning");
+      if (emailMissing && pwEmpty) {
+        setAuthMessage("Lütfen e-posta ve şifre giriniz.");
+      } else if (emailMissing) {
+        setAuthMessage("Lütfen e-posta giriniz.");
+      } else if (emailBadFormat && pwEmpty) {
+        setAuthMessage("Geçerli bir e-posta adresi girin ve şifrenizi yazın.");
+      } else if (emailBadFormat) {
+        setAuthMessage("Geçerli bir e-posta adresi girin.");
+      } else {
+        setAuthMessage("Lütfen şifre giriniz.");
+      }
+      return;
+    }
+
+    setLoading(true);
+    const { error } = await sb.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
+    setLoading(false);
+    if (error) {
+      setAuthMessageTone("warning");
+      setAuthMessage(mapAuthErrorMessage(error.message, "signIn"));
+      return;
+    }
+    setAuthMessageTone("success");
+    setAuthMessage("Giriş başarılı.");
+    setSnackbarTone("success");
+    setSnackbarMessage("Giriş başarılı.");
+    setAuthModalOpen(false);
+    setPassword("");
+    setPasswordConfirm("");
+  };
+
+  const requestPasswordReset = async () => {
+    const sb = getSupabase();
+    if (!sb) return;
+    setAuthMessage("");
+    const em = email.trim();
+    if (!em) {
+      setAuthMessageTone("warning");
+      setEmailInvalid(true);
+      setAuthMessage("Şifre sıfırlama için e-posta adresinizi girin.");
+      return;
+    }
+    if (!isLikelyValidEmail(em)) {
+      setAuthMessageTone("warning");
+      setEmailInvalid(true);
+      setAuthMessage("Geçerli bir e-posta adresi girin.");
+      return;
+    }
+    setLoading(true);
+    const origin = getOAuthRedirectOrigin();
+    const { error } = await sb.auth.resetPasswordForEmail(em, {
+      redirectTo: `${origin}/auth/confirm`,
+    });
+    setLoading(false);
+    if (error) {
+      setAuthMessageTone("warning");
+      setAuthMessage(error.message);
+      return;
+    }
+    setAuthMessageTone("success");
+    setAuthMessage("Şifre sıfırlama bağlantısı e-postanıza gönderildi.");
+  };
+
+  const signUpWithEmail = async () => {
+    const sb = getSupabase();
+    if (!sb) return;
+    setAuthMessage("");
+    setEmailInvalid(false);
+    setFirstNameInvalid(false);
+    setLastNameInvalid(false);
+    setBirthInvalid(false);
+    setPasswordMainInvalid(false);
+    setPasswordConfirmInvalid(false);
+
+    const fnOk = firstName.trim().length > 0;
+    const lnOk = lastName.trim().length > 0;
+    const birthOk = birthDate.trim().length > 0;
+    const em = email.trim();
+    const emailMissing = em.length === 0;
+    const emailBadFormat = em.length > 0 && !isLikelyValidEmail(em);
+    const pw = password;
+    const pwc = passwordConfirm;
+    const pwEmpty = pw.trim().length === 0;
+    const pwcEmpty = pwc.trim().length === 0;
+    const pwMismatch = pw.trim().length > 0 && pwc.trim().length > 0 && pw !== pwc;
+    const pwTooShort = pw.trim().length > 0 && pw.length < 6;
+
+    if (!fnOk) setFirstNameInvalid(true);
+    if (!lnOk) setLastNameInvalid(true);
+    if (!birthOk) setBirthInvalid(true);
+    if (emailMissing || emailBadFormat) setEmailInvalid(true);
+    if (pwEmpty) setPasswordMainInvalid(true);
+    if (pwcEmpty) setPasswordConfirmInvalid(true);
+    if (pwMismatch) {
+      setPasswordMainInvalid(true);
+      setPasswordConfirmInvalid(true);
+    }
+    if (pwTooShort) setPasswordMainInvalid(true);
+
+    if (
+      !fnOk ||
+      !lnOk ||
+      !birthOk ||
+      emailMissing ||
+      emailBadFormat ||
+      pwEmpty ||
+      pwcEmpty ||
+      pwMismatch ||
+      pwTooShort
+    ) {
+      setAuthMessageTone("warning");
+      if (!fnOk || !lnOk || !birthOk) {
+        setAuthMessage("Lütfen * ile belirtilen tüm alanları eksiksiz doldurun.");
+      } else if (emailMissing) {
+        setAuthMessage("Lütfen e-posta adresinizi girin.");
+      } else if (emailBadFormat) {
+        setAuthMessage("Geçerli bir e-posta adresi girin.");
+      } else if (pwEmpty || pwcEmpty) {
+        setAuthMessage("Lütfen şifre ve şifre tekrar alanlarını doldurun.");
+      } else if (pwTooShort) {
+        setAuthMessage("Şifre en az 6 karakter olmalıdır.");
+      } else if (pwMismatch) {
+        setAuthMessage("Şifreler birbiriyle eşleşmiyor.");
+      } else {
+        setAuthMessage("Lütfen bilgileri kontrol edip tekrar deneyin.");
+      }
+      return;
+    }
+
+    setLoading(true);
+    const origin = getOAuthRedirectOrigin();
+    const { data, error } = await sb.auth.signUp({
+      email: email.trim(),
+      password,
+      options: {
+        emailRedirectTo: `${origin}/auth/confirm`,
+        data: {
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
+          birth_date: birthDate,
+        },
+      },
+    });
+    setLoading(false);
+    if (error) {
+      setAuthMessageTone("warning");
+      setAuthMessage(mapAuthErrorMessage(error.message, "signUp"));
+      return;
+    }
+    setAuthMessageTone("success");
+    if (data.session) {
+      setAuthMessage("Kayıt başarılı. Oturumunuz açıldı.");
+      setSnackbarTone("success");
+      setSnackbarMessage("Kayıt başarılı. Oturumunuz açıldı.");
+    } else {
+      setAuthMessage("Kayıt başarılı. E-postanızı doğrulayın.");
+    }
+    setPasswordConfirm("");
   };
 
   const signOut = async () => {
@@ -104,113 +410,102 @@ export function AuthControls({ guestCompanion }: AuthControlsProps) {
   };
 
   if (!configured) {
-    const envHint =
-      "Kökte .env.local (URL + publishable/anon key). Vercel'den: npm run env:pull — sonra npm run dev yeniden.";
-    return (
-      <div className="flex shrink-0 flex-col items-end gap-1 text-right sm:max-w-[260px]">
-        <Button
-          type="button"
-          variant="secondary"
-          disabled
-          size="sm"
-          className="shrink-0"
-          title={envHint}
-        >
-          Giriş Yap
-        </Button>
-        <span className="hidden text-[10px] leading-snug text-amber-200/90 break-words sm:block">
-          Kökte <code className="rounded bg-black/25 px-0.5">.env.local</code> (URL + publishable/anon key).{" "}
-          Vercel&apos;den çekmek için: <code className="rounded bg-black/25 px-0.5">npm run env:pull</code> — sonra{" "}
-          <code className="rounded bg-black/25 px-0.5">npm run dev</code> yeniden.
-        </span>
-      </div>
-    );
+    return <AuthNotConfigured />;
   }
 
   if (!user) {
+    const modalProps: AuthModalProps = {
+      onClose: () => setAuthModalOpen(false),
+      authMode,
+      setAuthMode,
+      loading,
+      authMessage,
+      authMessageTone,
+      email,
+      setEmail,
+      password,
+      setPassword,
+      passwordConfirm,
+      setPasswordConfirm,
+      firstName,
+      setFirstName,
+      lastName,
+      setLastName,
+      birthDate,
+      setBirthDate,
+      emailInvalid,
+      setEmailInvalid,
+      passwordMainInvalid,
+      setPasswordMainInvalid,
+      passwordConfirmInvalid,
+      setPasswordConfirmInvalid,
+      firstNameInvalid,
+      setFirstNameInvalid,
+      lastNameInvalid,
+      setLastNameInvalid,
+      birthInvalid,
+      setBirthInvalid,
+      emailInputRef,
+      signInWithEmail,
+      signUpWithEmail,
+      signInWithGoogle,
+      requestPasswordReset,
+      setAuthMessage,
+    };
+
     return (
-      <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-        <Button
-          type="button"
-          variant="secondary"
-          size="sm"
-          className="min-h-[40px] shrink-0 touch-manipulation text-xs sm:min-h-0 sm:text-sm"
-          onClick={signInWithGoogle}
-          disabled={loading}
-        >
-          Giriş Yap
-        </Button>
-        {guestCompanion}
-      </div>
+      <>
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            className="min-h-[40px] shrink-0 touch-manipulation text-xs sm:min-h-0 sm:text-sm"
+            onClick={() => {
+              setAuthMode("signIn");
+              setAuthMessage("");
+              setAuthModalOpen(true);
+            }}
+            disabled={loading}
+          >
+            Giriş Yap / Kayıt Ol
+          </Button>
+          {guestCompanion}
+          {authModalOpen ? <AuthModal {...modalProps} /> : null}
+        </div>
+        {snackbarMessage ? (
+          <div className="pointer-events-none fixed bottom-4 left-1/2 z-[10020] w-[min(calc(100vw-2rem),28rem)] -translate-x-1/2 px-2">
+            <div
+              className={`rounded-lg border px-4 py-2 text-sm shadow-lg backdrop-blur ${
+                snackbarTone === "success"
+                  ? "border-green-500/50 bg-green-950/85 text-green-100"
+                  : "border-amber-500/50 bg-amber-950/85 text-amber-100"
+              }`}
+            >
+              {snackbarMessage}
+            </div>
+          </div>
+        ) : null}
+      </>
     );
   }
 
-  const avatarUrl = pickAvatarUrl(user);
-  const initials = pickInitials(user);
-
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          disabled={loading}
-          className="group flex shrink-0 items-center gap-0.5 rounded-full border-2 border-[var(--border-subtle)] bg-[var(--bg-card)] p-0.5 pl-0.5 pr-1 shadow-sm transition hover:border-[var(--accent)]/45 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/50 disabled:opacity-60 data-[state=open]:border-[var(--accent)]/55 data-[state=open]:shadow-[0_0_0_1px_var(--accent)]/25"
-          aria-label="Hesap menüsü: e-posta, tema ve çıkış"
-          title="Hesap menüsünü aç"
-        >
-          {avatarUrl ? (
-            // OAuth sağlayıcı URL'leri çeşitli; next/image remotePatterns yerine img
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={avatarUrl}
-              alt=""
-              width={32}
-              height={32}
-              className="h-8 w-8 rounded-full object-cover"
-              referrerPolicy="no-referrer"
-            />
-          ) : (
-            <span
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent)]/20 text-[11px] font-semibold text-[var(--accent)]"
-              aria-hidden
-            >
-              {initials}
-            </span>
-          )}
-          <ChevronDown
-            className="h-3.5 w-3.5 shrink-0 text-[var(--muted)] transition-transform duration-200 group-data-[state=open]:rotate-180"
-            aria-hidden
-          />
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" sideOffset={6} className="w-[min(calc(100vw-2rem),18rem)]">
-        <DropdownMenuLabel className="space-y-1 font-normal">
-          <span className="block text-[10px] font-medium uppercase tracking-wide text-[var(--muted)]">
-            Hesap
-          </span>
-          <span className="break-all text-sm leading-snug text-[var(--foreground)]">{user.email}</span>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <div
-          className="flex items-center justify-between gap-3 rounded-lg px-2 py-2"
-          onPointerDown={(e) => e.stopPropagation()}
-        >
-          <span className="text-sm text-[var(--foreground)]">Tema</span>
-          <ThemeToggle />
+    <>
+      <AccountDropdown user={user} loading={loading} onSignOut={signOut} />
+      {snackbarMessage ? (
+        <div className="pointer-events-none fixed bottom-4 left-1/2 z-[10020] w-[min(calc(100vw-2rem),28rem)] -translate-x-1/2 px-2">
+          <div
+            className={`rounded-lg border px-4 py-2 text-sm shadow-lg backdrop-blur ${
+              snackbarTone === "success"
+                ? "border-green-500/50 bg-green-950/85 text-green-100"
+                : "border-amber-500/50 bg-amber-950/85 text-amber-100"
+            }`}
+          >
+            {snackbarMessage}
+          </div>
         </div>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          className="cursor-pointer gap-2 text-red-300 focus:bg-red-950/40 focus:text-red-200"
-          disabled={loading}
-          onSelect={(e) => {
-            e.preventDefault();
-            void signOut();
-          }}
-        >
-          <LogOut className="h-4 w-4" />
-          Çıkış Yap
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+      ) : null}
+    </>
   );
 }

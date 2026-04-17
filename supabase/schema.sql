@@ -19,6 +19,37 @@ create table if not exists public.team_players (
   color text
 );
 
+create table if not exists public.user_profiles (
+  user_id uuid primary key references auth.users (id) on delete cascade,
+  first_name text not null default '',
+  last_name text not null default '',
+  position text not null default '',
+  preferred_foot text not null default '',
+  dominant_roles jsonb not null default '[]'::jsonb,
+  bio text not null default '',
+  avatar_url text not null default '',
+  phone text not null default '',
+  social_link text not null default '',
+  privacy_level text not null default 'friends',
+  birth_date date,
+  favorite_team text not null default '',
+  city text not null default '',
+  district text not null default '',
+  height_cm int,
+  weight_kg int,
+  updated_at timestamptz not null default now()
+);
+
+alter table public.user_profiles add column if not exists position text not null default '';
+alter table public.user_profiles add column if not exists preferred_foot text not null default '';
+alter table public.user_profiles add column if not exists dominant_roles jsonb not null default '[]'::jsonb;
+alter table public.user_profiles add column if not exists bio text not null default '';
+alter table public.user_profiles add column if not exists avatar_url text not null default '';
+alter table public.user_profiles add column if not exists phone text not null default '';
+alter table public.user_profiles add column if not exists social_link text not null default '';
+alter table public.user_profiles add column if not exists privacy_level text not null default 'friends';
+alter table public.user_profiles add column if not exists birth_date date;
+
 create table if not exists public.tactics (
   id uuid primary key,
   user_id uuid references auth.users (id) on delete set null,
@@ -36,10 +67,14 @@ create table if not exists public.tactics (
 create index if not exists tactics_share_id_idx on public.tactics (share_id);
 
 alter table public.tactics enable row level security;
+alter table public.user_profiles enable row level security;
 
 drop policy if exists "public read tactics" on public.tactics;
 drop policy if exists "anon insert tactics" on public.tactics;
 drop policy if exists "anon update tactics" on public.tactics;
+drop policy if exists "owner read profile" on public.user_profiles;
+drop policy if exists "owner upsert profile" on public.user_profiles;
+drop policy if exists "owner update profile" on public.user_profiles;
 
 -- Herkes yalnızca public taktikleri okuyabilir
 create policy "public read tactics"
@@ -59,5 +94,18 @@ create policy "owner insert tactics"
 -- Giriş yapan kullanıcı yalnızca kendi satırlarını güncelleyebilir
 create policy "owner update tactics"
   on public.tactics for update
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+create policy "owner read profile"
+  on public.user_profiles for select
+  using (auth.uid() = user_id);
+
+create policy "owner upsert profile"
+  on public.user_profiles for insert
+  with check (auth.uid() = user_id);
+
+create policy "owner update profile"
+  on public.user_profiles for update
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);

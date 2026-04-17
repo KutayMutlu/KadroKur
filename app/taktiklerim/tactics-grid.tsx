@@ -56,6 +56,7 @@ async function stageToPngBlob(stage: Konva.Stage): Promise<Blob> {
 export function TacticsGrid({ tactics }: { tactics: TacticRow[] }) {
   const router = useRouter();
   const shareStageRef = useRef<PitchCanvasHandle>(null);
+  const downloadStageRef = useRef<PitchCanvasHandle>(null);
   const [items, setItems] = useState<TacticRow[]>(tactics);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
@@ -64,6 +65,7 @@ export function TacticsGrid({ tactics }: { tactics: TacticRow[] }) {
   const [toastVariant, setToastVariant] = useState<"success" | "destructive">("success");
   const [selectedTacticForShare, setSelectedTacticForShare] = useState<string | null>(null);
   const [shareLoading, setShareLoading] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   useEffect(() => {
     setItems(tactics);
@@ -160,21 +162,17 @@ export function TacticsGrid({ tactics }: { tactics: TacticRow[] }) {
     if (!shareTactic || shareDisabled) return;
     setShareLoading(true);
     try {
-      const getStage = async () => {
-        for (let i = 0; i < 8; i += 1) {
-          const stage = shareStageRef.current?.getStage();
-          if (stage) return stage;
-          await new Promise((resolve) => window.requestAnimationFrame(resolve));
-        }
-        throw new Error("share_stage_not_ready");
-      };
-      const stage = await withTimeout(getStage(), 5000, "share_stage_timeout");
+      setIsDownloading(true);
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      const stage = downloadStageRef.current?.getStage();
+      if (!stage) throw new Error("download_stage_not_ready");
       const safe = (shareTactic.title || "taktik").replace(/[^\w\-]+/g, "_");
-      exportStageToPng(stage, `${safe}.png`);
+      exportStageToPng(stage, `${safe}.png`, { pixelRatio: 2 });
       showToast("Görsel indirildi.", "success");
     } catch {
       showToast("Görsel oluşturulamadı", "destructive");
     } finally {
+      setIsDownloading(false);
       setShareLoading(false);
     }
   };
@@ -293,6 +291,23 @@ export function TacticsGrid({ tactics }: { tactics: TacticRow[] }) {
           opponentTeamName={(shareTactic.canvas_state as CanvasState)?.opponentTeamName}
           onPlayerMove={() => {}}
           interactive={false}
+        />
+      </div>
+      ) : null}
+
+      {shareTactic && isDownloading ? (
+      <div className="pointer-events-none fixed -left-[9999px] top-0 h-[740px] w-[1473px] opacity-0">
+        <PitchCanvas
+          ref={downloadStageRef}
+          players={(shareTactic.canvas_state as CanvasState)?.players ?? []}
+          activePlayerId={null}
+          attackFlip={Boolean((shareTactic.canvas_state as CanvasState)?.attack_flip)}
+          homeTeamName={(shareTactic.canvas_state as CanvasState)?.teamName}
+          opponentTeamName={(shareTactic.canvas_state as CanvasState)?.opponentTeamName}
+          onPlayerMove={() => {}}
+          interactive={false}
+          dimensions={{ width: 1473, height: 740 }}
+          scale={1}
         />
       </div>
       ) : null}

@@ -33,6 +33,10 @@ export interface PitchCanvasProps {
   opponentTeamName?: string;
   /** Paylaşım görüntüleme için sahada gezinme/zoom */
   enablePanZoom?: boolean;
+  /** Responsive yerine sabit sahne boyutu (paylaşım/export) */
+  dimensions?: { width: number; height: number };
+  /** Sahne ölçeği (ör. 0.67) */
+  scale?: number;
 }
 
 export type PitchCanvasHandle = {
@@ -51,6 +55,8 @@ export const PitchCanvas = forwardRef<PitchCanvasHandle, PitchCanvasProps>(
       onLayoutChange,
       onAdaptiveDropChange,
       enablePanZoom = false,
+      dimensions,
+      scale = 1,
     },
     ref
   ) {
@@ -79,6 +85,16 @@ export const PitchCanvas = forwardRef<PitchCanvasHandle, PitchCanvasProps>(
     }));
 
     useEffect(() => {
+      if (dimensions) {
+        setCanvasSize({
+          w: Math.max(1, Math.floor(dimensions.width)),
+          h: Math.max(1, Math.floor(dimensions.height)),
+        });
+        setVerticalLayout(false);
+        onLayoutChangeRef.current?.(false);
+        return;
+      }
+
       const node = containerRef.current;
       if (!node) return;
 
@@ -112,7 +128,7 @@ export const PitchCanvas = forwardRef<PitchCanvasHandle, PitchCanvasProps>(
         window.removeEventListener("resize", handleViewportChange);
         window.removeEventListener("orientationchange", handleViewportChange);
       };
-    }, []);
+    }, [dimensions]);
 
     const clampScale = (value: number) => Math.min(2.2, Math.max(0.8, value));
 
@@ -165,8 +181,8 @@ export const PitchCanvas = forwardRef<PitchCanvasHandle, PitchCanvasProps>(
             ref={stageRef}
             className="rounded-xl"
             draggable={enablePanZoom}
-            scaleX={stageScale}
-            scaleY={stageScale}
+            scaleX={stageScale * scale}
+            scaleY={stageScale * scale}
             x={stagePos.x}
             y={stagePos.y}
             onDragEnd={(e) => setStagePos({ x: e.target.x(), y: e.target.y() })}

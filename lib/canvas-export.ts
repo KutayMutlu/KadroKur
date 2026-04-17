@@ -2,9 +2,10 @@ import type Konva from "konva";
 
 export function exportStageToPng(
   stage: Konva.Stage,
-  filename = "taktik.png"
+  filename = "taktik.png",
+  options?: { pixelRatio?: number }
 ): void {
-  const uri = stage.toDataURL({ pixelRatio: 2 });
+  const uri = stage.toDataURL({ pixelRatio: options?.pixelRatio ?? 2 });
   const link = document.createElement("a");
   link.download = filename;
   link.href = uri;

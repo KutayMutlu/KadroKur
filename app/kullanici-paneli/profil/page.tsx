@@ -1,23 +1,15 @@
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ProfileFeedback } from "./profile-feedback";
 import { SaveProfileButton } from "./save-profile-button";
 
 export default async function UserPanelProfilePage() {
   const supabase = await createClient();
-  const { data: authData } = await supabase.auth.getUser();
-  const user = authData.user;
-
-  if (!user) {
-    redirect("/");
-  }
 
   const { data: profile } = await supabase
     .from("user_profiles")
     .select(
       "position, preferred_foot, dominant_roles, avatar_url, social_link, privacy_level, favorite_team, city, district"
     )
-    .eq("user_id", user.id)
     .maybeSingle();
   const rolesText = Array.isArray(profile?.dominant_roles) ? profile.dominant_roles.join(", ") : "";
 

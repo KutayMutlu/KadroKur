@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useUserPanelUser } from "./user-panel-context";
 
 type Props = {
   children: React.ReactNode;
@@ -45,6 +47,8 @@ function PanelLinks({ onNavigate }: { onNavigate?: () => void }) {
 
 export function UserPanelShell({ children }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const router = useRouter();
+  const user = useUserPanelUser();
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -54,6 +58,13 @@ export function UserPanelShell({ children }: Props) {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [mobileOpen]);
+
+  useEffect(() => {
+    router.prefetch("/kullanici-paneli/profil");
+    router.prefetch("/kullanici-paneli/kisisel-bilgiler");
+    router.prefetch("/kullanici-paneli/taktikler");
+    router.prefetch("/kullanici-paneli/ayarlar");
+  }, [router]);
 
   return (
     <div className="min-h-screen bg-pitch-night">
@@ -69,6 +80,7 @@ export function UserPanelShell({ children }: Props) {
         <div>
           <p className="text-[10px] uppercase tracking-wide text-[var(--muted)]">Hesap</p>
           <p className="text-sm font-semibold text-[var(--foreground)]">Kullanıcı Paneli</p>
+          {user.email ? <p className="text-[11px] text-[var(--muted)]">{user.email}</p> : null}
         </div>
       </header>
 
@@ -89,6 +101,7 @@ export function UserPanelShell({ children }: Props) {
         <div className="mb-6">
           <p className="text-xs uppercase tracking-wide text-[var(--muted)]">Hesap</p>
           <h1 className="mt-1 text-lg font-semibold text-[var(--foreground)]">Kullanıcı Paneli</h1>
+          {user.email ? <p className="mt-1 break-all text-xs text-[var(--muted)]">{user.email}</p> : null}
         </div>
 
         <nav aria-label="Kullanıcı paneli menüsü" className="space-y-1">

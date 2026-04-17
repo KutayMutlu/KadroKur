@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ProfileFeedback } from "../profil/profile-feedback";
 import { SaveProfileButton } from "../profil/save-profile-button";
@@ -18,25 +17,15 @@ function calculateAgeFromBirthDate(birthDate: string | null | undefined): number
 
 export default async function UserPanelPersonalInfoPage() {
   const supabase = await createClient();
-  const { data: authData } = await supabase.auth.getUser();
-  const user = authData.user;
-
-  if (!user) {
-    redirect("/");
-  }
 
   const { data: profile } = await supabase
     .from("user_profiles")
     .select("first_name, last_name, bio, phone, birth_date, height_cm, weight_kg")
-    .eq("user_id", user.id)
     .maybeSingle();
 
-  const defaultFirstName =
-    profile?.first_name ?? (typeof user.user_metadata?.first_name === "string" ? user.user_metadata.first_name : "");
-  const defaultLastName =
-    profile?.last_name ?? (typeof user.user_metadata?.last_name === "string" ? user.user_metadata.last_name : "");
-  const defaultBirthDate =
-    profile?.birth_date ?? (typeof user.user_metadata?.birth_date === "string" ? user.user_metadata.birth_date : "");
+  const defaultFirstName = profile?.first_name ?? "";
+  const defaultLastName = profile?.last_name ?? "";
+  const defaultBirthDate = profile?.birth_date ?? "";
   const calculatedAge = calculateAgeFromBirthDate(defaultBirthDate);
 
   return (

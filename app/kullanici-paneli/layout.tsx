@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { UserPanelShell } from "./panel-shell";
+import { UserPanelProvider } from "./user-panel-context";
 
 export default async function UserPanelLayout({
   children,
@@ -13,5 +14,14 @@ export default async function UserPanelLayout({
     redirect("/");
   }
 
-  return <UserPanelShell>{children}</UserPanelShell>;
+  return (
+    <UserPanelProvider
+      user={{
+        id: user.id,
+        email: user.email ?? null,
+      }}
+    >
+      <UserPanelShell>{children}</UserPanelShell>
+    </UserPanelProvider>
+  );
 }

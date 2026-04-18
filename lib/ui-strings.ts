@@ -58,7 +58,7 @@ export const uiStrings = {
     tacticsSrTitle: "Kayıtlı taktikler",
     tacticsEmptyBody:
       "Henüz kayıtlı taktik yok. Editörde bir diziliş kaydettiğinde burada listelenecek.",
-    tacticsCtaFirst: "İlk taktikini oluştur",
+    tacticsCtaFirst: "İlk taktiğinizi oluşturun.",
     tacticsSectionTitle: "Kayıtlı taktikler",
     tacticsSectionSubtitle: "Bu cihazdaki ve hesabınızdaki kayıtlar",
     tacticsCloudHeading: "Hesabımdaki taktikler",

@@ -13,14 +13,16 @@ type SiteHeaderProps = {
  * Ana sayfa ve genel sayfalarda ortak üst şerit: logo, ayarlar (dişli), hesap, isteğe bağlı editör linki.
  */
 export function SiteHeader({ showEditorLink = true }: SiteHeaderProps) {
-  const { strings: s } = useLocale();
+  const { locale, strings: s } = useLocale();
+  const homeLinkAria = locale === "en" ? "KadroKur — Home" : "KadroKur — Ana sayfa";
 
   return (
     <header className="relative z-10 border-b border-[var(--border-subtle)] bg-[var(--bg-elevated)]/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-5xl flex-row items-center justify-between gap-2 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] sm:gap-3 sm:px-6 sm:pt-3">
         <Link
           href="/"
-          className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3"
+          className="flex min-w-0 shrink-0 items-center gap-2 sm:flex-1 sm:gap-3"
+          aria-label={homeLinkAria}
         >
           <span
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[var(--border-glow)] bg-[var(--bg-card)] text-base font-bold text-[var(--accent)] sm:h-10 sm:w-10 sm:text-lg"
@@ -28,7 +30,7 @@ export function SiteHeader({ showEditorLink = true }: SiteHeaderProps) {
           >
             KK
           </span>
-          <div className="min-w-0 text-left">
+          <div className="hidden min-w-0 text-left sm:block">
             <p
               className="text-sm font-semibold leading-tight tracking-tight text-[var(--foreground)]"
               style={{ fontFamily: "var(--font-display)" }}

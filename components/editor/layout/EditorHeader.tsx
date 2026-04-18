@@ -51,14 +51,14 @@ export function EditorHeader({
             >
               KK
             </span>
-            <div className="min-w-0 text-left leading-tight">
+            <div className="hidden min-w-0 text-left leading-tight sm:block">
               <p
                 className="truncate text-sm font-semibold tracking-tight text-[var(--foreground)]"
                 style={{ fontFamily: "var(--font-display)" }}
               >
                 KadroKur
               </p>
-              <p className="mt-0.5 hidden text-[10px] text-[var(--muted)] sm:block sm:text-[11px]">
+              <p className="mt-0.5 text-[10px] text-[var(--muted)] sm:text-[11px]">
                 {ui.editorBrandSubtitle}
               </p>
             </div>

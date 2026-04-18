@@ -87,18 +87,18 @@ export function useEditorBoardActions({
       if (!nextFormation) return;
       setHomeFormationKey(nextFormation);
       setAwayFormationKey(nextFormation);
-      setPlayers((prev) =>
-        rebuildAwayPlayers(
+      setPlayers((prev) => {
+        const hadOpponent = prev.some((p) => p.side === "away");
+        const homeRebuilt = rebuildHomePlayers(
           nextFormation,
-          awayPresetKey,
-          rebuildHomePlayers(
-            nextFormation,
-            homePresetKey,
-            prev,
-            prev.some((p) => p.side === "away")
-          )
-        )
-      );
+          homePresetKey,
+          prev,
+          hadOpponent
+        );
+        return hadOpponent
+          ? rebuildAwayPlayers(nextFormation, awayPresetKey, homeRebuilt)
+          : homeRebuilt;
+      });
     },
     [
       awayPresetKey,

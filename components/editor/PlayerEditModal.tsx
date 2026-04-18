@@ -149,16 +149,17 @@ export function PlayerEditModal({
           role="dialog"
           aria-modal="true"
           aria-labelledby={titleId}
-          className="animate-player-edit-panel pointer-events-auto max-h-[min(90dvh,560px)] w-full max-w-[min(92vw,420px)] overflow-y-auto rounded-t-2xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)]/96 p-4 shadow-[0_24px_64px_-20px_rgba(0,0,0,0.65)] sm:rounded-2xl"
+          className="animate-player-edit-panel pointer-events-auto flex w-full max-w-[min(92vw,420px)] flex-col rounded-t-2xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)]/96 shadow-[0_24px_64px_-20px_rgba(0,0,0,0.65)] max-sm:max-h-[min(88dvh,calc(100dvh-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px)-0.5rem))] max-sm:overflow-hidden sm:max-h-none sm:overflow-visible sm:rounded-2xl"
           onClick={(e) => e.stopPropagation()}
         >
           <form
+            className="flex min-h-0 flex-1 flex-col"
             onSubmit={(e) => {
               e.preventDefault();
               save();
             }}
           >
-            <div className="mb-4 flex items-start justify-between gap-3">
+            <div className="flex shrink-0 items-start justify-between gap-3 px-4 pb-3 pt-4 sm:px-5 sm:pb-3.5 sm:pt-5">
               <div className="min-w-0">
                 <p
                   id={titleId}
@@ -183,7 +184,8 @@ export function PlayerEditModal({
               </Button>
             </div>
 
-            <div className="space-y-4">
+            <div className="min-h-0 touch-pan-y overflow-x-hidden px-4 max-sm:flex-1 max-sm:overflow-y-auto max-sm:overscroll-y-contain max-sm:[scrollbar-width:thin] sm:flex-none sm:overflow-visible sm:px-5">
+              <div className="space-y-3 pb-1 sm:space-y-3.5 sm:pb-0">
               <div>
                 <div className="flex items-baseline justify-between gap-2">
                   <Label htmlFor="player-edit-name">{ui.editorNameLabel}</Label>
@@ -284,9 +286,10 @@ export function PlayerEditModal({
                   {jerseyError ?? ui.editorJerseyHint}
                 </p>
               </div>
+              </div>
             </div>
 
-            <div className="mt-6 flex justify-end border-t border-[var(--border-subtle)] pt-4">
+            <div className="flex shrink-0 justify-end border-t border-[var(--border-subtle)] px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 sm:px-5 sm:pb-4 sm:pt-4">
               <Button
                 type="submit"
                 className="bg-green-800 text-white hover:bg-lime-600"

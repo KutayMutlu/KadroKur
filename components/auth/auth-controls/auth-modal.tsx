@@ -2,8 +2,7 @@
 
 import { X } from "lucide-react";
 import { createPortal } from "react-dom";
-import { AuthModalDesktop } from "./auth-modal-desktop";
-import { AuthModalMobile } from "./auth-modal-mobile";
+import { AuthModalBody } from "./auth-modal-body";
 import type { AuthModalProps } from "./types";
 
 export function AuthModal(props: AuthModalProps) {
@@ -11,30 +10,57 @@ export function AuthModal(props: AuthModalProps) {
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[9999] bg-black/65 backdrop-blur-md transition-opacity duration-200"
+      className="fixed inset-0 z-[9999] flex min-h-0 items-end justify-center bg-black/60 backdrop-blur-md sm:items-center sm:p-4"
       onClick={onClose}
+      role="presentation"
     >
-      <div className="grid min-h-full place-items-center p-3 sm:p-6">
-        <div
-          className="relative isolate z-[10000] max-h-[min(92vh,900px)] w-[min(calc(100vw-1.5rem),42rem)] overflow-y-auto rounded-2xl border border-white/20 bg-[var(--card)]/95 p-4 shadow-[0_36px_90px_-34px_rgba(0,0,0,0.95)] ring-1 ring-white/10 backdrop-blur-xl sm:w-[min(calc(100vw-2rem),54rem)] sm:p-6 lg:w-[min(calc(100vw-3rem),60rem)]"
-          onClick={(e) => e.stopPropagation()}
-        >
+      <div
+        className="flex max-h-[min(92dvh,720px)] w-full max-w-lg flex-col overflow-hidden rounded-t-[1.75rem] border border-[var(--border-subtle)] bg-[var(--bg-card)] shadow-[0_24px_64px_-16px_rgba(0,0,0,0.75)] backdrop-blur-xl sm:max-h-[min(90vh,680px)] sm:rounded-3xl"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="auth-modal-heading"
+      >
+        <div className="relative shrink-0 border-b border-[var(--border-subtle)]/90 bg-gradient-to-b from-[var(--accent)]/[0.07] via-[var(--bg-card)] to-[var(--bg-card)] px-4 pb-3 pt-4 sm:px-6 sm:pb-4 sm:pt-5">
+          <div
+            className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-[var(--accent)]/35 to-transparent"
+            aria-hidden
+          />
           <button
             type="button"
-            className="absolute right-3 top-3 rounded-full p-1.5 text-[var(--muted)] transition hover:bg-white/10 hover:text-white"
+            className="absolute right-2 top-2 rounded-xl p-2 text-[var(--muted)] transition hover:bg-white/10 hover:text-[var(--foreground)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/45 sm:right-3 sm:top-3"
             onClick={onClose}
             aria-label="Kapat"
           >
-            <X className="h-4 w-4" />
+            <X className="h-5 w-5" />
           </button>
+          <div className="flex flex-col items-center px-8 text-center sm:px-10">
+            <p
+              id="auth-modal-heading"
+              className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--muted)]"
+            >
+              KadroKur
+            </p>
+            <p
+              className="mt-1.5 max-w-[18rem] text-pretty text-sm leading-snug text-[var(--muted)]"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              Oturum aç veya kayıt ol
+            </p>
+          </div>
+        </div>
 
-          <p className="mb-3 text-[11px] uppercase tracking-[0.2em] text-[var(--muted)]">KadroKur</p>
-
-          <AuthModalMobile {...panelProps} />
-          <AuthModalDesktop {...panelProps} />
-
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-5 sm:px-8 sm:pb-8 sm:pt-6">
+          <AuthModalBody {...panelProps} />
           {authMessage ? (
-            <p className={`mt-4 text-sm ${authMessageTone === "success" ? "text-green-400" : "text-red-400"}`}>
+            <p
+              className={`mt-5 rounded-xl border px-3 py-2.5 text-center text-sm leading-snug ${
+                authMessageTone === "success"
+                  ? "border-emerald-500/35 bg-emerald-500/10 text-emerald-200"
+                  : "border-red-500/40 bg-red-500/10 text-red-200"
+              }`}
+              role="status"
+            >
               {authMessage}
             </p>
           ) : null}

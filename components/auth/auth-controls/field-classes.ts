@@ -1,3 +1,10 @@
+/** Giriş / kayıt modalı — tek stil (açık & koyu tema) */
+export function authModalFieldClass(invalid: boolean): string {
+  return invalid
+    ? "min-h-[44px] w-full rounded-xl border border-red-500/80 bg-red-500/10 px-3.5 py-2.5 text-sm text-[var(--foreground)] outline-none ring-2 ring-red-500/40 transition placeholder:text-[var(--muted)] focus:ring-red-500/55 sm:min-h-0"
+    : "min-h-[44px] w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)]/95 px-3.5 py-2.5 text-sm text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted)] hover:border-[var(--border-subtle)] focus:border-[var(--accent)]/50 focus:ring-2 focus:ring-[var(--accent)]/25 sm:min-h-0";
+}
+
 export function emailInputClassMobile(emailInvalid: boolean): string {
   return emailInvalid
     ? "w-full rounded-lg border border-red-500 bg-red-950/25 px-3 py-2 text-sm text-[var(--foreground)] outline-none ring-2 ring-red-500/45 transition focus:ring-2 focus:ring-red-500/55"

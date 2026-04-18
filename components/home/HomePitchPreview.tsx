@@ -2,12 +2,22 @@ import type { CSSProperties } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
-const DOTS = [
-  { pos: "bottom-[18%] left-[22%]", color: "bg-[#f87171]", delay: "0s" },
-  { pos: "bottom-[28%] left-1/2 -translate-x-1/2", color: "bg-[#fbbf24]", delay: "0.18s" },
-  { pos: "bottom-[18%] right-[22%]", color: "bg-[#4ade80]", delay: "0.36s" },
-  { pos: "bottom-[42%] left-[30%]", color: "bg-[#a78bfa]", delay: "0.54s" },
-  { pos: "bottom-[42%] right-[30%]", color: "bg-[#22d3ee]", delay: "0.72s" },
+/** Alt yarı (atak yönü aşağı) — “ev” */
+const DOTS_HOME = [
+  { pos: "bottom-[16%] left-[22%]", color: "bg-[#f87171]", delay: "0s" },
+  { pos: "bottom-[26%] left-1/2 -translate-x-1/2", color: "bg-[#fbbf24]", delay: "0.15s" },
+  { pos: "bottom-[16%] right-[22%]", color: "bg-[#4ade80]", delay: "0.3s" },
+  { pos: "bottom-[38%] left-[28%]", color: "bg-[#a78bfa]", delay: "0.45s" },
+  { pos: "bottom-[38%] right-[28%]", color: "bg-[#22d3ee]", delay: "0.6s" },
+] as const;
+
+/** Üst yarı — “rakip” */
+const DOTS_AWAY = [
+  { pos: "top-[16%] left-[22%]", color: "bg-[#fb923c]", delay: "0.08s" },
+  { pos: "top-[26%] left-1/2 -translate-x-1/2", color: "bg-[#f472b6]", delay: "0.22s" },
+  { pos: "top-[16%] right-[22%]", color: "bg-[#a3e635]", delay: "0.38s" },
+  { pos: "top-[38%] left-[28%]", color: "bg-[#38bdf8]", delay: "0.52s" },
+  { pos: "top-[38%] right-[28%]", color: "bg-[#c4b5fd]", delay: "0.68s" },
 ] as const;
 
 export function HomePitchPreview() {
@@ -44,27 +54,78 @@ export function HomePitchPreview() {
           </div>
         </div>
 
-        <div className="home-preview-pitch relative aspect-[3/4] w-full overflow-hidden rounded-2xl border border-[var(--pitch-line)] bg-gradient-to-b from-[var(--mini-pitch-from)] to-[var(--mini-pitch-to)]">
+        <div className="home-preview-pitch relative aspect-[3/4] w-full overflow-hidden rounded-2xl border border-[var(--mini-pitch-line)] bg-gradient-to-b from-[var(--mini-pitch-from)] to-[var(--mini-pitch-to)]">
           <div
-            className="pointer-events-none absolute inset-0 opacity-[0.14]"
+            className="pointer-events-none absolute inset-0 opacity-[0.85]"
             style={{
               backgroundImage:
-                "repeating-linear-gradient(90deg, transparent, transparent 7px, rgba(255,255,255,0.06) 7px, rgba(255,255,255,0.06) 8px)",
+                "repeating-linear-gradient(90deg, transparent, transparent 7px, var(--mini-pitch-stripe) 7px, var(--mini-pitch-stripe) 8px)",
             }}
             aria-hidden
           />
-          <div className="absolute inset-x-[12%] top-[8%] bottom-[8%] rounded-sm border border-[var(--pitch-line)]" />
-          <div className="absolute left-1/2 top-1/2 h-[28%] w-[28%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-[var(--pitch-line)]" />
-          <div className="absolute left-0 right-0 top-1/2 border-t border-[var(--pitch-line)]" />
 
-          {/* Küçük “top” — orta hatta hafif gidip gelir */}
+          {/* Dış çizgiler */}
+          <div className="absolute inset-x-[12%] top-[8%] bottom-[8%] rounded-sm border border-[var(--mini-pitch-line)]" />
+
+          {/* Orta yuvarlak + orta saha çizgisi */}
+          <div className="absolute left-1/2 top-1/2 h-[28%] w-[28%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-[var(--mini-pitch-line)]" />
+          <div className="absolute left-0 right-0 top-1/2 border-t border-[var(--mini-pitch-line)]" />
+
+          {/* Üst ceza sahası + kale alanı (kale çizgisi = saha üst kenarı) */}
           <div
-            className="home-preview-ball absolute bottom-[36%] left-1/2 h-2 w-2 rounded-full bg-white/90 shadow-[0_0_8px_rgba(255,255,255,0.35)] ring-1 ring-white/40"
+            className="absolute left-[20%] right-[20%] top-[8%] h-[14%] rounded-t-sm border border-[var(--mini-pitch-line)]"
+            aria-hidden
+          />
+          <div
+            className="absolute left-[30%] right-[30%] top-[8%] h-[6%] rounded-t-sm border border-[var(--mini-pitch-line)]"
+            aria-hidden
+          />
+          {/* Üst kale direkleri (kale ağzı iki yanı) */}
+          <div
+            className="absolute left-[30%] top-[8%] h-[3.5%] w-[2px] rounded-t-sm bg-[var(--mini-pitch-line)]"
+            aria-hidden
+          />
+          <div
+            className="absolute right-[30%] top-[8%] h-[3.5%] w-[2px] rounded-t-sm bg-[var(--mini-pitch-line)]"
             aria-hidden
           />
 
-          {DOTS.map(({ pos, color, delay }) => (
-            <div key={`${pos}-${color}`} className={`absolute ${pos}`}>
+          {/* Alt ceza sahası + kale alanı */}
+          <div
+            className="absolute bottom-[8%] left-[20%] right-[20%] h-[14%] rounded-b-sm border border-[var(--mini-pitch-line)]"
+            aria-hidden
+          />
+          <div
+            className="absolute bottom-[8%] left-[30%] right-[30%] h-[6%] rounded-b-sm border border-[var(--mini-pitch-line)]"
+            aria-hidden
+          />
+          <div
+            className="absolute bottom-[8%] left-[30%] h-[3.5%] w-[2px] rounded-b-sm bg-[var(--mini-pitch-line)]"
+            aria-hidden
+          />
+          <div
+            className="absolute bottom-[8%] right-[30%] h-[3.5%] w-[2px] rounded-b-sm bg-[var(--mini-pitch-line)]"
+            aria-hidden
+          />
+
+          {/* Ceza noktaları (küçük nokta) */}
+          <div
+            className="absolute left-1/2 top-[17%] h-1 w-1 -translate-x-1/2 rounded-full bg-[var(--mini-pitch-line)]"
+            aria-hidden
+          />
+          <div
+            className="absolute bottom-[17%] left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-[var(--mini-pitch-line)]"
+            aria-hidden
+          />
+
+          {/* Top — orta hatta (koyu zeminde beyaz, açık zeminde koyu + gölge) */}
+          <div
+            className="home-preview-ball absolute bottom-[36%] left-1/2 h-2 w-2 rounded-full bg-[var(--foreground)]/85 shadow-sm ring-1 ring-[var(--foreground)]/25 dark:bg-white/90 dark:shadow-[0_0_8px_rgba(255,255,255,0.35)] dark:ring-white/40"
+            aria-hidden
+          />
+
+          {[...DOTS_HOME, ...DOTS_AWAY].map(({ pos, color, delay }, i) => (
+            <div key={`${pos}-${color}-${i}`} className={`absolute ${pos}`}>
               <div
                 className={`home-preview-dot-bob h-3 w-3 rounded-full ${color} ring-2 ring-[var(--mini-pitch-ring)]`}
                 style={{ "--home-preview-delay": delay } as CSSProperties}

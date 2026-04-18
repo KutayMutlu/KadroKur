@@ -49,6 +49,9 @@
   --on-accent: #142018;
   --mini-pitch-from: #0d2818;
   --mini-pitch-to: #0a1f12;
+  /* Hero mini saha çizgileri (koyu zeminde açık çizgi) */
+  --mini-pitch-line: rgba(200, 255, 220, 0.28);
+  --mini-pitch-stripe: rgba(255, 255, 255, 0.055);
   --mini-pitch-ring: #142018;
   --card-inset-glow: 0 0 0 1px rgba(190, 255, 100, 0.08) inset;
   --font-display: var(--font-outfit), system-ui, sans-serif;
@@ -74,9 +77,12 @@ html.light {
   --pitch-grad-start: #dce8df;
   --hero-glow-mid: rgba(90, 160, 70, 0.2);
   --on-accent: #f7fee7;
-  --mini-pitch-from: #1a4d2e;
-  --mini-pitch-to: #0f3320;
-  --mini-pitch-ring: #f0fdf4;
+  /* Açık temada kart üstünde açık çim + koyu çizgi (okunur) */
+  --mini-pitch-from: #e2f0e8;
+  --mini-pitch-to: #c8e0d0;
+  --mini-pitch-line: rgba(28, 65, 42, 0.45);
+  --mini-pitch-stripe: rgba(15, 45, 28, 0.06);
+  --mini-pitch-ring: rgba(25, 55, 38, 0.45);
   --card-inset-glow: 0 0 0 1px rgba(60, 100, 55, 0.12) inset;
   --background: var(--bg-deep);
   --card: var(--bg-card);
@@ -199,6 +205,10 @@ html.light {
   background-size: 220% 100%;
   animation: home-preview-sweep 9s ease-in-out infinite;
   pointer-events: none;
+}
+
+html.light .home-preview-pitch::after {
+  opacity: 0.55;
 }
 
 .home-preview-ball {

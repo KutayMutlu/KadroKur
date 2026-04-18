@@ -195,8 +195,9 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
 
   return (
     <div className="flex min-h-[100dvh] flex-col overflow-x-hidden bg-pitch-night pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:h-dvh lg:overflow-hidden">
-      <div className="mx-auto flex min-h-0 w-full max-w-none flex-1 flex-col px-3 py-4 sm:px-4 sm:py-6 xl:px-4 lg:h-full">
+      <div className="mx-auto flex min-h-0 w-full max-w-none flex-1 flex-col px-3 pb-4 pt-0 sm:px-4 sm:pb-6 xl:px-4 lg:h-full">
       <EditorHeader
+        tacticTitle={tacticTitle}
         canUndo={pastSnapshots.length > 0}
         canRedo={futureSnapshots.length > 0}
         onUndo={onUndo}

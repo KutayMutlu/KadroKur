@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { AppSettingsPopover } from "@/components/app-settings-popover";
 import { PitchCanvas, type PitchCanvasHandle } from "@/components/editor/PitchCanvas";
 import { getLocalTacticByShareId } from "@/lib/local-tactics";
 import { getSupabase } from "@/lib/supabase";
@@ -114,7 +114,7 @@ export function ShareViewClient({ shareId }: ShareViewClientProps) {
             </p>
           </div>
           <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 sm:justify-start">
-            <ThemeToggle />
+            <AppSettingsPopover />
             <Button
               type="button"
               variant="secondary"

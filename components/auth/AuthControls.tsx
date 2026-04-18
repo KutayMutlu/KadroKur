@@ -2,6 +2,7 @@
 
 import { AccountDropdown } from "@/components/auth/auth-controls/account-dropdown";
 import { AuthModal } from "@/components/auth/auth-controls/auth-modal";
+import { AppSettingsPopover } from "@/components/app-settings-popover";
 import { AuthNotConfigured } from "@/components/auth/auth-controls/not-configured";
 import type { AuthControlsProps, AuthModalProps } from "@/components/auth/auth-controls/types";
 import {
@@ -11,7 +12,7 @@ import {
 import { getOAuthRedirectOrigin } from "@/lib/site-origin";
 import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import type { User } from "@supabase/supabase-js";
-import { LogIn } from "lucide-react";
+import { CircleUserRound } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 export type { AuthControlsProps };
@@ -484,37 +485,40 @@ export function AuthControls({ guestCompanion }: AuthControlsProps) {
     return (
       <>
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-          <button
-            type="button"
-            disabled={loading}
-            aria-haspopup="dialog"
-            aria-expanded={authModalOpen}
-            aria-label="Giriş yap veya kayıt ol"
-            onClick={() => {
-              setAuthMode("signIn");
-              setAuthMessage("");
-              setAuthModalOpen(true);
-            }}
-            className="group relative flex min-h-[44px] shrink-0 touch-manipulation items-center gap-2.5 overflow-hidden rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)]/95 py-2 pl-2 pr-3 shadow-[var(--card-inset-glow)] backdrop-blur-sm transition hover:border-[var(--accent)]/35 hover:shadow-[0_0_0_1px_color-mix(in_srgb,var(--accent)_22%,transparent)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/40 disabled:pointer-events-none disabled:opacity-50 sm:min-h-0 sm:py-1.5 sm:pl-1.5 sm:pr-2.5"
-          >
-            <span
-              className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[var(--accent)]/28 to-transparent opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100"
-              aria-hidden
-            />
-            <span className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--accent)]/[0.14] text-[var(--accent)] ring-1 ring-[var(--accent)]/18">
-              <LogIn className="h-[18px] w-[18px]" strokeWidth={2.25} aria-hidden />
-            </span>
-            <span
-              className="relative min-w-0 text-[13px] font-semibold leading-tight text-[var(--foreground)] sm:text-sm"
-              style={{ fontFamily: "var(--font-display)" }}
+          <div className="flex min-h-[44px] shrink-0 items-stretch overflow-hidden rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)]/95 shadow-[var(--card-inset-glow)] backdrop-blur-sm transition hover:border-[var(--accent)]/35 hover:shadow-[0_0_0_1px_color-mix(in_srgb,var(--accent)_22%,transparent)] focus-within:outline-none focus-within:ring-2 focus-within:ring-[var(--accent)]/40 sm:min-h-0">
+            <button
+              type="button"
+              disabled={loading}
+              aria-haspopup="dialog"
+              aria-expanded={authModalOpen}
+              aria-label="Giriş yap veya kayıt ol"
+              onClick={() => {
+                setAuthMode("signIn");
+                setAuthMessage("");
+                setAuthModalOpen(true);
+              }}
+              className="group relative flex min-h-0 min-w-0 flex-1 touch-manipulation items-center gap-2.5 overflow-hidden rounded-l-2xl rounded-r-none border-0 border-r border-[var(--border-subtle)]/70 bg-transparent py-2 pl-2 pr-3 text-left shadow-none transition hover:bg-white/[0.06] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/40 disabled:pointer-events-none disabled:opacity-50 sm:py-1.5 sm:pl-1.5 sm:pr-2.5"
             >
-              <span className="whitespace-nowrap">
-                Giriş yap
-                <span className="px-1 text-[var(--muted)]">·</span>
-                Kayıt ol
+              <span
+                className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[var(--accent)]/28 to-transparent opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100"
+                aria-hidden
+              />
+              <span className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--accent)]/[0.14] text-[var(--accent)] ring-1 ring-[var(--accent)]/18">
+                <CircleUserRound className="h-[19px] w-[19px]" strokeWidth={1.85} aria-hidden />
               </span>
-            </span>
-          </button>
+              <span
+                className="relative min-w-0 text-[13px] font-semibold leading-tight text-[var(--foreground)] sm:text-sm"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                <span className="whitespace-nowrap">
+                  Giriş yap
+                  <span className="px-1 text-[var(--muted)]">·</span>
+                  Kayıt ol
+                </span>
+              </span>
+            </button>
+            <AppSettingsPopover variant="embedded" />
+          </div>
           {guestCompanion}
           {authModalOpen ? <AuthModal {...modalProps} /> : null}
         </div>
@@ -537,15 +541,19 @@ export function AuthControls({ guestCompanion }: AuthControlsProps) {
 
   return (
     <>
-      <AccountDropdown
-        user={user}
-        profile={profileNames}
-        loading={loading}
-        onSignOut={signOut}
-        onMenuOpenChange={(open) => {
-          if (open) void fetchProfileNames();
-        }}
-      />
+      <div className="flex min-h-[44px] shrink-0 items-stretch overflow-hidden rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)]/95 shadow-[var(--card-inset-glow)] backdrop-blur-sm transition hover:border-[var(--accent)]/35 hover:shadow-[0_0_0_1px_color-mix(in_srgb,var(--accent)_22%,transparent)] focus-within:outline-none focus-within:ring-2 focus-within:ring-[var(--accent)]/40 sm:min-h-0">
+        <AccountDropdown
+          embedded
+          user={user}
+          profile={profileNames}
+          loading={loading}
+          onSignOut={signOut}
+          onMenuOpenChange={(open) => {
+            if (open) void fetchProfileNames();
+          }}
+        />
+        <AppSettingsPopover variant="embedded" />
+      </div>
       {snackbarMessage ? (
         <div className="pointer-events-none fixed bottom-4 left-1/2 z-[10020] w-[min(calc(100vw-2rem),28rem)] -translate-x-1/2 px-2">
           <div

@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { AuthControls } from "@/components/auth/AuthControls";
-import { ThemeToggle } from "@/components/theme-toggle";
 
 type SiteHeaderProps = {
   /** Varsayılan true. Taktiklerim gibi sayfalarda false yapılabilir (sayfa zaten editöre yönlendiriyor). */
@@ -8,7 +7,7 @@ type SiteHeaderProps = {
 };
 
 /**
- * Ana sayfa ve genel sayfalarda ortak üst şerit: logo → anasayfa, tema, hesap menüsü, isteğe bağlı editör linki.
+ * Ana sayfa ve genel sayfalarda ortak üst şerit: logo, ayarlar (dişli), hesap, isteğe bağlı editör linki.
  */
 export function SiteHeader({ showEditorLink = true }: SiteHeaderProps) {
   return (
@@ -40,7 +39,7 @@ export function SiteHeader({ showEditorLink = true }: SiteHeaderProps) {
           </div>
         </Link>
         <div className="flex shrink-0 flex-nowrap items-center gap-1.5 sm:gap-2">
-          <AuthControls guestCompanion={<ThemeToggle />} />
+          <AuthControls />
           {showEditorLink ? (
             <Link
               href="/editor"

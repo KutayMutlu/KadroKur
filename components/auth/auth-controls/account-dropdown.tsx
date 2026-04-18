@@ -7,10 +7,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ThemeToggle } from "@/components/theme-toggle";
 import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { ChevronDown, LayoutGrid, LogOut, UserRound } from "lucide-react";
+import { cn } from "@/lib/utils";
 import {
   pickAvatarUrl,
   pickDisplayName,
@@ -25,6 +25,8 @@ type Props = {
   /** `user_profiles` — yoksa kayıt metadata’sındaki ad/soyad kullanılır */
   profile?: ProfileNameFields | null;
   onMenuOpenChange?: (open: boolean) => void;
+  /** Ayarlar ile tek çerçevede sağ segment */
+  embedded?: boolean;
 };
 
 export function AccountDropdown({
@@ -33,6 +35,7 @@ export function AccountDropdown({
   onSignOut,
   profile = null,
   onMenuOpenChange,
+  embedded = false,
 }: Props) {
   const avatarUrl = pickAvatarUrl(user);
   const initials = pickInitials(user, profile);
@@ -45,7 +48,12 @@ export function AccountDropdown({
         <button
           type="button"
           disabled={loading}
-          className="group relative flex max-w-[min(100%,13rem)] shrink-0 items-center gap-2.5 overflow-hidden rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)]/90 py-1.5 pl-1.5 pr-2 shadow-[var(--card-inset-glow)] backdrop-blur-sm transition hover:border-[var(--accent)]/35 hover:shadow-[0_0_0_1px_color-mix(in_srgb,var(--accent)_22%,transparent)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/40 disabled:opacity-60 data-[state=open]:border-[var(--accent)]/45 data-[state=open]:shadow-[0_0_24px_-8px_color-mix(in_srgb,var(--accent)_35%,transparent)] sm:max-w-[16.5rem]"
+          className={cn(
+            "group relative flex max-w-[min(100%,13rem)] shrink-0 items-center gap-2.5 overflow-hidden py-1.5 pl-1.5 pr-2 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/40 disabled:opacity-60 sm:max-w-[16.5rem]",
+            embedded
+              ? "min-h-[44px] min-w-0 flex-1 rounded-none rounded-l-2xl rounded-r-none border-0 border-r border-[var(--border-subtle)]/70 bg-transparent py-2 pl-2 pr-2 shadow-none hover:bg-white/[0.05] data-[state=open]:bg-[var(--accent)]/[0.08] sm:min-h-0 sm:py-1.5 sm:pl-1.5"
+              : "rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)]/90 shadow-[var(--card-inset-glow)] backdrop-blur-sm hover:border-[var(--accent)]/35 hover:shadow-[0_0_0_1px_color-mix(in_srgb,var(--accent)_22%,transparent)] data-[state=open]:border-[var(--accent)]/45 data-[state=open]:shadow-[0_0_24px_-8px_color-mix(in_srgb,var(--accent)_35%,transparent)]"
+          )}
           aria-label={`Hesap menüsü: ${displayName}`}
           title={displayName}
         >
@@ -158,19 +166,6 @@ export function AccountDropdown({
               <span className="text-sm font-medium text-[var(--foreground)]">Taktiklerim</span>
             </Link>
           </DropdownMenuItem>
-        </div>
-
-        <DropdownMenuSeparator className="my-0 bg-white/[0.06]" />
-
-        <div
-          className="flex items-center justify-between gap-3 px-4 py-2.5"
-          onPointerDown={(e) => e.stopPropagation()}
-        >
-          <div>
-            <p className="text-sm font-medium text-[var(--foreground)]">Görünüm</p>
-            <p className="text-[11px] text-[var(--muted)]">Açık / koyu tema</p>
-          </div>
-          <ThemeToggle />
         </div>
 
         <DropdownMenuSeparator className="my-0 bg-white/[0.06]" />

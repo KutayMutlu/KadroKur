@@ -10,6 +10,7 @@ import { ShareSheet } from "@/components/ui/share-sheet";
 import { Toast } from "@/components/ui/toast";
 import { PitchCanvas, type PitchCanvasHandle } from "@/components/editor/PitchCanvas";
 import { exportStageToPng } from "@/lib/canvas-export";
+import { shareHttpUrl } from "@/lib/share-web-url";
 import type { CanvasState } from "@/types/tactic";
 import { useRef } from "react";
 
@@ -134,6 +135,20 @@ export function TacticsGrid({ tactics }: { tactics: TacticRow[] }) {
     } catch {
       showToast("Bağlantı kopyalanamadı. Lütfen tekrar deneyin.", "destructive");
     }
+  };
+
+  const handleShareLink = async () => {
+    if (!shareUrl || shareDisabled) return;
+    const result = await shareHttpUrl(shareUrl, {
+      title: "KadroKur taktik",
+      text: "Taktik paylaşım linki:",
+    });
+    if (result === "shared") {
+      showToast("Paylaşım menüsü açıldı", "success");
+      return;
+    }
+    if (result === "cancelled") return;
+    await handleCopyLink();
   };
 
   const handleShareImage = async () => {
@@ -371,26 +386,58 @@ export function TacticsGrid({ tactics }: { tactics: TacticRow[] }) {
               className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-[var(--border-subtle)] bg-slate-800/80 px-3 py-2 text-sm font-semibold text-slate-100 transition hover:border-emerald-400/45 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isDownloading ? <Loader2 className="h-4 w-4 shrink-0 animate-spin" /> : <Download className="h-4 w-4 shrink-0" />}
-              {isDownloading ? "İndiriliyor..." : "Görseli İndir"}
+              {isDownloading ? (
+                <>
+                  <span className="min-[1367px]:hidden">Kaydediliyor...</span>
+                  <span className="hidden min-[1367px]:inline">İndiriliyor...</span>
+                </>
+              ) : (
+                <>
+                  <span className="min-[1367px]:hidden">Galeriye kaydet</span>
+                  <span className="hidden min-[1367px]:inline">Görseli İndir</span>
+                </>
+              )}
             </button>
           </div>
         </div>
         <div className="mt-4 border-t border-[var(--border-subtle)] pt-4">
           <div className="rounded-xl border border-[var(--border-subtle)] bg-slate-950/70 p-2">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <div className="flex flex-col gap-2 min-[1367px]:flex-row min-[1367px]:items-center">
             <div className="flex h-[40px] w-full min-h-10 flex-1 items-center rounded-lg border border-[var(--border-subtle)] bg-slate-900/90 px-3 text-xs text-slate-200">
               <Link2 className="mr-2 h-3.5 w-3.5 shrink-0 text-slate-400" />
               <span className="truncate">{shareUrl || "Paylaşım linki yok"}</span>
             </div>
-            <button
-              type="button"
-              onClick={handleCopyLink}
-              disabled={shareDisabled}
-              title={shareDisabled ? shareDisabledTitle : "Bağlantıyı kopyala"}
-              className="inline-flex h-[40px] min-h-10 w-full items-center justify-center rounded-lg border border-emerald-400/50 bg-emerald-500/25 px-4 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-500/35 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
-            >
-              Kopyala
-            </button>
+            <div className="flex w-full gap-2 min-[1367px]:w-auto min-[1367px]:shrink-0">
+              <button
+                type="button"
+                onClick={handleShareLink}
+                disabled={shareDisabled}
+                title={shareDisabled ? shareDisabledTitle : "Paylaşım linkini paylaş"}
+                className="inline-flex h-[40px] min-h-10 flex-1 items-center justify-center gap-2 rounded-lg border border-emerald-400/50 bg-emerald-500/25 px-3 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-500/35 disabled:cursor-not-allowed disabled:opacity-50 min-[1367px]:hidden"
+              >
+                <Share2 className="h-4 w-4 shrink-0" aria-hidden />
+                Linki paylaş
+              </button>
+              <button
+                type="button"
+                onClick={handleCopyLink}
+                disabled={shareDisabled}
+                title={shareDisabled ? shareDisabledTitle : "Panoya kopyala"}
+                className="inline-flex h-[40px] min-h-10 flex-1 items-center justify-center gap-2 rounded-lg border border-[var(--border-subtle)] bg-slate-800/90 px-3 text-sm font-semibold text-slate-100 transition hover:border-emerald-400/35 disabled:cursor-not-allowed disabled:opacity-50 min-[1367px]:hidden"
+              >
+                <Link2 className="h-4 w-4 shrink-0" aria-hidden />
+                Panoya kopyala
+              </button>
+              <button
+                type="button"
+                onClick={handleCopyLink}
+                disabled={shareDisabled}
+                title={shareDisabled ? shareDisabledTitle : "Bağlantıyı kopyala"}
+                className="hidden h-[40px] min-h-10 w-full items-center justify-center rounded-lg border border-emerald-400/50 bg-emerald-500/25 px-4 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-500/35 disabled:cursor-not-allowed disabled:opacity-50 min-[1367px]:inline-flex min-[1367px]:w-auto"
+              >
+                Linki kopyala
+              </button>
+            </div>
           </div>
         </div>
         </div>

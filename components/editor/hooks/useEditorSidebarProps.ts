@@ -33,6 +33,7 @@ interface UseEditorSidebarPropsParams {
   onSave: () => void;
   onExport: () => void;
   onCopyShare: () => void;
+  onShareLink: () => void;
   saving: boolean;
   canCopyShare: boolean;
   copyBlockedMessage: string;
@@ -67,6 +68,7 @@ export function useEditorSidebarProps({
   onSave,
   onExport,
   onCopyShare,
+  onShareLink,
   saving,
   canCopyShare,
   copyBlockedMessage,
@@ -105,6 +107,7 @@ export function useEditorSidebarProps({
       onSave,
       onExport,
       onCopyShare,
+      onShareLink,
       saving,
       canCopyShare,
       copyBlockedMessage,
@@ -127,6 +130,7 @@ export function useEditorSidebarProps({
       onAwayPresetChange,
       onCopyShare,
       onExport,
+      onShareLink,
       onHomeFormationChange,
       onHomePresetChange,
       onMatchFormatChange,

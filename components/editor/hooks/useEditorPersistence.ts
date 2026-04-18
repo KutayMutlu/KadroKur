@@ -6,6 +6,7 @@ import { getMatchFormatForFormation, type MatchFormatKey } from "@/lib/formation
 import { formatJerseyNumber, normalizeCaptainFlags, normalizePlayerRole, sanitizePlayerName } from "@/lib/player-fields";
 import { getLocalTacticById, upsertLocalTactic, type StoredTactic } from "@/lib/local-tactics";
 import { generateShareId, shareUrl } from "@/lib/share";
+import { shareHttpUrl } from "@/lib/share-web-url";
 import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import { normalizePresetKey, type TacticalPresetKey } from "@/lib/presets";
 import type { CanvasState } from "@/types/tactic";
@@ -332,6 +333,33 @@ export function useEditorPersistence({
     setMessage("Link panoya kopyalandı.");
   }, [didSaveOnce, isAuthenticated, shareId]);
 
+  const handleShareLink = useCallback(async () => {
+    if (!isAuthenticated) {
+      setMessageTone("warning");
+      setMessage("Paylaşım linki için lütfen giriş yapın.");
+      return;
+    }
+    if (!didSaveOnce || !shareId) {
+      setMessageTone("warning");
+      setMessage("Paylaşım linkini paylaşmadan önce lütfen taktiği kaydedin.");
+      return;
+    }
+    const url = shareUrl(shareId);
+    const result = await shareHttpUrl(url, {
+      title: "KadroKur taktik",
+      text: "Taktik paylaşım linki:",
+    });
+    if (result === "shared") {
+      setMessageTone("success");
+      setMessage("Paylaşım menüsü açıldı.");
+      return;
+    }
+    if (result === "cancelled") return;
+    await navigator.clipboard.writeText(url);
+    setMessageTone("success");
+    setMessage("Link panoya kopyalandı.");
+  }, [didSaveOnce, isAuthenticated, shareId]);
+
   return {
     saving,
     message,
@@ -340,5 +368,6 @@ export function useEditorPersistence({
     copyBlockedMessage,
     handleSave,
     handleCopyShare,
+    handleShareLink,
   };
 }

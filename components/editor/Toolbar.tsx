@@ -4,14 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { AlertTriangle, CheckCircle2, Download, Link2, Loader2, Save } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Download, Link2, Loader2, Save, Share2 } from "lucide-react";
 
 export interface ToolbarProps {
   tacticTitle: string;
   onTacticTitleChange: (t: string) => void;
   onSave: () => void;
   onExport: () => void;
+  /** Masaüstü: tek “Linki kopyala”. Mobilde ayrıca `onShareLink` kullanılır. */
   onCopyShare: () => void;
+  /** Mobil: sistem paylaşımı (WhatsApp vb.); olmazsa panoya düşer */
+  onShareLink: () => void;
   saving: boolean;
   canCopyShare: boolean;
   copyBlockedMessage: string;
@@ -27,6 +30,7 @@ export function Toolbar({
   onSave,
   onExport,
   onCopyShare,
+  onShareLink,
   saving,
   canCopyShare,
   copyBlockedMessage,
@@ -55,17 +59,31 @@ export function Toolbar({
             type="button"
             variant="secondary"
             onClick={onExport}
-            className="min-h-[44px] w-full touch-manipulation sm:min-h-0"
+            className="min-h-[44px] w-full touch-manipulation min-[1367px]:min-h-0"
           >
-            <Download className="h-4 w-4" />
-            PNG indir
+            <Download className="h-4 w-4 shrink-0" aria-hidden />
+            <span className="min-[1367px]:hidden">Galeriye kaydet</span>
+            <span className="hidden min-[1367px]:inline">PNG indir</span>
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={onShareLink}
+            aria-disabled={!canCopyShare}
+            className={`min-h-[44px] w-full touch-manipulation min-[1367px]:min-h-0 min-[1367px]:hidden ${
+              canCopyShare ? "" : "opacity-50"
+            }`}
+            title={canCopyShare ? "Paylaşım linkini paylaş" : copyBlockedMessage}
+          >
+            <Share2 className="h-4 w-4 shrink-0" aria-hidden />
+            Linki paylaş
           </Button>
           <Button
             type="button"
             variant="secondary"
             onClick={onCopyShare}
             aria-disabled={!canCopyShare}
-            className={`min-h-[44px] w-full touch-manipulation sm:min-h-0 ${
+            className={`hidden min-h-[44px] w-full touch-manipulation min-[1367px]:min-h-0 min-[1367px]:inline-flex ${
               canCopyShare ? "" : "opacity-50"
             }`}
             title={
@@ -74,15 +92,28 @@ export function Toolbar({
                 : copyBlockedMessage
             }
           >
-            <Link2 className="h-4 w-4" />
+            <Link2 className="h-4 w-4 shrink-0" aria-hidden />
             Linki kopyala
           </Button>
         </div>
         <Button
           type="button"
+          variant="ghost"
+          onClick={onCopyShare}
+          aria-disabled={!canCopyShare}
+          className={`min-h-[40px] w-full touch-manipulation border border-[var(--border-subtle)] bg-[var(--card)]/40 hover:bg-[var(--bg-elevated)] min-[1367px]:hidden ${
+            canCopyShare ? "" : "opacity-50"
+          }`}
+          title={canCopyShare ? "Linki panoya kopyala" : copyBlockedMessage}
+        >
+          <Link2 className="h-4 w-4 shrink-0" aria-hidden />
+          Panoya kopyala
+        </Button>
+        <Button
+          type="button"
           onClick={onSave}
           disabled={saving}
-          className="min-h-[48px] w-full touch-manipulation bg-green-800 text-white hover:bg-lime-600 sm:min-h-0"
+          className="min-h-[48px] w-full touch-manipulation bg-green-800 text-white hover:bg-lime-600 min-[1367px]:min-h-0"
         >
           {saving ? (
             <Loader2 className="h-4 w-4 animate-spin" />

@@ -136,6 +136,7 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
     copyBlockedMessage,
     handleSave,
     handleCopyShare,
+    handleShareLink,
   } = useEditorPersistence({
     initialTacticId,
     authUser,
@@ -194,6 +195,7 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
     onSave: handleSave,
     onExport: handleExport,
     onCopyShare: handleCopyShare,
+    onShareLink: handleShareLink,
     saving,
     canCopyShare,
     copyBlockedMessage,

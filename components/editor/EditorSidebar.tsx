@@ -52,6 +52,7 @@ export interface EditorSidebarProps {
   onSave: () => void;
   onExport: () => void;
   onCopyShare: () => void;
+  onShareLink: () => void;
   saving: boolean;
   canCopyShare: boolean;
   copyBlockedMessage: string;
@@ -89,6 +90,7 @@ export function EditorSidebar({
   onSave,
   onExport,
   onCopyShare,
+  onShareLink,
   saving,
   canCopyShare,
   copyBlockedMessage,
@@ -271,6 +273,7 @@ export function EditorSidebar({
           onSave={onSave}
           onExport={onExport}
           onCopyShare={onCopyShare}
+          onShareLink={onShareLink}
           saving={saving}
           canCopyShare={canCopyShare}
           copyBlockedMessage={copyBlockedMessage}

@@ -119,17 +119,20 @@ export function ShareViewClient({ shareId }: ShareViewClientProps) {
               type="button"
               variant="secondary"
               size="sm"
-              className="touch-manipulation min-h-[40px] min-w-[40px] px-0 sm:min-h-0 sm:min-w-0 sm:px-3"
+              className="touch-manipulation inline-flex min-h-[40px] min-w-0 max-w-[min(100%,11rem)] gap-1 px-1.5 min-[1367px]:min-h-0 min-[1367px]:max-w-none min-[1367px]:px-3"
               onClick={() => {
                 const stage = stageRef.current?.getStage();
                 if (!stage) return;
                 exportStageToPng(stage, "taktik.png");
               }}
-              title="PNG indir"
-              aria-label="PNG indir"
+              title="Taktik görselini kaydet"
+              aria-label="Taktik görselini kaydet"
             >
-              <Download className="h-4 w-4 sm:mr-1.5" aria-hidden />
-              <span className="hidden sm:inline">PNG indir</span>
+              <Download className="h-4 w-4 shrink-0 min-[1367px]:mr-1.5" aria-hidden />
+              <span className="text-left text-xs leading-tight min-[1367px]:text-sm">
+                <span className="min-[1367px]:hidden">Galeriye kaydet</span>
+                <span className="hidden min-[1367px]:inline">PNG indir</span>
+              </span>
             </Button>
             <Button asChild variant="ghost" size="sm" className="touch-manipulation">
               <Link href="/" className="inline-flex min-h-[40px] items-center gap-1.5 sm:min-h-0">

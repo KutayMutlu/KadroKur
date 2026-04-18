@@ -13,7 +13,7 @@ export function EditorHeaderPitchBar({ tacticTitle }: { tacticTitle: string }) {
   return (
     <div
       className={cn(
-        "relative min-w-0 w-full max-w-[min(100%,14rem)] overflow-hidden rounded-xl border px-2 py-1.5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)] backdrop-blur-sm sm:max-w-md sm:rounded-[0.9rem] sm:px-3 sm:py-2",
+        "relative min-w-0 w-full max-w-md overflow-hidden rounded-xl border px-2.5 py-1.5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)] backdrop-blur-sm sm:rounded-[0.9rem] sm:px-3 sm:py-2",
         "border-emerald-500/30 bg-gradient-to-b from-emerald-900/55 via-[#0c1810]/95 to-black/35"
       )}
       title={hasTitle ? trimmed : undefined}

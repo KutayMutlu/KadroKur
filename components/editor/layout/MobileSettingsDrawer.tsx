@@ -61,7 +61,8 @@ export function MobileSettingsDrawer({
       <Button
         type="button"
         size="lg"
-        className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] right-4 z-30 h-14 w-14 rounded-full p-0 shadow-lg touch-manipulation"
+        className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] z-30 h-14 w-14 rounded-full p-0 shadow-lg touch-manipulation"
+        style={{ right: "max(1rem, env(safe-area-inset-right, 0px))" }}
         onClick={onToggle}
         aria-expanded={open}
         aria-controls="editor-settings-drawer"

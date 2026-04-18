@@ -17,8 +17,9 @@ type Props = {
 export function EditorMobileUndoRedo({ canUndo, canRedo, onUndo, onRedo }: Props) {
   return (
     <div
-      className="pointer-events-auto fixed right-4 z-[32] flex w-11 flex-col overflow-hidden rounded-2xl border border-white/10 bg-[var(--card)]/88 shadow-md backdrop-blur-sm lg:hidden"
+      className="pointer-events-auto fixed z-[32] flex w-11 flex-col overflow-hidden rounded-2xl border border-white/10 bg-[var(--card)]/88 shadow-md backdrop-blur-sm lg:hidden"
       style={{
+        right: "max(1rem, env(safe-area-inset-right, 0px))",
         bottom: "max(5.75rem, calc(env(safe-area-inset-bottom, 0px) + 4.75rem))",
       }}
       role="toolbar"

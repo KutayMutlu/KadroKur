@@ -31,35 +31,38 @@ export function EditorHeader({
     >
       <h1 className="sr-only">KadroKur taktik editörü</h1>
 
-      <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-        <Link
-          href="/"
-          className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-2.5"
-          aria-label="Ana sayfaya dön"
-        >
-          <span
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-[var(--border-glow)] bg-[var(--bg-card)] text-sm font-bold text-[var(--accent)] sm:h-9 sm:w-9 sm:text-base"
-            style={{ fontFamily: "var(--font-display)" }}
-            aria-hidden
+      {/*
+        Mobil: iki satır — logo|hesap üstte, taktik rozeti altta tam genişlik (dar ekranda sıkışmayı önler).
+        lg+: tek satır — logo | rozet (orta) | geri al + hesap
+      */}
+      <div className="flex min-w-0 flex-col gap-2 lg:flex-row lg:items-center lg:gap-3">
+        <div className="flex min-w-0 items-center justify-between gap-2 lg:contents">
+          <Link
+            href="/"
+            className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-2.5"
+            aria-label="Ana sayfaya dön"
           >
-            KK
-          </span>
-          <div className="min-w-0 text-left leading-tight">
-            <p
-              className="truncate text-sm font-semibold tracking-tight text-[var(--foreground)]"
+            <span
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-[var(--border-glow)] bg-[var(--bg-card)] text-sm font-bold text-[var(--accent)] sm:h-9 sm:w-9 sm:text-base"
               style={{ fontFamily: "var(--font-display)" }}
+              aria-hidden
             >
-              KadroKur
-            </p>
-            <p className="mt-0.5 text-[10px] text-[var(--muted)] sm:text-[11px]">Taktik editörü</p>
-          </div>
-        </Link>
+              KK
+            </span>
+            <div className="min-w-0 text-left leading-tight">
+              <p
+                className="truncate text-sm font-semibold tracking-tight text-[var(--foreground)]"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                KadroKur
+              </p>
+              <p className="mt-0.5 hidden text-[10px] text-[var(--muted)] sm:block sm:text-[11px]">
+                Taktik editörü
+              </p>
+            </div>
+          </Link>
 
-        <div className="min-w-0 flex-1 flex justify-center px-0.5 sm:px-2">
-          <EditorHeaderPitchBar tacticTitle={tacticTitle} />
-        </div>
-
-        <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
+          <div className="flex shrink-0 items-center gap-1 sm:gap-1.5 lg:order-3">
           {showUndoRedoInHeader ? (
             <div
               className="flex items-center rounded-lg border border-[var(--border-subtle)] bg-black/[0.12] p-0.5 dark:bg-black/25"
@@ -93,7 +96,12 @@ export function EditorHeader({
               </Button>
             </div>
           ) : null}
-          <AuthControls />
+            <AuthControls />
+          </div>
+        </div>
+
+        <div className="flex w-full min-w-0 justify-center px-0 sm:px-2 lg:flex-1 lg:order-2">
+          <EditorHeaderPitchBar tacticTitle={tacticTitle} />
         </div>
       </div>
     </header>

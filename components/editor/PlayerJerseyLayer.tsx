@@ -21,9 +21,6 @@ const HOME_NUMBER_FILL = "#0a0a0a";
 const NAME_TAG_BG = "#141414";
 const NAME_TAG_TEXT = "#fafafa";
 
-/** Deneme: Konva shadow maliyetini ölçmek için gölgeler kapalı (blur/opacity 0). */
-const EXPERIMENT_NO_SHADOWS = true;
-
 /** Örnekteki gibi: path’ler aynı x/y ve scale */
 const PATH_OFF = 20;
 const PATH_SCALE = 1.5;
@@ -82,9 +79,6 @@ export function PlayerJerseyLayer({
       : HEM_STROKE_LIGHT
     : HEM_STROKE_LIGHT;
   const numberFill = isAwayKit ? kit.accent : HOME_NUMBER_FILL;
-  const numberShadowColor =
-    isAwayKit && isDarkJersey ? "rgba(0,0,0,0.55)" : "rgba(0,0,0,0.22)";
-  const jerseyShadowOpacity = isAwayKit ? (isDarkJersey ? 0.35 : 0.1) : 0.1;
 
   const tagH = 22;
   const tagRadius = 9;
@@ -153,9 +147,6 @@ export function PlayerJerseyLayer({
                 stroke={stroke}
                 strokeWidth={strokeW}
                 lineJoin="round"
-                shadowColor="black"
-                shadowBlur={EXPERIMENT_NO_SHADOWS ? 0 : 10}
-                shadowOpacity={EXPERIMENT_NO_SHADOWS ? 0 : jerseyShadowOpacity}
                 listening={false}
               />
               <Path data={collarPath} fill={collarFill} listening={false} />
@@ -179,9 +170,6 @@ export function PlayerJerseyLayer({
                 fontFamily="'Segoe UI', system-ui, sans-serif"
                 fontStyle="bold"
                 fill={numberFill}
-                shadowColor={isDarkJersey ? "transparent" : numberShadowColor}
-                shadowBlur={EXPERIMENT_NO_SHADOWS ? 0 : isDarkJersey ? 0 : 3}
-                shadowOffset={isDarkJersey ? { x: 0, y: 0 } : { x: 0, y: 2 }}
                 listening={false}
               />
             </Group>
@@ -197,10 +185,6 @@ export function PlayerJerseyLayer({
             height={tagH}
             cornerRadius={tagRadius}
             fill={NAME_TAG_BG}
-            shadowColor="rgba(0,0,0,0.45)"
-            shadowBlur={EXPERIMENT_NO_SHADOWS ? 0 : 4}
-            shadowOpacity={EXPERIMENT_NO_SHADOWS ? 0 : 1}
-            shadowOffset={{ x: 0, y: 1 }}
             listening={false}
           />
           <Text

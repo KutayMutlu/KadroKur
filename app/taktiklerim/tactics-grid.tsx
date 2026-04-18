@@ -144,7 +144,7 @@ export function TacticsGrid({ tactics }: { tactics: TacticRow[] }) {
       text: "Taktik paylaşım linki:",
     });
     if (result === "shared") {
-      showToast("Paylaşım menüsü açıldı", "success");
+      showToast("Taktik başarıyla paylaşıldı! Maç toplantısına hazırsın. 🏟️", "success");
       return;
     }
     if (result === "cancelled") return;
@@ -241,8 +241,12 @@ export function TacticsGrid({ tactics }: { tactics: TacticRow[] }) {
       await new Promise((resolve) => setTimeout(resolve, 250));
       const stage = await getExportStage();
       const safe = (shareTactic.title || "taktik").replace(/[^\w\-]+/g, "_");
-      exportStageToPng(stage, `${safe}.png`, { pixelRatio: 2 });
-      showToast("Görsel indirildi.", "success");
+      const result = await exportStageToPng(stage, `${safe}.png`, { pixelRatio: 2 });
+      if (result === "shared") {
+        showToast("Görsel kaydedildi. Artık stratejin cebinde! 📱", "success");
+      } else if (result === "downloaded") {
+        showToast("Görsel indirildi.", "success");
+      }
     } catch {
       showToast("Görsel oluşturulamadı", "destructive");
     } finally {

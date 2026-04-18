@@ -5,30 +5,25 @@ export type ExportStagePngOptions = {
   pixelRatio?: number;
 };
 
+/** shared: paylaşım sheet’i hatasız kapandı (galeriye kaydet dahil) · downloaded: dosya indirildi · cancelled: boş sahne veya kullanıcı iptal */
+export type ExportStagePngResult = "shared" | "downloaded" | "cancelled";
+
 /**
  * Masaüstü: doğrudan PNG indir.
- * Mobil (dar ekran): mümkünse Web Share ile dosya (galeri yolu); değilse indir.
+ * Mobil/tablet: mümkünse Web Share ile dosya; değilse indir.
  */
-export function exportStageToPng(
+export async function exportStageToPng(
   stage: Konva.Stage,
   filename = "taktik.png",
   options?: ExportStagePngOptions
-): void {
-  void exportStageToPngAsync(stage, filename, options);
-}
-
-async function exportStageToPngAsync(
-  stage: Konva.Stage,
-  filename: string,
-  options?: ExportStagePngOptions
-): Promise<void> {
+): Promise<ExportStagePngResult> {
   const pixelRatio = options?.pixelRatio ?? 2;
   const uri = stage.toDataURL({ pixelRatio, mimeType: "image/png" });
-  if (!uri || uri === "data:,") return;
+  if (!uri || uri === "data:,") return "cancelled";
 
   if (!isMobileLayout()) {
     triggerDownload(uri, filename);
-    return;
+    return "downloaded";
   }
 
   const blob = await dataUrlToBlob(uri);
@@ -46,13 +41,14 @@ async function exportStageToPngAsync(
         title: "KadroKur taktik",
         text: "Taktik sahası görüntüsü",
       });
-      return;
+      return "shared";
     }
   } catch (e) {
-    if (e instanceof Error && e.name === "AbortError") return;
+    if (e instanceof Error && e.name === "AbortError") return "cancelled";
   }
 
   triggerDownload(uri, filename);
+  return "downloaded";
 }
 
 function triggerDownload(uri: string, filename: string) {

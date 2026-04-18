@@ -8,6 +8,7 @@ import { getLocalTacticByShareId } from "@/lib/local-tactics";
 import { getSupabase } from "@/lib/supabase";
 import type { CanvasState } from "@/types/tactic";
 import { Button } from "@/components/ui/button";
+import { Toast } from "@/components/ui/toast";
 import { exportStageToPng } from "@/lib/canvas-export";
 import { Download, Home } from "lucide-react";
 
@@ -21,6 +22,13 @@ export function ShareViewClient({ shareId }: ShareViewClientProps) {
   const [title, setTitle] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [pngToast, setPngToast] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!pngToast) return;
+    const timer = window.setTimeout(() => setPngToast(null), 2600);
+    return () => window.clearTimeout(timer);
+  }, [pngToast]);
 
   useEffect(() => {
     let cancelled = false;
@@ -120,10 +128,15 @@ export function ShareViewClient({ shareId }: ShareViewClientProps) {
               variant="secondary"
               size="sm"
               className="touch-manipulation inline-flex min-h-[40px] min-w-0 max-w-[min(100%,11rem)] gap-1 px-1.5 min-[1367px]:min-h-0 min-[1367px]:max-w-none min-[1367px]:px-3"
-              onClick={() => {
+              onClick={async () => {
                 const stage = stageRef.current?.getStage();
                 if (!stage) return;
-                exportStageToPng(stage, "taktik.png");
+                const result = await exportStageToPng(stage, "taktik.png");
+                if (result === "shared") {
+                  setPngToast("Görsel kaydedildi. Artık stratejin cebinde! 📱");
+                } else if (result === "downloaded") {
+                  setPngToast("Görsel indirildi.");
+                }
               }}
               title="Taktik görselini kaydet"
               aria-label="Taktik görselini kaydet"
@@ -155,6 +168,7 @@ export function ShareViewClient({ shareId }: ShareViewClientProps) {
           />
         </div>
       </div>
+      {pngToast ? <Toast message={pngToast} /> : null}
     </div>
   );
 }

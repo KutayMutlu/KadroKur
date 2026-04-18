@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { PitchCanvas, type PitchCanvasHandle } from "./PitchCanvas";
 import { PlayerEditModal } from "./PlayerEditModal";
 import { createPlayersForFormation } from "@/lib/players-factory";
@@ -27,6 +27,7 @@ import { EditorMobileUndoRedo } from "./layout/EditorMobileUndoRedo";
 import { MobileSettingsDrawer } from "./layout/MobileSettingsDrawer";
 import { EditorWorkspace } from "./layout/EditorWorkspace";
 import { EditorSaveToast } from "./EditorSaveToast";
+import { Toast } from "@/components/ui/toast";
 
 const EDITOR_CLOUD_SAVE_TOAST =
   "Taktik başarıyla kaydedildi. Sahaya çıkmaya hazırsın! 📋";
@@ -64,6 +65,13 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
   const [dropConfig, setDropConfig] = useState<AdaptiveDropConfig>(DEFAULT_DROP_CONFIG);
   const [attackFlip, setAttackFlip] = useState(false);
   const [cloudSaveToastOpen, setCloudSaveToastOpen] = useState(false);
+  const [exportToast, setExportToast] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!exportToast) return;
+    const timer = window.setTimeout(() => setExportToast(null), 2600);
+    return () => window.clearTimeout(timer);
+  }, [exportToast]);
 
   const onTacticSavedToCloud = useCallback(() => {
     setCloudSaveToastOpen(true);
@@ -121,11 +129,16 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
     setAttackFlip,
   });
 
-  const handleExport = () => {
+  const handleExport = async () => {
     const stage = stageRef.current?.getStage();
     if (!stage) return;
     const safe = (tacticTitle || "taktik").replace(/[^\w\-]+/g, "_");
-    exportStageToPng(stage, `${safe}.png`);
+    const result = await exportStageToPng(stage, `${safe}.png`);
+    if (result === "shared") {
+      setExportToast("Görsel kaydedildi. Artık stratejin cebinde! 📱");
+    } else if (result === "downloaded") {
+      setExportToast("Görsel indirildi.");
+    }
   };
 
   const {
@@ -262,6 +275,7 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
         message={EDITOR_CLOUD_SAVE_TOAST}
         onDismiss={() => setCloudSaveToastOpen(false)}
       />
+      {exportToast ? <Toast message={exportToast} /> : null}
       </div>
     </div>
   );

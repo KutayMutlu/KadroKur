@@ -351,7 +351,7 @@ export function useEditorPersistence({
     });
     if (result === "shared") {
       setMessageTone("success");
-      setMessage("Paylaşım menüsü açıldı.");
+      setMessage("Taktik başarıyla paylaşıldı! Maç toplantısına hazırsın. 🏟️");
       return;
     }
     if (result === "cancelled") return;

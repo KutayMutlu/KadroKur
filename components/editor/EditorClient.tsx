@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useLocale } from "@/components/locale-provider";
 import { PitchCanvas, type PitchCanvasHandle } from "./PitchCanvas";
 import { PlayerEditModal } from "./PlayerEditModal";
 import { createPlayersForFormation } from "@/lib/players-factory";
@@ -29,14 +30,12 @@ import { EditorWorkspace } from "./layout/EditorWorkspace";
 import { EditorSaveToast } from "./EditorSaveToast";
 import { Toast } from "@/components/ui/toast";
 
-const EDITOR_CLOUD_SAVE_TOAST =
-  "Taktik başarıyla kaydedildi. Sahaya çıkmaya hazırsın! 📋";
-
 export interface EditorClientProps {
   initialTacticId?: string | null;
 }
 
 export function EditorClient({ initialTacticId }: EditorClientProps) {
+  const { strings: ui } = useLocale();
   const stageRef = useRef<PitchCanvasHandle>(null);
   const authUser = useSupabaseAuthUser();
   const { isLg, mobileSettingsOpen, setMobileSettingsOpen } = useResponsiveDrawer();
@@ -132,12 +131,12 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
   const handleExport = async () => {
     const stage = stageRef.current?.getStage();
     if (!stage) return;
-    const safe = (tacticTitle || "taktik").replace(/[^\w\-]+/g, "_");
+    const safe = (tacticTitle || ui.editorExportFallbackFilename).replace(/[^\w\-]+/g, "_");
     const result = await exportStageToPng(stage, `${safe}.png`);
     if (result === "shared") {
-      setExportToast("Görsel kaydedildi. Artık stratejin cebinde! 📱");
+      setExportToast(ui.editorExportToastGallery);
     } else if (result === "downloaded") {
-      setExportToast("Görsel indirildi.");
+      setExportToast(ui.editorExportToastDownloaded);
     }
   };
 
@@ -272,7 +271,7 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
       />
       <EditorSaveToast
         open={cloudSaveToastOpen}
-        message={EDITOR_CLOUD_SAVE_TOAST}
+        message={ui.editorCloudSaveToast}
         onDismiss={() => setCloudSaveToastOpen(false)}
       />
       {exportToast ? <Toast message={exportToast} /> : null}

@@ -5,6 +5,7 @@ import { ChevronRight, Contact, Home, Menu, Settings, UserRound, X } from "lucid
 import type { LucideIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { useLocale } from "@/components/locale-provider";
 import { cn } from "@/lib/utils";
 import { useUserPanelUser } from "./user-panel-context";
 
@@ -79,18 +80,18 @@ type Props = {
   children: React.ReactNode;
 };
 
-const PANEL_NAV: readonly { href: string; label: string; Icon: LucideIcon }[] = [
-  { href: "/kullanici-paneli/profil", label: "Profil", Icon: UserRound },
-  { href: "/kullanici-paneli/kisisel-bilgiler", label: "Kişisel Bilgiler", Icon: Contact },
-  { href: "/kullanici-paneli/ayarlar", label: "Ayarlar", Icon: Settings },
-];
-
-function PanelLinks({ onNavigate }: { onNavigate?: () => void }) {
+function PanelLinks({
+  onNavigate,
+  items,
+}: {
+  onNavigate?: () => void;
+  items: readonly { href: string; label: string; Icon: LucideIcon }[];
+}) {
   const pathname = usePathname();
 
   return (
     <ul className="space-y-1">
-      {PANEL_NAV.map(({ href, label, Icon }) => {
+      {items.map(({ href, label, Icon }) => {
         const active = pathname === href;
         return (
           <li key={href}>
@@ -128,6 +129,13 @@ export function UserPanelShell({ children }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const router = useRouter();
   const user = useUserPanelUser();
+  const { strings: ui } = useLocale();
+  const shownName = user.displayNameIsFallback ? ui.panelDefaultDisplayName : user.displayName;
+  const panelNav = [
+    { href: "/kullanici-paneli/profil", label: ui.panelNavProfile, Icon: UserRound },
+    { href: "/kullanici-paneli/kisisel-bilgiler", label: ui.panelNavPersonal, Icon: Contact },
+    { href: "/kullanici-paneli/ayarlar", label: ui.panelNavSettings, Icon: Settings },
+  ] as const;
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -162,7 +170,7 @@ export function UserPanelShell({ children }: Props) {
       <div className="relative flex items-start gap-3">
         <PanelUserAvatar
           avatarUrl={user.avatarUrl}
-          displayName={user.displayName}
+          displayName={shownName}
           email={user.email}
           size={opts.compact ? "sm" : "lg"}
         />
@@ -172,7 +180,7 @@ export function UserPanelShell({ children }: Props) {
               className="text-pretty break-words text-sm font-semibold leading-snug text-[var(--foreground)] [overflow-wrap:anywhere] group-hover:text-[var(--accent)] sm:text-[15px]"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              {user.displayName}
+              {shownName}
             </p>
             <ChevronRight
               className="mt-0.5 h-4 w-4 shrink-0 text-[var(--muted)] opacity-40 transition group-hover:translate-x-0.5 group-hover:opacity-100"
@@ -184,7 +192,7 @@ export function UserPanelShell({ children }: Props) {
               {user.email}
             </p>
           ) : (
-            <p className="mt-1.5 text-[11px] text-[var(--muted)]">Profilini düzenle</p>
+            <p className="mt-1.5 text-[11px] text-[var(--muted)]">{ui.panelEditProfileHint}</p>
           )}
         </div>
       </div>
@@ -200,7 +208,7 @@ export function UserPanelShell({ children }: Props) {
           onClick={() => setMobileOpen((v) => !v)}
           aria-expanded={mobileOpen}
           aria-controls="user-panel-sidebar"
-          aria-label={mobileOpen ? "Menüyü kapat" : "Menüyü aç"}
+          aria-label={mobileOpen ? ui.panelMenuCloseMobile : ui.panelMenuOpenMobile}
           className="rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)] p-2.5 text-[var(--foreground)] transition hover:border-[var(--accent)]/35 hover:bg-[var(--accent)]/5"
         >
           {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -211,7 +219,7 @@ export function UserPanelShell({ children }: Props) {
         >
           <PanelUserAvatar
             avatarUrl={user.avatarUrl}
-            displayName={user.displayName}
+            displayName={shownName}
             email={user.email}
             size="sm"
           />
@@ -220,7 +228,7 @@ export function UserPanelShell({ children }: Props) {
               className="text-pretty break-words text-sm font-semibold leading-snug text-[var(--foreground)] [overflow-wrap:anywhere]"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              {user.displayName}
+              {shownName}
             </p>
             {user.email ? (
               <p className="mt-0.5 break-all text-[10px] leading-snug text-[var(--muted)] sm:break-words">{user.email}</p>
@@ -231,7 +239,7 @@ export function UserPanelShell({ children }: Props) {
 
       <button
         type="button"
-        aria-label="Menüyü kapat"
+        aria-label={ui.panelMenuCloseMobile}
         onClick={() => setMobileOpen(false)}
         className={cn(
           "fixed inset-0 z-30 bg-[var(--bg-deep)]/70 backdrop-blur-sm transition-opacity md:hidden",
@@ -252,14 +260,16 @@ export function UserPanelShell({ children }: Props) {
           <div className="mb-4 md:hidden">{identityCard({ compact: true, onNavigate: () => setMobileOpen(false) })}</div>
 
           <div className="mb-2 px-1">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--muted)]">Gezinme</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--muted)]">
+              {ui.panelNavSection}
+            </p>
           </div>
 
           <nav
-            aria-label="Kullanıcı paneli menüsü"
+            aria-label={ui.panelNavAria}
             className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-3 [-webkit-overflow-scrolling:touch]"
           >
-            <PanelLinks onNavigate={() => setMobileOpen(false)} />
+            <PanelLinks items={panelNav} onNavigate={() => setMobileOpen(false)} />
           </nav>
 
           {/* Alt blok: home indicator / Safari alt çubuğu üstünde kalsın; arka plan opak */}
@@ -270,7 +280,7 @@ export function UserPanelShell({ children }: Props) {
               className="flex w-full items-center justify-center gap-2 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)]/80 px-3 py-2.5 text-sm font-medium text-[var(--foreground)] transition hover:border-[var(--accent)]/40 hover:bg-[var(--accent)]/[0.08]"
             >
               <Home className="h-4 w-4 shrink-0 text-[var(--accent-dim)]" aria-hidden />
-              Ana sayfaya dön
+              {ui.panelBackHome}
             </Link>
           </div>
         </div>

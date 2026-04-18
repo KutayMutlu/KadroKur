@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useLocale } from "@/components/locale-provider";
+import { presetLabel } from "@/lib/editor-i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -98,6 +100,7 @@ export function EditorSidebar({
   messageTone,
   embeddedInDrawer = false,
 }: EditorSidebarProps) {
+  const { strings: ui } = useLocale();
   /** 0 = hepsi kapalı; 1–4 = o adım açık. Aynı başlığa tekrar tıklanınca kapanır. */
   const [openStep, setOpenStep] = useState(1);
 
@@ -112,7 +115,7 @@ export function EditorSidebar({
       )}
 
       <EditorSection
-        title="Takım"
+        title={ui.editorSectionTeam}
         step={1}
         expanded={openStep === 1}
         onSelect={() => toggleStep(1)}
@@ -131,14 +134,14 @@ export function EditorSidebar({
       </EditorSection>
 
       <EditorSection
-        title="Maç ve diziliş"
+        title={ui.editorSectionMatch}
         step={2}
         expanded={openStep === 2}
         onSelect={() => toggleStep(2)}
       >
         <MatchFormatSelector value={matchFormat} onChange={onMatchFormatChange} />
         <p className="text-xs leading-snug text-[var(--muted)]">
-          Oyuncu: çift tıkla düzenle, sürükleyerek taşı.
+          {ui.editorHintPlayerEdit}
         </p>
         <FormationSelector
           value={homeFormationKey}
@@ -146,30 +149,29 @@ export function EditorSidebar({
           options={availableFormations}
         />
         <div>
-          <Label>Atak yönü (görünüm)</Label>
+          <Label>{ui.editorAttackDirectionLabel}</Label>
           <Button
             type="button"
             variant="secondary"
             size="sm"
             className="mt-1 w-full"
             onClick={onAttackDirectionToggle}
-            title="Takımınız ve rakip aynı anda döner; paylaşılan linkte de bu görünüm kullanılır."
+            title={ui.editorAttackFlipTitle}
           >
             {pitchVertical
               ? attackFlip
-                ? "↓ Aşağı atak"
-                : "Yukarı atak ↑"
+                ? ui.editorAttackDown
+                : ui.editorAttackUp
               : attackFlip
-                ? "← Sola atak"
-                : "Sağa atak →"}
+                ? ui.editorAttackLeft
+                : ui.editorAttackRight}
           </Button>
           <p className="mt-1.5 hidden text-[10px] leading-snug text-[var(--muted)] sm:block">
-            Sahayı hangi yönden görmek istediğinizi seçin. Kendi oyuncularınız ve rakip
-            aynı anda döner; linke bakanlar da bu yönü görür.
+            {ui.editorAttackDirectionHelp}
           </p>
         </div>
         <div>
-          <Label>Hazır taktikler</Label>
+          <Label>{ui.editorPresetsLabel}</Label>
           <Select value={homePresetKey} onValueChange={onHomePresetChange}>
             <SelectTrigger className="mt-1 w-full">
               <SelectValue />
@@ -177,7 +179,7 @@ export function EditorSidebar({
             <SelectContent>
               {Object.values(TACTIC_PRESETS).map((p) => (
                 <SelectItem key={p.key} value={p.key}>
-                  {p.label}
+                  {presetLabel(ui, p.key)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -189,19 +191,21 @@ export function EditorSidebar({
             onClick={onResetPlayerPositions}
             className="mt-2 w-full"
           >
-            Oyuncu konumlarını sıfırla
+            {ui.editorResetPositions}
           </Button>
         </div>
       </EditorSection>
 
       <EditorSection
-        title="Rakip (isteğe bağlı)"
+        title={ui.editorSectionOpponent}
         step={3}
         expanded={openStep === 3}
         onSelect={() => toggleStep(3)}
       >
         <div className="flex items-center justify-between gap-2">
-          <span className="text-sm text-[var(--foreground)]">Rakip dizilişi</span>
+          <span className="text-sm text-[var(--foreground)]">
+            {ui.editorOpponentFormationLabel}
+          </span>
           {hasOpponentLineup ? (
             <Button
               type="button"
@@ -210,7 +214,7 @@ export function EditorSidebar({
               className="h-8 shrink-0 px-2 text-xs"
               onClick={onRemoveOpponentLineup}
             >
-              Kaldır
+              {ui.editorRemove}
             </Button>
           ) : (
             <Button
@@ -219,8 +223,8 @@ export function EditorSidebar({
               size="sm"
               className="h-8 w-8 shrink-0 rounded-full p-0 text-lg leading-none"
               onClick={onAddOpponentLineup}
-              title="Rakip dizilişi ekle"
-              aria-label="Rakip dizilişi ekle"
+              title={ui.editorAddOpponentLineup}
+              aria-label={ui.editorAddOpponentLineup}
             >
               +
             </Button>
@@ -231,8 +235,8 @@ export function EditorSidebar({
             id="opponentTeamName"
             value={opponentTeamName}
             onChange={(e) => onOpponentTeamNameChange(e.target.value)}
-            placeholder="Rakip takım adı (isteğe bağlı)"
-            aria-label="Rakip takım adı"
+            placeholder={ui.editorOpponentPlaceholder}
+            aria-label={ui.editorOpponentAria}
           />
         )}
         {hasOpponentLineup && (
@@ -244,7 +248,7 @@ export function EditorSidebar({
         )}
         {hasOpponentLineup && (
           <div>
-            <Label>Hazır taktikler (rakip)</Label>
+            <Label>{ui.editorAwayPresetsLabel}</Label>
             <Select value={awayPresetKey} onValueChange={onAwayPresetChange}>
               <SelectTrigger className="mt-1 w-full">
                 <SelectValue />
@@ -252,7 +256,7 @@ export function EditorSidebar({
               <SelectContent>
                 {Object.values(TACTIC_PRESETS).map((p) => (
                   <SelectItem key={`away-${p.key}`} value={p.key}>
-                    {p.label}
+                    {presetLabel(ui, p.key)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -262,7 +266,7 @@ export function EditorSidebar({
       </EditorSection>
 
       <EditorSection
-        title="Kaydet ve paylaş"
+        title={ui.editorSectionSaveShare}
         step={4}
         expanded={openStep === 4}
         onSelect={() => toggleStep(4)}

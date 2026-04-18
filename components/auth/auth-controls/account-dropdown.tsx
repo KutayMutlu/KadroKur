@@ -1,5 +1,6 @@
 "use client";
 
+import { useLocale } from "@/components/locale-provider";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,6 +38,7 @@ export function AccountDropdown({
   onMenuOpenChange,
   embedded = false,
 }: Props) {
+  const { strings: ui } = useLocale();
   const avatarUrl = pickAvatarUrl(user);
   const initials = pickInitials(user, profile);
   const displayName = pickDisplayName(user, profile);
@@ -54,7 +56,7 @@ export function AccountDropdown({
               ? "min-h-[44px] min-w-0 flex-1 rounded-none rounded-l-2xl rounded-r-none border-0 border-r border-[var(--border-subtle)]/70 bg-transparent py-2 pl-2 pr-2 shadow-none hover:bg-white/[0.05] data-[state=open]:bg-[var(--accent)]/[0.08] sm:min-h-0 sm:py-1.5 sm:pl-1.5"
               : "rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)]/90 shadow-[var(--card-inset-glow)] backdrop-blur-sm hover:border-[var(--accent)]/35 hover:shadow-[0_0_0_1px_color-mix(in_srgb,var(--accent)_22%,transparent)] data-[state=open]:border-[var(--accent)]/45 data-[state=open]:shadow-[0_0_24px_-8px_color-mix(in_srgb,var(--accent)_35%,transparent)]"
           )}
-          aria-label={`Hesap menüsü: ${displayName}`}
+          aria-label={ui.accountMenuAria.replace("{name}", displayName)}
           title={displayName}
         >
           <span
@@ -145,7 +147,7 @@ export function AccountDropdown({
 
         <div className="p-2">
           <p className="px-2 pb-1.5 pt-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
-            Kısayollar
+            {ui.accountShortcutsHeading}
           </p>
           <DropdownMenuItem asChild className="cursor-pointer rounded-xl px-2 py-1.5 focus:bg-white/[0.04]">
             <Link
@@ -155,7 +157,9 @@ export function AccountDropdown({
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--accent)]/[0.12] text-[var(--accent)] ring-1 ring-[var(--accent)]/15">
                 <UserRound className="h-[18px] w-[18px]" strokeWidth={2} aria-hidden />
               </span>
-              <span className="text-sm font-medium text-[var(--foreground)]">Kullanıcı paneli</span>
+              <span className="text-sm font-medium text-[var(--foreground)]">
+                {ui.accountLinkUserPanel}
+              </span>
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild className="cursor-pointer rounded-xl px-2 py-1.5 focus:bg-white/[0.04]">
@@ -163,7 +167,9 @@ export function AccountDropdown({
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--accent)]/[0.12] text-[var(--accent)] ring-1 ring-[var(--accent)]/15">
                 <LayoutGrid className="h-[18px] w-[18px]" strokeWidth={2} aria-hidden />
               </span>
-              <span className="text-sm font-medium text-[var(--foreground)]">Taktiklerim</span>
+              <span className="text-sm font-medium text-[var(--foreground)]">
+                {ui.accountLinkMyTactics}
+              </span>
             </Link>
           </DropdownMenuItem>
         </div>
@@ -182,7 +188,7 @@ export function AccountDropdown({
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-red-500/10 text-red-300 ring-1 ring-red-500/15">
               <LogOut className="h-[18px] w-[18px]" strokeWidth={2} aria-hidden />
             </span>
-            <span className="text-sm font-medium">Çıkış yap</span>
+            <span className="text-sm font-medium">{ui.accountSignOut}</span>
           </DropdownMenuItem>
         </div>
       </DropdownMenuContent>

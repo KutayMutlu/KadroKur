@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, useCallback } from "react";
+import { useLocale } from "@/components/locale-provider";
 import type { Player, PlayerRole } from "@/types/player";
+import type { UiStrings } from "@/lib/ui-strings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,14 +16,17 @@ import {
   sanitizePlayerName,
 } from "@/lib/player-fields";
 
-const ROLE_LABEL: Record<Player["role"], string> = {
-  kaleci: "Kaleci",
-  defans: "Defans",
-  orta: "Orta saha",
-  forvet: "Forvet",
-};
-
 const ROLE_ORDER: PlayerRole[] = ["kaleci", "defans", "orta", "forvet"];
+
+function roleLabel(ui: UiStrings, role: PlayerRole): string {
+  const m: Record<PlayerRole, string> = {
+    kaleci: ui.editorRoleKaleci,
+    defans: ui.editorRoleDefans,
+    orta: ui.editorRoleOrta,
+    forvet: ui.editorRoleForvet,
+  };
+  return m[role];
+}
 
 export type PlayerEditModalProps = {
   player: Player | null;
@@ -37,6 +42,7 @@ export function PlayerEditModal({
   onClose,
   onUpdatePlayer,
 }: PlayerEditModalProps) {
+  const { strings: ui } = useLocale();
   const titleId = useId();
   const nameInputRef = useRef<HTMLInputElement>(null);
   const jerseyDraftRef = useRef("");
@@ -95,16 +101,16 @@ export function PlayerEditModal({
     const formatted = formatJerseyNumber(jerseyDraftRef.current);
     const raw = sanitizeJerseyInput(jerseyDraftRef.current);
     if (!raw) {
-      setJerseyError("1-99 arası forma numarası girin.");
+      setJerseyError(ui.editorJerseyErrorRange);
       return;
     }
     if (raw === "00") {
-      setJerseyError("0 ile başlayan numara kullanılamaz.");
+      setJerseyError(ui.editorJerseyErrorLeadingZero);
       return;
     }
     const name = sanitizePlayerName(nameDraft);
     if (!name) {
-      setNameError("En az bir harf veya rakam girin.");
+      setNameError(ui.editorNameErrorEmpty);
       return;
     }
     setNameError(null);
@@ -116,7 +122,7 @@ export function PlayerEditModal({
       isCaptain: captainDraft,
     });
     onClose();
-  }, [captainDraft, nameDraft, onClose, onUpdatePlayer, player]);
+  }, [captainDraft, nameDraft, onClose, onUpdatePlayer, player, ui]);
 
   useEffect(() => {
     if (!player) return;
@@ -158,11 +164,11 @@ export function PlayerEditModal({
                   id={titleId}
                   className="text-base font-semibold tracking-tight text-[var(--foreground)]"
                 >
-                  Oyuncu düzenle
+                  {ui.editorPlayerEditTitle}
                 </p>
                 {player.side === "away" && (
                   <p className="mt-1 text-xs font-medium text-sky-400/90">
-                    Rakip takım
+                    {ui.editorPlayerOpponentTeam}
                   </p>
                 )}
               </div>
@@ -173,14 +179,14 @@ export function PlayerEditModal({
                 className="shrink-0"
                 onClick={discardClose}
               >
-                Kapat
+                {ui.editorPlayerClose}
               </Button>
             </div>
 
             <div className="space-y-4">
               <div>
                 <div className="flex items-baseline justify-between gap-2">
-                  <Label htmlFor="player-edit-name">İsim</Label>
+                  <Label htmlFor="player-edit-name">{ui.editorNameLabel}</Label>
                   <span
                     className="text-xs tabular-nums text-[var(--muted)]"
                     aria-live="polite"
@@ -202,12 +208,11 @@ export function PlayerEditModal({
                   }}
                 />
                 <p className="mt-1.5 text-xs text-[var(--muted)]">
-                  {nameError ??
-                    "Harf, rakam, boşluk ve . ' - (tire) kullanılabilir; özel işaret ve emoji yazılmaz."}
+                  {nameError ?? ui.editorNameHint}
                 </p>
               </div>
               <div>
-                <Label htmlFor="player-edit-role">Saha rolü</Label>
+                <Label htmlFor="player-edit-role">{ui.editorRoleLabel}</Label>
                 <select
                   id="player-edit-role"
                   className="mt-1.5 flex h-9 w-full rounded-md border border-slate-600 bg-[var(--card)] px-3 py-2 text-sm text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
@@ -220,12 +225,12 @@ export function PlayerEditModal({
                 >
                   {ROLE_ORDER.map((key) => (
                     <option key={key} value={key}>
-                      {ROLE_LABEL[key]}
+                      {roleLabel(ui, key)}
                     </option>
                   ))}
                 </select>
                 <p className="mt-1.5 text-xs text-[var(--muted)]">
-                  Konum sahada olduğu gibi kalır; rolü buradan seçebilirsiniz.
+                  {ui.editorRoleHelp}
                 </p>
               </div>
               <div className="flex items-start gap-3 rounded-md border border-[var(--border-subtle)] bg-[var(--bg-deep)]/40 px-3 py-2.5">
@@ -241,33 +246,31 @@ export function PlayerEditModal({
                     htmlFor="player-edit-captain"
                     className="cursor-pointer text-[var(--foreground)]"
                   >
-                    Takım kaptanı
+                    {ui.editorCaptainLabel}
                   </Label>
                   <p className="mt-1 text-xs leading-snug text-[var(--muted)]">
-                    Bu takımda yalnızca bir kaptan; başka bir oyuncuyu
-                    işaretlediğinizde aynı taraftaki önceki seçim kalkar (rakip
-                    takımda ayrı bir kaptan seçebilirsiniz).
+                    {ui.editorCaptainHelp}
                   </p>
                 </div>
               </div>
               <div>
-                <Label htmlFor="player-edit-number">Forma numarası</Label>
+                <Label htmlFor="player-edit-number">{ui.editorJerseyLabel}</Label>
                 <Input
                   id="player-edit-number"
                   type="text"
                   inputMode="numeric"
-                  placeholder="Örn: 7"
+                  placeholder={ui.editorJerseyPlaceholder}
                   className="mt-1.5"
                   value={jerseyDraft}
                   onChange={(e) => {
                     const next = sanitizeJerseyInput(e.target.value);
                     setJerseyDraftBoth(next);
                     if (!next) {
-                      setJerseyError("1-99 arası forma numarası girin.");
+                      setJerseyError(ui.editorJerseyErrorRange);
                       return;
                     }
                     setJerseyError(
-                      next === "00" ? "0 ile başlayan numara kullanılamaz." : null
+                      next === "00" ? ui.editorJerseyErrorLeadingZero : null
                     );
                   }}
                   onBlur={() => {
@@ -278,7 +281,7 @@ export function PlayerEditModal({
                   }}
                 />
                 <p className="mt-1.5 text-xs text-[var(--muted)]">
-                  {jerseyError ?? "1-99 (başında 0 olmadan)."}
+                  {jerseyError ?? ui.editorJerseyHint}
                 </p>
               </div>
             </div>
@@ -288,7 +291,7 @@ export function PlayerEditModal({
                 type="submit"
                 className="bg-green-800 text-white hover:bg-lime-600"
               >
-                Kaydet
+                {ui.editorSave}
               </Button>
             </div>
           </form>

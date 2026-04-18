@@ -1,4 +1,9 @@
+"use client";
+
+import { useLocale } from "@/components/locale-provider";
+
 export default function UserPanelLoading() {
+  const { strings: ui } = useLocale();
   return (
     <section className="space-y-4">
       <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-5">
@@ -21,7 +26,7 @@ export default function UserPanelLoading() {
       </div>
 
       <div className="flex items-center justify-center">
-        <p className="text-sm text-[var(--muted)]">Kullanıcı paneli hazırlanıyor...</p>
+        <p className="text-sm text-[var(--muted)]">{ui.panelLoadingMessage}</p>
       </div>
     </section>
   );

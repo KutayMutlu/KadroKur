@@ -1,5 +1,7 @@
 "use client";
 
+import { useLocale } from "@/components/locale-provider";
+import { matchFormatLabel } from "@/lib/editor-i18n";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -21,21 +23,22 @@ export function MatchFormatSelector({
   onChange,
   disabled,
 }: MatchFormatSelectorProps) {
+  const { strings: ui } = useLocale();
   return (
     <div className="flex flex-col gap-2">
-      <Label htmlFor="match-format">Oyun tipi</Label>
+      <Label htmlFor="match-format">{ui.editorMatchTypeLabel}</Label>
       <Select
         value={value}
         onValueChange={(key) => onChange(key as MatchFormatKey)}
         disabled={disabled}
       >
         <SelectTrigger id="match-format" className="w-full">
-          <SelectValue placeholder="Seçin" />
+          <SelectValue placeholder={ui.editorSelectPlaceholder} />
         </SelectTrigger>
         <SelectContent>
           {MATCH_FORMATS.map((format) => (
             <SelectItem key={format.key} value={format.key}>
-              {format.label}
+              {matchFormatLabel(ui, format.key)}
             </SelectItem>
           ))}
         </SelectContent>

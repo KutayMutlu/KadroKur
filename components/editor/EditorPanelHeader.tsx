@@ -1,13 +1,7 @@
 "use client";
 
+import { useLocale } from "@/components/locale-provider";
 import { cn } from "@/lib/utils";
-
-const STEPS = [
-  { n: 1, label: "Takım" },
-  { n: 2, label: "Maç" },
-  { n: 3, label: "Rakip" },
-  { n: 4, label: "Kaydet" },
-] as const;
 
 export type EditorPanelHeaderProps = {
   /** 0 = hiçbiri seçili değil (hepsi kapalı) */
@@ -20,6 +14,14 @@ export type EditorPanelHeaderProps = {
  * Adım rozetleri accordion ile eşlenir; aynı rozete tekrar tıklanınca bölüm kapanır.
  */
 export function EditorPanelHeader({ activeStep, onStepSelect }: EditorPanelHeaderProps) {
+  const { strings: ui } = useLocale();
+  const steps = [
+    { n: 1, label: ui.editorStepTeam },
+    { n: 2, label: ui.editorStepMatch },
+    { n: 3, label: ui.editorStepOpponent },
+    { n: 4, label: ui.editorStepSave },
+  ] as const;
+
   return (
     <header className="relative overflow-hidden rounded-2xl border border-[var(--border-subtle)] bg-gradient-to-b from-[var(--bg-elevated)]/80 to-[var(--bg-card)]/50 px-3 py-3.5 shadow-[var(--card-inset-glow)] sm:px-4 sm:py-4">
       <div
@@ -34,15 +36,18 @@ export function EditorPanelHeader({ activeStep, onStepSelect }: EditorPanelHeade
             className="text-base font-semibold tracking-[0.14em] text-[var(--foreground)] sm:text-lg"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            EDİTÖR
+            {ui.editorPanelTitle}
           </h2>
           <p className="mt-1 max-w-md text-pretty text-[11px] leading-relaxed text-[var(--muted)] sm:mx-0 sm:text-xs">
-            Her adımda yalnızca o bölüm açık kalır; sırayı izleyin veya aşağıdan bir başlığa tıklayın.
+            {ui.editorPanelIntro}
           </p>
         </div>
 
-        <ol className="flex flex-wrap justify-center gap-2 sm:justify-start" aria-label="Adımlar">
-          {STEPS.map((s) => {
+        <ol
+          className="flex flex-wrap justify-center gap-2 sm:justify-start"
+          aria-label={ui.editorStepsAria}
+        >
+          {steps.map((s) => {
             const isActive = activeStep === s.n;
             return (
               <li key={s.n}>

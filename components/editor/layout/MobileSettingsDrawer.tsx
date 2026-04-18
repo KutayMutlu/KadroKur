@@ -1,5 +1,6 @@
 "use client";
 
+import { useLocale } from "@/components/locale-provider";
 import { Button } from "@/components/ui/button";
 import { SlidersHorizontal, X } from "lucide-react";
 import { EditorSidebar, type EditorSidebarProps } from "../EditorSidebar";
@@ -17,13 +18,14 @@ export function MobileSettingsDrawer({
   onClose,
   sidebarProps,
 }: MobileSettingsDrawerProps) {
+  const { strings: ui } = useLocale();
   return (
     <>
       {open && (
         <button
           type="button"
           className="fixed inset-0 z-40 bg-black/55 backdrop-blur-[2px]"
-          aria-label="Editör panelini kapat"
+          aria-label={ui.editorMobileDrawerClose}
           onClick={onClose}
         />
       )}
@@ -40,7 +42,7 @@ export function MobileSettingsDrawer({
             className="text-center text-sm font-semibold tracking-[0.14em] text-[var(--foreground)]"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            EDİTÖR
+            {ui.editorPanelTitle}
           </h2>
           <Button
             type="button"
@@ -48,7 +50,7 @@ export function MobileSettingsDrawer({
             size="sm"
             className="absolute right-2 top-1/2 h-9 w-9 shrink-0 -translate-y-1/2 p-0"
             onClick={onClose}
-            aria-label="Kapat"
+            aria-label={ui.editorMobileDrawerCloseBtn}
           >
             <X className="h-4 w-4" aria-hidden />
           </Button>
@@ -66,7 +68,7 @@ export function MobileSettingsDrawer({
         onClick={onToggle}
         aria-expanded={open}
         aria-controls="editor-settings-drawer"
-        title="Takım ve taktik ayarları"
+        title={ui.editorMobileFabTitle}
       >
         <SlidersHorizontal className="h-6 w-6" aria-hidden />
       </Button>

@@ -1,4 +1,6 @@
 import type { AppLocale } from "./app-locale";
+import { editorUiStrings } from "./editor-ui-strings";
+import { panelUiStrings } from "./panel-ui-strings";
 
 /** Ayarlar, site başlığı, ana sayfa, kayıtlı taktikler — locale ile seçilir */
 export const uiStrings = {
@@ -61,6 +63,12 @@ export const uiStrings = {
     tacticsSectionSubtitle: "Bu cihazdaki ve hesabınızdaki kayıtlar",
     tacticsCloudHeading: "Hesabımdaki taktikler",
     tacticsLocalHeading: "Bu cihazdaki kayıtlar",
+
+    accountMenuAria: "Hesap menüsü: {name}",
+    accountShortcutsHeading: "Kısayollar",
+    accountLinkUserPanel: "Kullanıcı paneli",
+    accountLinkMyTactics: "Taktiklerim",
+    accountSignOut: "Çıkış yap",
   },
   en: {
     settingsTitle: "Appearance & language",
@@ -121,11 +129,19 @@ export const uiStrings = {
     tacticsSectionSubtitle: "On this device and in your account",
     tacticsCloudHeading: "In my account",
     tacticsLocalHeading: "On this device",
+
+    accountMenuAria: "Account menu: {name}",
+    accountShortcutsHeading: "Shortcuts",
+    accountLinkUserPanel: "Account",
+    accountLinkMyTactics: "My tactics",
+    accountSignOut: "Sign out",
   },
 } as const;
 
-export type UiStrings = (typeof uiStrings)[AppLocale];
+export type UiStrings = (typeof uiStrings)[AppLocale] &
+  (typeof editorUiStrings)[AppLocale] &
+  (typeof panelUiStrings)[AppLocale];
 
 export function getUiStrings(locale: AppLocale): UiStrings {
-  return uiStrings[locale];
+  return { ...uiStrings[locale], ...editorUiStrings[locale], ...panelUiStrings[locale] };
 }

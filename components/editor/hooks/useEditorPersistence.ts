@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useLocale } from "@/components/locale-provider";
 import type { User } from "@supabase/supabase-js";
 import { getMatchFormatForFormation, type MatchFormatKey } from "@/lib/formations";
 import { formatJerseyNumber, normalizeCaptainFlags, normalizePlayerRole, sanitizePlayerName } from "@/lib/player-fields";
@@ -83,6 +84,7 @@ export function useEditorPersistence({
   setDidSaveOnce,
   onTacticSavedToCloud,
 }: UseEditorPersistenceParams) {
+  const { strings: ui } = useLocale();
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [messageTone, setMessageTone] = useState<MessageTone>("warning");
@@ -97,12 +99,12 @@ export function useEditorPersistence({
     if (fromMeta) return fromMeta;
     const email = authUser?.email?.trim();
     if (email && email.includes("@")) return email.split("@")[0];
-    return "KadroKur kullanıcısı";
-  }, [authUser]);
+    return ui.editorPersistenceDefaultOwner;
+  }, [authUser, ui.editorPersistenceDefaultOwner]);
 
   const copyBlockedMessage = !isAuthenticated
-    ? "Paylaşım linki için lütfen giriş yapın."
-    : "Paylaşım linkini kopyalamadan önce lütfen taktiği kaydedin.";
+    ? ui.editorPersistenceCopyBlockedLogin
+    : ui.editorPersistenceCopyBlockedSaveFirst;
 
   const loadTactic = useCallback(
     (t: StoredTactic) => {
@@ -120,7 +122,9 @@ export function useEditorPersistence({
           s.players.map((p, i) => ({
             ...p,
             side: p.side === "away" ? "away" : "home",
-            name: sanitizePlayerName(String(p.name ?? `Oyuncu ${i + 1}`)),
+            name: sanitizePlayerName(
+              String(p.name ?? `${ui.editorPlayerFallbackPrefix} ${i + 1}`)
+            ),
             number: formatJerseyNumber(String(p.number ?? i + 1)),
             role: normalizePlayerRole(p.role),
           }))
@@ -143,6 +147,7 @@ export function useEditorPersistence({
       setTacticId,
       setTacticTitle,
       setTeamName,
+      ui.editorPlayerFallbackPrefix,
     ]
   );
 
@@ -158,9 +163,7 @@ export function useEditorPersistence({
       setShareId(generateShareId());
       setDidSaveOnce(false);
       setMessageTone("warning");
-      setMessage(
-        "Bu kayıt bu cihazda yok. Paylaşım için yeni bir link oluşturuldu — düzenleyip Kaydet ile buluta yazın."
-      );
+      setMessage(ui.editorPersistenceLoadWarningLocal);
       return;
     }
     sb.auth.getUser().then(async ({ data }) => {
@@ -169,9 +172,7 @@ export function useEditorPersistence({
         setShareId(generateShareId());
         setDidSaveOnce(false);
         setMessageTone("warning");
-        setMessage(
-          "Bu kayıt bu cihazda yok. Google ile giriş yaparsanız hesabınızdaki taktikleri de açabilirsiniz."
-        );
+        setMessage(ui.editorPersistenceLoadWarningGoogle);
         return;
       }
       const { data: cloud } = await sb
@@ -193,15 +194,23 @@ export function useEditorPersistence({
       setShareId(generateShareId());
       setDidSaveOnce(false);
       setMessageTone("warning");
-      setMessage("Bu kayıt bulunamadı. Yeni taktik olarak devam edebilirsiniz.");
+      setMessage(ui.editorPersistenceNotFound);
     });
-  }, [initialTacticId, loadTactic, setDidSaveOnce, setShareId]);
+  }, [
+    initialTacticId,
+    loadTactic,
+    setDidSaveOnce,
+    setShareId,
+    ui.editorPersistenceLoadWarningGoogle,
+    ui.editorPersistenceLoadWarningLocal,
+    ui.editorPersistenceNotFound,
+  ]);
 
   const handleSave = useCallback(async () => {
     const normalizedTitle = tacticTitle.trim();
     if (!normalizedTitle) {
       setMessageTone("warning");
-      setMessage("Lütfen önce taktik adını girin.");
+      setMessage(ui.editorPersistenceTitleRequired);
       return;
     }
 
@@ -271,28 +280,24 @@ export function useEditorPersistence({
 
       if (!isSupabaseConfigured()) {
         setMessageTone("success");
-        setMessage("Kaydedildi (yalnız bu cihaz).");
+        setMessage(ui.editorPersistenceSavedLocalOnly);
       } else if (!authUser) {
         setMessageTone("warning");
-        setMessage(
-          "Kaydedildi (yalnız bu cihaz). Diğer cihazlarda görmek için giriş yapıp tekrar kaydedin."
-        );
+        setMessage(ui.editorPersistenceSavedLocalLoginHint);
       } else if (cloudAttempted && cloudSaveFailed) {
         setMessageTone("warning");
-        setMessage(
-          "Bu cihazda kaydedildi; buluta yazılamadı. Bağlantınızı ve oturumunuzu kontrol edip yeniden deneyin."
-        );
+        setMessage(ui.editorPersistenceSavedLocalCloudFail);
       } else if (cloudAttempted && !cloudSaveFailed) {
         setMessage(null);
         onTacticSavedToCloud?.();
       } else {
         setMessageTone("success");
-        setMessage("Taktik bu cihazda kaydedildi.");
+        setMessage(ui.editorPersistenceSavedDevice);
       }
     } catch (err) {
       console.error("handleSave:", err);
       setMessageTone("warning");
-      setMessage("Kaydedilirken bir hata oluştu. Lütfen tekrar deneyin.");
+      setMessage(ui.editorPersistenceSaveError);
     } finally {
       setSaving(false);
     }
@@ -314,51 +319,74 @@ export function useEditorPersistence({
     teamName,
     ownerName,
     onTacticSavedToCloud,
+    ui.editorPersistenceSavedLocalOnly,
+    ui.editorPersistenceSavedLocalLoginHint,
+    ui.editorPersistenceSavedLocalCloudFail,
+    ui.editorPersistenceSavedDevice,
+    ui.editorPersistenceSaveError,
+    ui.editorPersistenceTitleRequired,
   ]);
 
   const handleCopyShare = useCallback(async () => {
     if (!isAuthenticated) {
       setMessageTone("warning");
-      setMessage("Paylaşım linki için lütfen giriş yapın.");
+      setMessage(ui.editorPersistenceCopyBlockedLogin);
       return;
     }
     if (!didSaveOnce || !shareId) {
       setMessageTone("warning");
-      setMessage("Paylaşım linkini kopyalamadan önce lütfen taktiği kaydedin.");
+      setMessage(ui.editorPersistenceCopyBlockedSaveFirst);
       return;
     }
     const url = shareUrl(shareId);
     await navigator.clipboard.writeText(url);
     setMessageTone("success");
-    setMessage("Link panoya kopyalandı.");
-  }, [didSaveOnce, isAuthenticated, shareId]);
+    setMessage(ui.editorPersistenceLinkCopied);
+  }, [
+    didSaveOnce,
+    isAuthenticated,
+    shareId,
+    ui.editorPersistenceCopyBlockedLogin,
+    ui.editorPersistenceCopyBlockedSaveFirst,
+    ui.editorPersistenceLinkCopied,
+  ]);
 
   const handleShareLink = useCallback(async () => {
     if (!isAuthenticated) {
       setMessageTone("warning");
-      setMessage("Paylaşım linki için lütfen giriş yapın.");
+      setMessage(ui.editorPersistenceCopyBlockedLogin);
       return;
     }
     if (!didSaveOnce || !shareId) {
       setMessageTone("warning");
-      setMessage("Paylaşım linkini paylaşmadan önce lütfen taktiği kaydedin.");
+      setMessage(ui.editorPersistenceShareNeedSave);
       return;
     }
     const url = shareUrl(shareId);
     const result = await shareHttpUrl(url, {
-      title: "KadroKur taktik",
-      text: "Taktik paylaşım linki:",
+      title: ui.editorPersistenceShareTitle,
+      text: ui.editorPersistenceShareText,
     });
     if (result === "shared") {
       setMessageTone("success");
-      setMessage("Taktik başarıyla paylaşıldı! Maç toplantısına hazırsın. 🏟️");
+      setMessage(ui.editorPersistenceShareSuccess);
       return;
     }
     if (result === "cancelled") return;
     await navigator.clipboard.writeText(url);
     setMessageTone("success");
-    setMessage("Link panoya kopyalandı.");
-  }, [didSaveOnce, isAuthenticated, shareId]);
+    setMessage(ui.editorPersistenceLinkCopied);
+  }, [
+    didSaveOnce,
+    isAuthenticated,
+    shareId,
+    ui.editorPersistenceCopyBlockedLogin,
+    ui.editorPersistenceLinkCopied,
+    ui.editorPersistenceShareNeedSave,
+    ui.editorPersistenceShareSuccess,
+    ui.editorPersistenceShareText,
+    ui.editorPersistenceShareTitle,
+  ]);
 
   return {
     saving,

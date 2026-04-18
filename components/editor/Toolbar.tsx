@@ -1,5 +1,6 @@
 "use client";
 
+import { useLocale } from "@/components/locale-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -38,17 +39,18 @@ export function Toolbar({
   messageTone,
   embedded = false,
 }: ToolbarProps) {
+  const { strings: ui } = useLocale();
   return (
     <div className={embedded ? "flex flex-col gap-3" : "flex flex-col gap-3 rounded-xl border border-white/10 bg-black/10 p-3"}>
       <div className="grid gap-3">
         <div>
-          <Label htmlFor="title">Taktik adı</Label>
+          <Label htmlFor="title">{ui.editorTacticNameLabel}</Label>
           <Input
             id="title"
             className="mt-1"
             value={tacticTitle}
             onChange={(e) => onTacticTitleChange(e.target.value)}
-            placeholder="Taktik adını giriniz"
+            placeholder={ui.editorTacticNamePlaceholder}
           />
         </div>
       </div>
@@ -62,8 +64,8 @@ export function Toolbar({
             className="min-h-[44px] w-full touch-manipulation min-[1367px]:min-h-0"
           >
             <Download className="h-4 w-4 shrink-0" aria-hidden />
-            <span className="min-[1367px]:hidden">Galeriye kaydet</span>
-            <span className="hidden min-[1367px]:inline">PNG indir</span>
+            <span className="min-[1367px]:hidden">{ui.editorPngSaveToGallery}</span>
+            <span className="hidden min-[1367px]:inline">{ui.editorPngDownload}</span>
           </Button>
           <Button
             type="button"
@@ -73,10 +75,10 @@ export function Toolbar({
             className={`min-h-[44px] w-full touch-manipulation min-[1367px]:min-h-0 min-[1367px]:hidden ${
               canCopyShare ? "" : "opacity-50"
             }`}
-            title={canCopyShare ? "Paylaşım linkini paylaş" : copyBlockedMessage}
+            title={canCopyShare ? ui.editorShareLinkTitle : copyBlockedMessage}
           >
             <Share2 className="h-4 w-4 shrink-0" aria-hidden />
-            Linki paylaş
+            {ui.editorShareLink}
           </Button>
           <Button
             type="button"
@@ -86,14 +88,10 @@ export function Toolbar({
             className={`hidden min-h-[44px] w-full touch-manipulation min-[1367px]:min-h-0 min-[1367px]:inline-flex ${
               canCopyShare ? "" : "opacity-50"
             }`}
-            title={
-              canCopyShare
-                ? "Tam paylaşım URL’sini panoya kopyala"
-                : copyBlockedMessage
-            }
+            title={canCopyShare ? ui.editorCopyLinkTitle : copyBlockedMessage}
           >
             <Link2 className="h-4 w-4 shrink-0" aria-hidden />
-            Linki kopyala
+            {ui.editorCopyLink}
           </Button>
         </div>
         <Button
@@ -104,10 +102,10 @@ export function Toolbar({
           className={`min-h-[40px] w-full touch-manipulation border border-[var(--border-subtle)] bg-[var(--card)]/40 hover:bg-[var(--bg-elevated)] min-[1367px]:hidden ${
             canCopyShare ? "" : "opacity-50"
           }`}
-          title={canCopyShare ? "Linki panoya kopyala" : copyBlockedMessage}
+          title={canCopyShare ? ui.editorCopyClipboardTitle : copyBlockedMessage}
         >
           <Link2 className="h-4 w-4 shrink-0" aria-hidden />
-          Panoya kopyala
+          {ui.editorCopyClipboard}
         </Button>
         <Button
           type="button"
@@ -120,7 +118,7 @@ export function Toolbar({
           ) : (
             <Save className="h-4 w-4" />
           )}
-          Kaydet
+          {ui.editorSave}
         </Button>
       </div>
 

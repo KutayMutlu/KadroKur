@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useLocale } from "@/components/locale-provider";
 import { Button } from "@/components/ui/button";
 import { AuthControls } from "@/components/auth/AuthControls";
 import { Redo2, Undo2 } from "lucide-react";
@@ -24,12 +25,13 @@ export function EditorHeader({
   onRedo,
   showUndoRedoInHeader = true,
 }: EditorHeaderProps) {
+  const { strings: ui } = useLocale();
   return (
     <header
       className="sticky top-0 z-30 -mx-3 mb-2 shrink-0 border-b border-[var(--border-subtle)] bg-[var(--bg-elevated)]/92 px-3 pb-2.5 pt-[max(0.5rem,env(safe-area-inset-top))] backdrop-blur-md sm:-mx-4 sm:mb-3 sm:px-4 sm:pb-3"
       role="banner"
     >
-      <h1 className="sr-only">KadroKur taktik editörü</h1>
+      <h1 className="sr-only">{ui.editorSrTitle}</h1>
 
       {/*
         Mobil: iki satır — logo|hesap üstte, taktik rozeti altta tam genişlik (dar ekranda sıkışmayı önler).
@@ -40,7 +42,7 @@ export function EditorHeader({
           <Link
             href="/"
             className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-2.5"
-            aria-label="Ana sayfaya dön"
+            aria-label={ui.editorHomeAria}
           >
             <span
               className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-[var(--border-glow)] bg-[var(--bg-card)] text-sm font-bold text-[var(--accent)] sm:h-9 sm:w-9 sm:text-base"
@@ -57,7 +59,7 @@ export function EditorHeader({
                 KadroKur
               </p>
               <p className="mt-0.5 hidden text-[10px] text-[var(--muted)] sm:block sm:text-[11px]">
-                Taktik editörü
+                {ui.editorBrandSubtitle}
               </p>
             </div>
           </Link>
@@ -67,7 +69,7 @@ export function EditorHeader({
             <div
               className="flex items-center rounded-lg border border-[var(--border-subtle)] bg-black/[0.12] p-0.5 dark:bg-black/25"
               role="group"
-              aria-label="Geri al ve yinele"
+              aria-label={ui.editorUndoRedoAria}
             >
               <Button
                 type="button"
@@ -76,8 +78,8 @@ export function EditorHeader({
                 onClick={onUndo}
                 disabled={!canUndo}
                 className="h-8 w-8 p-0 text-[var(--foreground)] hover:bg-white/10 disabled:opacity-35"
-                title="Geri al (Ctrl+Z)"
-                aria-label="Geri al"
+                title={ui.editorUndoTitle}
+                aria-label={ui.editorUndoAria}
               >
                 <Undo2 className="h-4 w-4" aria-hidden />
               </Button>
@@ -89,8 +91,8 @@ export function EditorHeader({
                 onClick={onRedo}
                 disabled={!canRedo}
                 className="h-8 w-8 p-0 text-[var(--foreground)] hover:bg-white/10 disabled:opacity-35"
-                title="Yinele (Ctrl+Shift+Z)"
-                aria-label="Yinele"
+                title={ui.editorRedoTitle}
+                aria-label={ui.editorRedoAria}
               >
                 <Redo2 className="h-4 w-4" aria-hidden />
               </Button>

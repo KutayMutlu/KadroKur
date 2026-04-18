@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useLocale } from "@/components/locale-provider";
 import { Download, Link2, Loader2, Share2 } from "lucide-react";
 import type Konva from "konva";
 import { TacticCard } from "@/components/kullanici-paneli/tactic-card";
@@ -14,7 +15,7 @@ import { shareHttpUrl } from "@/lib/share-web-url";
 import type { CanvasState } from "@/types/tactic";
 import { useRef } from "react";
 
-type TacticRow = {
+export type TacticRow = {
   id: string;
   title: string;
   share_id: string;
@@ -27,9 +28,9 @@ type TacticRow = {
   created_at: string;
 };
 
-function sanitizeFileName(value: string): string {
+function sanitizeFileName(value: string, fallback: string): string {
   const normalized = value.trim().toLowerCase();
-  if (!normalized) return "taktik";
+  if (!normalized) return fallback;
   return normalized
     .replace(/[^a-z0-9\u00c0-\u024f\u1e00-\u1eff\s-]/gi, "")
     .replace(/\s+/g, "-")
@@ -67,6 +68,7 @@ function downloadBlobAsFile(blob: Blob, filename: string) {
 }
 
 export function TacticsGrid({ tactics }: { tactics: TacticRow[] }) {
+  const { strings: ui } = useLocale();
   const router = useRouter();
   const exportStageRef = useRef<PitchCanvasHandle>(null);
   const [items, setItems] = useState<TacticRow[]>(tactics);
@@ -103,7 +105,7 @@ export function TacticsGrid({ tactics }: { tactics: TacticRow[] }) {
     [items, selectedTacticForShare]
   );
   const shareDisabled = !shareTactic?.share_id || !shareTactic?.is_public;
-  const shareDisabledTitle = "Önce taktiği herkese açık yapmalısın";
+  const shareDisabledTitle = ui.myTacticsShareNeedPublic;
   const shareUrl = useMemo(() => {
     if (!shareTactic?.share_id || typeof window === "undefined") return "";
     return `${window.location.origin}/view/${shareTactic.share_id}`;
@@ -131,20 +133,20 @@ export function TacticsGrid({ tactics }: { tactics: TacticRow[] }) {
     if (!shareUrl || shareDisabled) return;
     try {
       await navigator.clipboard.writeText(shareUrl);
-      showToast("Bağlantı kopyalandı!", "success");
+      showToast(ui.myTacticsCopySuccess, "success");
     } catch {
-      showToast("Bağlantı kopyalanamadı. Lütfen tekrar deneyin.", "destructive");
+      showToast(ui.myTacticsCopyFail, "destructive");
     }
   };
 
   const handleShareLink = async () => {
     if (!shareUrl || shareDisabled) return;
     const result = await shareHttpUrl(shareUrl, {
-      title: "KadroKur taktik",
-      text: "Taktik paylaşım linki:",
+      title: ui.editorPersistenceShareTitle,
+      text: ui.editorPersistenceShareText,
     });
     if (result === "shared") {
-      showToast("Taktik başarıyla paylaşıldı! Maç toplantısına hazırsın. 🏟️", "success");
+      showToast(ui.myTacticsShareSuccessToast, "success");
       return;
     }
     if (result === "cancelled") return;
@@ -155,7 +157,7 @@ export function TacticsGrid({ tactics }: { tactics: TacticRow[] }) {
     if (!shareTactic || shareDisabled) return;
     const canvasState = shareTactic.canvas_state as CanvasState | null;
     if (!canvasState) {
-      showToast("Taktik verisi bulunamadı.", "destructive");
+      showToast(ui.myTacticsNoCanvasData, "destructive");
       return;
     }
 
@@ -165,7 +167,7 @@ export function TacticsGrid({ tactics }: { tactics: TacticRow[] }) {
       await new Promise((resolve) => setTimeout(resolve, 250));
       const stage = await getExportStage();
       const blob = await stageToPngBlob(stage);
-      const filename = `${sanitizeFileName(shareTactic.title || "taktik")}.png`;
+      const filename = `${sanitizeFileName(shareTactic.title || "", ui.tacticFilenameFallback)}.png`;
       const file = new File([blob], filename, { type: "image/png" });
 
       // navigator.share en sonda — önce PNG hazır; görsel + public link birlikte
@@ -173,8 +175,8 @@ export function TacticsGrid({ tactics }: { tactics: TacticRow[] }) {
         throw new Error("missing_share_url");
       }
 
-      const title = "Taktik Paylaşımı";
-      const textBody = "Taktik görselime göz at! Kendi taktiğini oluşturmak için:";
+      const title = ui.myTacticsShareImageTitle;
+      const textBody = ui.myTacticsShareImageText;
       const shareData: ShareData = {
         files: [file],
         title,
@@ -200,7 +202,7 @@ export function TacticsGrid({ tactics }: { tactics: TacticRow[] }) {
               url: shareUrl,
             });
           }
-          showToast("Paylaşım menüsü açıldı", "success");
+          showToast(ui.myTacticsShareMenuOpened, "success");
         } catch (err: unknown) {
           const name = err && typeof err === "object" && "name" in err ? (err as { name?: string }).name : "";
           if (name === "AbortError") {
@@ -209,18 +211,18 @@ export function TacticsGrid({ tactics }: { tactics: TacticRow[] }) {
           downloadBlobAsFile(blob, filename);
           try {
             await navigator.clipboard.writeText(`${textBody}\n\n${shareUrl}`);
-            showToast("Görsel indirildi; metin ve taktik linki panoya kopyalandı.", "success");
+            showToast(ui.myTacticsDownloadedClipboardOk, "success");
           } catch {
-            showToast("Görsel indirildi. Linki aşağıdaki kutudan kopyalayabilirsin.", "success");
+            showToast(ui.myTacticsDownloadedCopyLinkHint, "success");
           }
         }
       } else {
         downloadBlobAsFile(blob, filename);
         try {
           await navigator.clipboard.writeText(`${textBody}\n\n${shareUrl}`);
-          showToast("Görsel indirildi; metin ve taktik linki panoya kopyalandı.", "success");
+          showToast(ui.myTacticsDownloadedClipboardOk, "success");
         } catch {
-          showToast("Görsel indirildi. Linki aşağıdaki kutudan kopyalayabilirsin.", "success");
+          showToast(ui.myTacticsDownloadedCopyLinkHint, "success");
         }
       }
     } catch (err: unknown) {
@@ -228,7 +230,7 @@ export function TacticsGrid({ tactics }: { tactics: TacticRow[] }) {
       if (name === "AbortError") {
         return;
       }
-      showToast("Görsel oluşturulamadı veya paylaşılamadı.", "destructive");
+      showToast(ui.myTacticsImageShareFail, "destructive");
     } finally {
       setShareImageLoading(false);
     }
@@ -240,15 +242,15 @@ export function TacticsGrid({ tactics }: { tactics: TacticRow[] }) {
       setIsDownloading(true);
       await new Promise((resolve) => setTimeout(resolve, 250));
       const stage = await getExportStage();
-      const safe = (shareTactic.title || "taktik").replace(/[^\w\-]+/g, "_");
+      const safe = (shareTactic.title || ui.tacticFilenameFallback).replace(/[^\w\-]+/g, "_");
       const result = await exportStageToPng(stage, `${safe}.png`, { pixelRatio: 2 });
       if (result === "shared") {
-        showToast("Görsel kaydedildi. Artık stratejin cebinde! 📱", "success");
+        showToast(ui.myTacticsPngGallery, "success");
       } else if (result === "downloaded") {
-        showToast("Görsel indirildi.", "success");
+        showToast(ui.myTacticsPngDownloaded, "success");
       }
     } catch {
-      showToast("Görsel oluşturulamadı", "destructive");
+      showToast(ui.myTacticsPngFail, "destructive");
     } finally {
       setIsDownloading(false);
     }
@@ -267,7 +269,7 @@ export function TacticsGrid({ tactics }: { tactics: TacticRow[] }) {
 
       if (response.status === 403) {
         setToastVariant("destructive");
-        setToastMessage("Yetki Hatası: Bu taktik hesabınıza bağlı olmadığı için silinemedi.");
+        setToastMessage(ui.myTacticsDeleteForbidden);
         setConfirmDeleteId(null);
         return;
       }
@@ -278,11 +280,11 @@ export function TacticsGrid({ tactics }: { tactics: TacticRow[] }) {
 
       setItems((prev) => prev.filter((item) => item.id !== confirmDeleteId));
       setToastVariant("success");
-      setToastMessage("Başarıyla Silindi");
+      setToastMessage(ui.myTacticsDeleted);
       setConfirmDeleteId(null);
       router.refresh();
     } catch {
-      setDeleteError("Taktik silinirken bir hata oluştu. Lütfen tekrar deneyin.");
+      setDeleteError(ui.myTacticsDeleteError);
     } finally {
       setDeletingId(null);
     }
@@ -319,10 +321,8 @@ export function TacticsGrid({ tactics }: { tactics: TacticRow[] }) {
         onClose={() => {
           if (!deletingId) setConfirmDeleteId(null);
         }}
-        title="Taktiği Sil"
-        description={`${
-          selectedTactic?.title || "Bu taktik"
-        } kalıcı olarak silinecek. Bu işlemi geri alamazsın.`}
+        title={ui.myTacticsDeleteModalTitle}
+        description={`${selectedTactic?.title || ui.myTacticsDeleteModalFallbackName} ${ui.myTacticsDeleteModalDesc}`}
         footer={
           <>
             <button
@@ -331,7 +331,7 @@ export function TacticsGrid({ tactics }: { tactics: TacticRow[] }) {
               disabled={Boolean(deletingId)}
               className="rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-elevated)] px-3 py-2 text-sm font-medium text-[var(--foreground)] transition hover:border-[var(--accent)]/35 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Vazgeç
+              {ui.myTacticsCancel}
             </button>
             <button
               type="button"
@@ -339,7 +339,7 @@ export function TacticsGrid({ tactics }: { tactics: TacticRow[] }) {
               disabled={Boolean(deletingId)}
               className="rounded-lg border border-rose-400/40 bg-rose-500/20 px-3 py-2 text-sm font-semibold text-rose-100 transition hover:bg-rose-500/30 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {deletingId ? "Siliniyor..." : "Taktiği Sil"}
+              {deletingId ? ui.myTacticsDeleting : ui.myTacticsDeleteConfirm}
             </button>
           </>
         }
@@ -368,7 +368,7 @@ export function TacticsGrid({ tactics }: { tactics: TacticRow[] }) {
         onOpenChange={(open) => {
           if (!open) setSelectedTacticForShare(null);
         }}
-        title="Paylaş"
+        title={ui.myTacticsShareSheetTitle}
       >
         <div className="rounded-xl border border-[var(--border-subtle)] bg-slate-950/70 p-3">
           <div className="flex gap-2">
@@ -380,7 +380,7 @@ export function TacticsGrid({ tactics }: { tactics: TacticRow[] }) {
               className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-emerald-400/45 bg-emerald-500/20 px-3 py-2 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-500/30 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {shareImageLoading ? <Loader2 className="h-4 w-4 shrink-0 animate-spin" /> : <Share2 className="h-4 w-4 shrink-0" />}
-              {shareImageLoading ? "Hazırlanıyor..." : "Görseli Paylaş / Kaydet"}
+              {shareImageLoading ? ui.myTacticsPreparing : ui.myTacticsShareImageBtn}
             </button>
             <button
               type="button"
@@ -392,13 +392,13 @@ export function TacticsGrid({ tactics }: { tactics: TacticRow[] }) {
               {isDownloading ? <Loader2 className="h-4 w-4 shrink-0 animate-spin" /> : <Download className="h-4 w-4 shrink-0" />}
               {isDownloading ? (
                 <>
-                  <span className="min-[1367px]:hidden">Kaydediliyor...</span>
-                  <span className="hidden min-[1367px]:inline">İndiriliyor...</span>
+                  <span className="min-[1367px]:hidden">{ui.myTacticsSaving}</span>
+                  <span className="hidden min-[1367px]:inline">{ui.myTacticsDownloading}</span>
                 </>
               ) : (
                 <>
-                  <span className="min-[1367px]:hidden">Galeriye kaydet</span>
-                  <span className="hidden min-[1367px]:inline">Görseli İndir</span>
+                  <span className="min-[1367px]:hidden">{ui.myTacticsGallerySave}</span>
+                  <span className="hidden min-[1367px]:inline">{ui.myTacticsDownloadImage}</span>
                 </>
               )}
             </button>
@@ -409,37 +409,37 @@ export function TacticsGrid({ tactics }: { tactics: TacticRow[] }) {
           <div className="flex flex-col gap-2 min-[1367px]:flex-row min-[1367px]:items-center">
             <div className="flex h-[40px] w-full min-h-10 flex-1 items-center rounded-lg border border-[var(--border-subtle)] bg-slate-900/90 px-3 text-xs text-slate-200">
               <Link2 className="mr-2 h-3.5 w-3.5 shrink-0 text-slate-400" />
-              <span className="truncate">{shareUrl || "Paylaşım linki yok"}</span>
+              <span className="truncate">{shareUrl || ui.myTacticsNoShareLink}</span>
             </div>
             <div className="flex w-full gap-2 min-[1367px]:w-auto min-[1367px]:shrink-0">
               <button
                 type="button"
                 onClick={handleShareLink}
                 disabled={shareDisabled}
-                title={shareDisabled ? shareDisabledTitle : "Paylaşım linkini paylaş"}
+                title={shareDisabled ? shareDisabledTitle : ui.myTacticsShareLinkTitle}
                 className="inline-flex h-[40px] min-h-10 flex-1 items-center justify-center gap-2 rounded-lg border border-emerald-400/50 bg-emerald-500/25 px-3 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-500/35 disabled:cursor-not-allowed disabled:opacity-50 min-[1367px]:hidden"
               >
                 <Share2 className="h-4 w-4 shrink-0" aria-hidden />
-                Linki paylaş
+                {ui.myTacticsShareLinkShort}
               </button>
               <button
                 type="button"
                 onClick={handleCopyLink}
                 disabled={shareDisabled}
-                title={shareDisabled ? shareDisabledTitle : "Panoya kopyala"}
+                title={shareDisabled ? shareDisabledTitle : ui.myTacticsCopyClipboardTitle}
                 className="inline-flex h-[40px] min-h-10 flex-1 items-center justify-center gap-2 rounded-lg border border-[var(--border-subtle)] bg-slate-800/90 px-3 text-sm font-semibold text-slate-100 transition hover:border-emerald-400/35 disabled:cursor-not-allowed disabled:opacity-50 min-[1367px]:hidden"
               >
                 <Link2 className="h-4 w-4 shrink-0" aria-hidden />
-                Panoya kopyala
+                {ui.myTacticsCopyClipboardShort}
               </button>
               <button
                 type="button"
                 onClick={handleCopyLink}
                 disabled={shareDisabled}
-                title={shareDisabled ? shareDisabledTitle : "Bağlantıyı kopyala"}
+                title={shareDisabled ? shareDisabledTitle : ui.myTacticsCopyLinkDesktop}
                 className="hidden h-[40px] min-h-10 w-full items-center justify-center rounded-lg border border-emerald-400/50 bg-emerald-500/25 px-4 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-500/35 disabled:cursor-not-allowed disabled:opacity-50 min-[1367px]:inline-flex min-[1367px]:w-auto"
               >
-                Linki kopyala
+                {ui.myTacticsCopyLinkDesktop}
               </button>
             </div>
           </div>

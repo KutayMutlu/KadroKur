@@ -7,6 +7,8 @@ export type PanelUser = {
   email: string | null;
   /** Profil adı veya e-posta öneki */
   displayName: string;
+  /** Sunucu varsayılan adı kullanıldıysa istemci diline göre `panelDefaultDisplayName` gösterilir */
+  displayNameIsFallback?: boolean;
   /** `user_profiles.avatar_url` — yoksa baş harf avatar */
   avatarUrl?: string | null;
 };

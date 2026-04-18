@@ -1,5 +1,6 @@
 "use client";
 
+import { useLocale } from "@/components/locale-provider";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,7 @@ export function TeamPanel({
   showOpponentSection = true,
   unstyled = false,
 }: TeamPanelProps) {
+  const { strings: ui } = useLocale();
   return (
     <div
       className={
@@ -40,13 +42,13 @@ export function TeamPanel({
     >
       {showTeamName && (
         <div>
-          <Label htmlFor="teamName">Takım adı</Label>
+          <Label htmlFor="teamName">{ui.editorTeamNameLabel}</Label>
           <Input
             id="teamName"
             className="mt-1"
             value={teamName}
             onChange={(e) => onTeamNameChange(e.target.value)}
-            placeholder="Takımınızın adını giriniz"
+            placeholder={ui.editorTeamNamePlaceholder}
           />
         </div>
       )}
@@ -54,7 +56,7 @@ export function TeamPanel({
       {showOpponentSection && (
         <div className={`space-y-2 ${showTeamName ? "border-t border-white/10 pt-3" : ""}`}>
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <Label className="text-[var(--foreground)]">Rakip takım</Label>
+          <Label className="text-[var(--foreground)]">{ui.editorOpponentTeamLabel}</Label>
           {hasOpponentLineup ? (
             <Button
               type="button"
@@ -63,7 +65,7 @@ export function TeamPanel({
               className="shrink-0"
               onClick={onRemoveOpponentLineup}
             >
-              Rakibi kaldır
+              {ui.editorRemoveOpponent}
             </Button>
           ) : (
             <Button
@@ -73,7 +75,7 @@ export function TeamPanel({
               className="shrink-0"
               onClick={onAddOpponentLineup}
             >
-              Rakip dizilişi ekle
+              {ui.editorAddOpponentLineupFull}
             </Button>
           )}
         </div>
@@ -83,8 +85,8 @@ export function TeamPanel({
               id="opponentTeamName"
               value={opponentTeamName}
               onChange={(e) => onOpponentTeamNameChange(e.target.value)}
-              placeholder="Rakip takım adı (isteğe bağlı)"
-              aria-label="Rakip takım adı"
+              placeholder={ui.editorOpponentPlaceholder}
+              aria-label={ui.editorOpponentAria}
             />
           </>
         )}

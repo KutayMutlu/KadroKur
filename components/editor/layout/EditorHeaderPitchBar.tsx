@@ -1,5 +1,6 @@
 "use client";
 
+import { useLocale } from "@/components/locale-provider";
 import { cn } from "@/lib/utils";
 import { Goal } from "lucide-react";
 
@@ -7,8 +8,12 @@ import { Goal } from "lucide-react";
  * Üst çubukta, saha ile aynı görsel dil — tek satır, sahayı küçültmez.
  */
 export function EditorHeaderPitchBar({ tacticTitle }: { tacticTitle: string }) {
+  const { strings: ui } = useLocale();
   const trimmed = tacticTitle.trim();
   const hasTitle = trimmed.length > 0;
+  const ariaLabel = hasTitle
+    ? ui.editorPitchAriaWithTitle.replace("{title}", trimmed)
+    : ui.editorPitchAriaNoTitle;
 
   return (
     <div
@@ -17,7 +22,7 @@ export function EditorHeaderPitchBar({ tacticTitle }: { tacticTitle: string }) {
         "border-emerald-500/30 bg-gradient-to-b from-emerald-900/55 via-[#0c1810]/95 to-black/35"
       )}
       title={hasTitle ? trimmed : undefined}
-      aria-label={hasTitle ? `Bu sahada düzenlenen taktik: ${trimmed}` : "Taktik adı henüz yok"}
+      aria-label={ariaLabel}
     >
       <div
         className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.06)_0%,transparent_45%)]"
@@ -31,7 +36,7 @@ export function EditorHeaderPitchBar({ tacticTitle }: { tacticTitle: string }) {
       <div className="relative flex min-w-0 items-center justify-center gap-1.5 sm:justify-start sm:gap-2">
         <Goal className="h-3.5 w-3.5 shrink-0 text-emerald-400" strokeWidth={2} aria-hidden />
         <span className="hidden text-[9px] font-semibold uppercase tracking-[0.18em] text-emerald-200/88 sm:inline sm:text-[10px]">
-          Bu sahada
+          {ui.editorPitchBadgeThisPitch}
         </span>
         <span className="hidden text-emerald-500/45 sm:inline" aria-hidden>
           ·
@@ -43,7 +48,7 @@ export function EditorHeaderPitchBar({ tacticTitle }: { tacticTitle: string }) {
           )}
           style={{ fontFamily: "var(--font-display)" }}
         >
-          {hasTitle ? trimmed : "Adsız taktik"}
+          {hasTitle ? trimmed : ui.editorUntitledTactic}
         </p>
       </div>
     </div>

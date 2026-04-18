@@ -24,6 +24,7 @@ export default async function UserPanelLayout({
   const last = profile?.last_name?.trim() ?? "";
   const fromProfile = [first, last].filter(Boolean).join(" ").trim();
   const emailLocal = user.email?.split("@")[0]?.trim();
+  const displayNameIsFallback = !fromProfile && !emailLocal;
   const displayName = fromProfile || emailLocal || "Hesabım";
   const rawAvatar = profile?.avatar_url?.trim();
   const avatarUrl = rawAvatar && rawAvatar.length > 0 ? rawAvatar : null;
@@ -34,6 +35,7 @@ export default async function UserPanelLayout({
         id: user.id,
         email: user.email ?? null,
         displayName,
+        displayNameIsFallback,
         avatarUrl,
       }}
     >

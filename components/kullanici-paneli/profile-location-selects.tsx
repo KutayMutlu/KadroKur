@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useLocale } from "@/components/locale-provider";
 
 import {
   Select,
@@ -45,6 +46,7 @@ export function ProfileLocationSelects({
   initialCity,
   initialDistrict,
 }: ProfileLocationSelectsProps) {
+  const { strings: ui } = useLocale();
   const [plate, setPlate] = useState(() => normalizePlate(initialCity));
 
   const [districtId, setDistrictId] = useState(() => {
@@ -60,7 +62,7 @@ export function ProfileLocationSelects({
   }, [catalog.districtsByPlate, plate]);
 
   const districtDisabled = !plate;
-  const districtHint = districtDisabled ? "Lütfen önce şehir seçiniz" : undefined;
+  const districtHint = districtDisabled ? ui.panelLocationPickCityFirst : undefined;
 
   return (
     <div className="grid gap-6 md:grid-cols-2">
@@ -69,7 +71,7 @@ export function ProfileLocationSelects({
 
       <div className="space-y-2">
         <span className={labelClass} id="profile-location-city-label">
-          Şehir
+          {ui.panelLocationCity}
         </span>
         <Select
           value={plate || EMPTY}
@@ -84,11 +86,11 @@ export function ProfileLocationSelects({
             className="w-full"
             aria-labelledby="profile-location-city-label"
           >
-            <SelectValue placeholder="Şehir seçin" />
+            <SelectValue placeholder={ui.panelLocationSelectCity} />
           </SelectTrigger>
           <SelectContent position="popper" sideOffset={6}>
             <SelectItem value={EMPTY} className="text-[var(--muted)]">
-              Şehir seçin
+              {ui.panelLocationSelectCity}
             </SelectItem>
             {catalog.provinces.map((p) => (
               <SelectItem key={p.plate} value={p.plate}>
@@ -104,7 +106,7 @@ export function ProfileLocationSelects({
         title={districtHint}
       >
         <span className={labelClass} id="profile-location-district-label">
-          İlçe
+          {ui.panelLocationDistrict}
         </span>
         <Select
           disabled={districtDisabled}
@@ -117,11 +119,13 @@ export function ProfileLocationSelects({
             aria-labelledby="profile-location-district-label"
             aria-disabled={districtDisabled}
           >
-            <SelectValue placeholder={districtDisabled ? "Önce şehir seçin" : "İlçe seçin"} />
+            <SelectValue
+              placeholder={districtDisabled ? ui.panelLocationSelectCityFirst : ui.panelLocationSelectDistrict}
+            />
           </SelectTrigger>
           <SelectContent position="popper" sideOffset={6}>
             <SelectItem value={EMPTY} className="text-[var(--muted)]">
-              {districtDisabled ? "Önce şehir seçin" : "İlçe seçin"}
+              {districtDisabled ? ui.panelLocationSelectCityFirst : ui.panelLocationSelectDistrict}
             </SelectItem>
             {districtOptions.map((d) => (
               <SelectItem key={d.id} value={d.id}>

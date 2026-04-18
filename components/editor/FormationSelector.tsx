@@ -1,5 +1,6 @@
 "use client";
 
+import { useLocale } from "@/components/locale-provider";
 import type { FormationDefinition } from "@/types/formation";
 import { Label } from "@/components/ui/label";
 import {
@@ -23,12 +24,13 @@ export function FormationSelector({
   options,
   disabled,
 }: FormationSelectorProps) {
+  const { strings: ui } = useLocale();
   return (
     <div className="flex flex-col gap-2">
-      <Label htmlFor="formation">Diziliş</Label>
+      <Label htmlFor="formation">{ui.editorFormationLabel}</Label>
       <Select value={value} onValueChange={onChange} disabled={disabled}>
         <SelectTrigger id="formation" className="w-full">
-          <SelectValue placeholder="Seçin" />
+          <SelectValue placeholder={ui.editorSelectPlaceholder} />
         </SelectTrigger>
         <SelectContent>
           {options.map((f) => (

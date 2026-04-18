@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { isValidDistrictForPlate } from "@/lib/turkiye-location";
+import { normalizePersonNameForStorage } from "@/lib/turkish-person-name";
 import { syncAuthMetadataNamesToProfile } from "@/lib/user-profile-sync";
 
 function toText(value: FormDataEntryValue | null): string {
@@ -12,6 +14,29 @@ function toOptionalInt(value: FormDataEntryValue | null): number | null {
   if (!trimmed) return null;
   const parsed = Number.parseInt(trimmed, 10);
   return Number.isFinite(parsed) ? parsed : null;
+}
+
+/** Konum: şehir = plaka string, ilçe = turkiye-db ilçe apiId string; ikisi de opsiyonel, boş string. */
+function normalizeLocationFields(cityRaw: string, districtRaw: string): { city: string; district: string } {
+  const city = cityRaw.trim();
+  const district = districtRaw.trim();
+  if (!city) {
+    return { city: "", district: "" };
+  }
+  if (!/^\d{1,2}$/.test(city)) {
+    return { city: "", district: "" };
+  }
+  const n = Number(city);
+  if (n < 1 || n > 81) {
+    return { city: "", district: "" };
+  }
+  if (!district) {
+    return { city, district: "" };
+  }
+  if (!/^\d+$/.test(district) || !isValidDistrictForPlate(city, district)) {
+    return { city, district: "" };
+  }
+  return { city, district };
 }
 
 function parseRoleList(value: FormDataEntryValue | null): string[] {
@@ -82,11 +107,14 @@ export async function POST(request: Request) {
     payload.social_link = toText(formData.get("social_link"));
     payload.privacy_level = toText(formData.get("privacy_level")) || "friends";
     payload.favorite_team = toText(formData.get("favorite_team"));
-    payload.city = toText(formData.get("city"));
-    payload.district = toText(formData.get("district"));
+    {
+      const loc = normalizeLocationFields(toText(formData.get("city")), toText(formData.get("district")));
+      payload.city = loc.city;
+      payload.district = loc.district;
+    }
   } else {
-    payload.first_name = toText(formData.get("first_name"));
-    payload.last_name = toText(formData.get("last_name"));
+    payload.first_name = normalizePersonNameForStorage(toText(formData.get("first_name")));
+    payload.last_name = normalizePersonNameForStorage(toText(formData.get("last_name")));
     payload.bio = toText(formData.get("bio"));
     payload.phone = toText(formData.get("phone"));
     payload.birth_date = toText(formData.get("birth_date")) || null;

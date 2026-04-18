@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { extractProfileNamesFromUserMetadata } from "@/lib/profile-names";
+import { normalizePersonNameForStorage } from "@/lib/turkish-person-name";
 
 /**
  * Tek doğruluk kaynağı `public.user_profiles`. Kişisel bilgi kaydından sonra
@@ -12,8 +13,8 @@ export async function syncAuthMetadataNamesToProfile(
 ): Promise<{ error: Error | null }> {
   const { error } = await supabase.auth.updateUser({
     data: {
-      first_name: firstName.trim(),
-      last_name: lastName.trim(),
+      first_name: normalizePersonNameForStorage(firstName),
+      last_name: normalizePersonNameForStorage(lastName),
     },
   });
   return { error: error ?? null };

@@ -1,5 +1,7 @@
 import { MapPin, Shield, Sparkles, UserCircle } from "lucide-react";
+import { ProfileLocationSelects } from "@/components/kullanici-paneli/profile-location-selects";
 import { createClient } from "@/lib/supabase/server";
+import { getLocationCatalog } from "@/lib/turkiye-location";
 import { PanelFormSection, panelFieldClass, panelLabelClass } from "../panel-form";
 import { ProfileFeedback } from "./profile-feedback";
 import { SubmitButton } from "./save-profile-button";
@@ -9,6 +11,7 @@ const labelClass = panelLabelClass;
 
 export default async function UserPanelProfilePage() {
   const supabase = await createClient();
+  const locationCatalog = getLocationCatalog();
 
   const { data: profile } = await supabase
     .from("user_profiles")
@@ -91,18 +94,13 @@ export default async function UserPanelProfilePage() {
         <PanelFormSection
           icon={MapPin}
           title="Konum"
-          description="İsteğe bağlı. Yakın çevre veya lig eşleşmeleri için kullanılabilir."
+          description="Şehir ve ilçe bilgini ekleyerek, yakındaki takımlarla ve oyuncularla eşleşmeye bir adım daha yaklaşabilirsin."
         >
-          <div className="grid gap-5 md:grid-cols-2">
-            <label className="block">
-              <span className={labelClass}>Şehir</span>
-              <input name="city" defaultValue={profile?.city ?? ""} placeholder="Örn: İstanbul" className={fieldClass} autoComplete="address-level2" />
-            </label>
-            <label className="block">
-              <span className={labelClass}>İlçe</span>
-              <input name="district" defaultValue={profile?.district ?? ""} placeholder="Örn: Kadıköy" className={fieldClass} autoComplete="off" />
-            </label>
-          </div>
+          <ProfileLocationSelects
+            catalog={locationCatalog}
+            initialCity={profile?.city ?? ""}
+            initialDistrict={profile?.district ?? ""}
+          />
         </PanelFormSection>
 
         <PanelFormSection

@@ -1,5 +1,7 @@
 import type { User } from "@supabase/supabase-js";
 
+import { normalizePersonNameForStorage } from "@/lib/turkish-person-name";
+
 /** İki alanı tek görünen ada birleştirir (boşları atar). */
 export function joinFirstLast(first?: string | null, last?: string | null): string {
   const fn = (first ?? "").trim();
@@ -23,19 +25,34 @@ export function extractProfileNamesFromUserMetadata(user: User): {
 
   let fn = s(m.first_name);
   let ln = s(m.last_name);
-  if (fn || ln) return { first_name: fn, last_name: ln };
+  if (fn || ln) {
+    return {
+      first_name: normalizePersonNameForStorage(fn),
+      last_name: normalizePersonNameForStorage(ln),
+    };
+  }
 
   fn = s(m.given_name);
   ln = s(m.family_name);
-  if (fn || ln) return { first_name: fn, last_name: ln };
+  if (fn || ln) {
+    return {
+      first_name: normalizePersonNameForStorage(fn),
+      last_name: normalizePersonNameForStorage(ln),
+    };
+  }
 
   for (const key of ["full_name", "name", "user_name"] as const) {
     const full = s(m[key]);
     if (!full) continue;
     const parts = full.split(/\s+/).filter(Boolean);
     if (parts.length === 0) continue;
-    if (parts.length === 1) return { first_name: parts[0], last_name: "" };
-    return { first_name: parts[0], last_name: parts.slice(1).join(" ") };
+    if (parts.length === 1) {
+      return { first_name: normalizePersonNameForStorage(parts[0]), last_name: "" };
+    }
+    return {
+      first_name: normalizePersonNameForStorage(parts[0]),
+      last_name: normalizePersonNameForStorage(parts.slice(1).join(" ")),
+    };
   }
 
   return { first_name: "", last_name: "" };

@@ -33,8 +33,8 @@ create table if not exists public.user_profiles (
   privacy_level text not null default 'friends',
   birth_date date,
   favorite_team text not null default '',
-  city text not null default '',
-  district text not null default '',
+  city text not null default '', -- plaka kodu string (örn. "34"); boş = seçilmedi
+  district text not null default '', -- ilçe benzersiz id string (turkiye-db apiId); boş = seçilmedi
   height_cm int,
   weight_kg int,
   updated_at timestamptz not null default now()

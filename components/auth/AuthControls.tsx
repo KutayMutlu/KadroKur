@@ -16,6 +16,7 @@ import {
 } from "@/components/auth/auth-controls/user-helpers";
 import { getOAuthRedirectOrigin } from "@/lib/site-origin";
 import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
+import { normalizePersonNameForStorage } from "@/lib/turkish-person-name";
 import { ensureUserProfileFromAuthUser } from "@/lib/user-profile-sync";
 import type { User } from "@supabase/supabase-js";
 import { CircleUserRound } from "lucide-react";
@@ -436,8 +437,8 @@ export function AuthControls({ guestCompanion }: AuthControlsProps) {
       options: {
         emailRedirectTo: `${origin}/auth/confirm`,
         data: {
-          first_name: firstName.trim(),
-          last_name: lastName.trim(),
+          first_name: normalizePersonNameForStorage(firstName),
+          last_name: normalizePersonNameForStorage(lastName),
           birth_date: birthDate,
         },
       },

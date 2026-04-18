@@ -102,21 +102,28 @@ export default async function UserPanelPersonalInfoPage() {
         <PanelFormSection
           icon={Phone}
           title="İletişim"
-          description="Telefon isteğe bağlıdır; doğum tarihi yaşını otomatik hesaplar."
+          description="Telefon isteğe bağlıdır; etkinlik veya ekip bildirimleri için kullanılabilir."
+        >
+          <label className="block max-w-xl">
+            <span className={panelLabelClass}>Telefon</span>
+            <span className="mb-1.5 block text-[11px] text-[var(--muted)]/90">Opsiyonel</span>
+            <input
+              name="phone"
+              type="tel"
+              defaultValue={profile?.phone ?? ""}
+              placeholder="+90 5xx xxx xx xx"
+              className={panelFieldClass}
+              autoComplete="tel"
+            />
+          </label>
+        </PanelFormSection>
+
+        <PanelFormSection
+          icon={Ruler}
+          title="Fiziksel Detaylar"
+          description="Doğum tarihi yaşını otomatik hesaplar; boy ve kilo istatistik veya kadro önerileri için kullanılabilir."
         >
           <div className="grid gap-5 md:grid-cols-2">
-            <label className="block md:col-span-2">
-              <span className={panelLabelClass}>Telefon</span>
-              <span className="mb-1.5 block text-[11px] text-[var(--muted)]/90">Opsiyonel</span>
-              <input
-                name="phone"
-                type="tel"
-                defaultValue={profile?.phone ?? ""}
-                placeholder="+90 5xx xxx xx xx"
-                className={panelFieldClass}
-                autoComplete="tel"
-              />
-            </label>
             <label className="block">
               <span className={panelLabelClass}>Doğum tarihi</span>
               <input name="birth_date" type="date" defaultValue={defaultBirthDate} className={panelFieldClass} />
@@ -136,15 +143,6 @@ export default async function UserPanelPersonalInfoPage() {
                 aria-readonly="true"
               />
             </label>
-          </div>
-        </PanelFormSection>
-
-        <PanelFormSection
-          icon={Ruler}
-          title="Fiziksel ölçüler"
-          description="Boy ve kilo; istatistik veya kadro önerileri için kullanılabilir."
-        >
-          <div className="grid gap-5 md:grid-cols-2">
             <label className="block">
               <span className={panelLabelClass}>Boy (cm)</span>
               <input

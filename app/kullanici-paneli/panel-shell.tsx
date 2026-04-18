@@ -193,8 +193,8 @@ export function UserPanelShell({ children }: Props) {
 
   return (
     <div className="min-h-screen bg-pitch-night">
-      {/* Mobil üst bar */}
-      <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-[var(--border-subtle)] bg-[var(--bg-card)]/90 px-3 py-2.5 backdrop-blur-xl md:hidden">
+      {/* Mobil üst bar — çentik / durum çubuğu için safe-area */}
+      <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-[var(--border-subtle)] bg-[var(--bg-card)]/90 px-3 py-2.5 pt-[max(0.5rem,env(safe-area-inset-top))] backdrop-blur-xl md:hidden">
         <button
           type="button"
           onClick={() => setMobileOpen((v) => !v)}
@@ -243,11 +243,11 @@ export function UserPanelShell({ children }: Props) {
       <aside
         id="user-panel-sidebar"
         className={cn(
-          "fixed left-0 top-0 z-40 flex h-screen w-[min(100vw-1rem,20rem)] flex-col border-r border-[var(--border-subtle)] bg-[var(--bg-card)]/95 shadow-[8px_0_32px_-16px_rgba(0,0,0,0.65)] backdrop-blur-xl transition-[transform,width] duration-300 ease-out md:z-20 md:w-72 lg:w-80",
+          "fixed left-0 top-0 z-40 flex h-[100dvh] max-h-[100dvh] w-[min(100vw-1rem,20rem)] flex-col border-r border-[var(--border-subtle)] bg-[var(--bg-card)]/95 shadow-[8px_0_32px_-16px_rgba(0,0,0,0.65)] backdrop-blur-xl transition-[transform,width] duration-300 ease-out md:z-20 md:w-72 lg:w-80",
           mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         )}
       >
-        <div className="flex h-full min-h-0 flex-col p-4 md:p-5">
+        <div className="flex min-h-0 flex-1 flex-col px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-[max(1.25rem,env(safe-area-inset-bottom))] md:h-full md:p-5">
           <div className="hidden md:block">{identityCard({ onNavigate: () => setMobileOpen(false) })}</div>
           <div className="mb-4 md:hidden">{identityCard({ compact: true, onNavigate: () => setMobileOpen(false) })}</div>
 
@@ -255,11 +255,15 @@ export function UserPanelShell({ children }: Props) {
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--muted)]">Gezinme</p>
           </div>
 
-          <nav aria-label="Kullanıcı paneli menüsü" className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-2">
+          <nav
+            aria-label="Kullanıcı paneli menüsü"
+            className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-3 [-webkit-overflow-scrolling:touch]"
+          >
             <PanelLinks onNavigate={() => setMobileOpen(false)} />
           </nav>
 
-          <div className="mt-auto shrink-0 border-t border-[var(--border-subtle)] pt-4">
+          {/* Alt blok: home indicator / Safari alt çubuğu üstünde kalsın; arka plan opak */}
+          <div className="relative z-10 mt-auto shrink-0 border-t border-[var(--border-subtle)] bg-[var(--bg-card)] pt-4">
             <Link
               href="/"
               onClick={() => setMobileOpen(false)}
@@ -272,7 +276,9 @@ export function UserPanelShell({ children }: Props) {
         </div>
       </aside>
 
-      <main className="min-h-screen px-4 py-6 md:ml-72 lg:ml-80 md:px-8 md:py-8">{children}</main>
+      <main className="min-h-screen px-4 py-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] md:ml-72 md:pb-8 lg:ml-80 md:px-8 md:py-8">
+        {children}
+      </main>
     </div>
   );
 }

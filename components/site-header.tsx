@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import { AuthControls } from "@/components/auth/AuthControls";
+import { useLocale } from "@/components/locale-provider";
 
 type SiteHeaderProps = {
   /** Varsayılan true. Taktiklerim gibi sayfalarda false yapılabilir (sayfa zaten editöre yönlendiriyor). */
@@ -10,6 +13,8 @@ type SiteHeaderProps = {
  * Ana sayfa ve genel sayfalarda ortak üst şerit: logo, ayarlar (dişli), hesap, isteğe bağlı editör linki.
  */
 export function SiteHeader({ showEditorLink = true }: SiteHeaderProps) {
+  const { strings: s } = useLocale();
+
   return (
     <header className="relative z-10 border-b border-[var(--border-subtle)] bg-[var(--bg-elevated)]/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-5xl flex-row items-center justify-between gap-2 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] sm:gap-3 sm:px-6 sm:pt-3">
@@ -32,9 +37,9 @@ export function SiteHeader({ showEditorLink = true }: SiteHeaderProps) {
             </p>
             <p
               className="truncate text-[10px] leading-tight text-[var(--muted)] sm:text-[11px]"
-              title="Halı saha taktik tahtası"
+              title={s.siteTagline}
             >
-              Halı saha taktik tahtası
+              {s.siteTagline}
             </p>
           </div>
         </Link>
@@ -45,8 +50,8 @@ export function SiteHeader({ showEditorLink = true }: SiteHeaderProps) {
               href="/editor"
               className="inline-flex min-h-[40px] shrink-0 touch-manipulation items-center justify-center rounded-lg border border-[var(--accent)]/40 bg-[var(--accent)]/10 px-2.5 py-1.5 text-[11px] font-medium text-[var(--accent)] transition hover:bg-[var(--accent)]/20 sm:min-h-0 sm:px-4 sm:py-2 sm:text-sm"
             >
-              <span className="sm:hidden">Editör →</span>
-              <span className="hidden sm:inline">Editöre git →</span>
+              <span className="sm:hidden">{s.editorLinkShort}</span>
+              <span className="hidden sm:inline">{s.editorLinkLong}</span>
             </Link>
           ) : null}
         </div>

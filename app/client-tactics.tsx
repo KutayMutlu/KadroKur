@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useLocale } from "@/components/locale-provider";
 import { formatTeamMatchupLine } from "@/lib/tactic-display";
 import { listLocalTactics, type StoredTactic } from "@/lib/local-tactics";
 import { getSupabase } from "@/lib/supabase";
@@ -16,6 +17,7 @@ type CloudTactic = {
 };
 
 export function ClientTactics() {
+  const { strings: s } = useLocale();
   const [items, setItems] = useState<StoredTactic[]>([]);
   const [cloudItems, setCloudItems] = useState<CloudTactic[]>([]);
   const [cloudReady, setCloudReady] = useState(false);
@@ -70,21 +72,21 @@ export function ClientTactics() {
         aria-labelledby="taktikler-bos"
       >
         <h2 id="taktikler-bos" className="sr-only">
-          Kayıtlı taktikler
+          {s.tacticsSrTitle}
         </h2>
         <div className="rounded-2xl border border-dashed border-[var(--border-subtle)] bg-[var(--bg-card)]/80 p-8 text-center shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)] backdrop-blur-sm sm:p-10">
           <p
             className="mx-auto max-w-md text-sm leading-relaxed text-[var(--muted)]"
             style={{ fontFamily: "var(--font-body)" }}
           >
-            Henüz kayıtlı taktik yok. Editörde bir diziliş kaydettiğinde burada listelenecek.
+            {s.tacticsEmptyBody}
           </p>
           <Link
             href="/editor"
             className="mt-5 inline-flex min-h-[44px] items-center justify-center rounded-xl bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-[var(--on-accent)] transition hover:brightness-110 touch-manipulation"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            İlk taktikini oluştur
+            {s.tacticsCtaFirst}
           </Link>
         </div>
       </section>
@@ -103,15 +105,15 @@ export function ClientTactics() {
             className="text-2xl font-semibold tracking-tight text-[var(--foreground)] sm:text-3xl"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            Kayıtlı taktikler
+            {s.tacticsSectionTitle}
           </h2>
-          <p className="mt-1 text-sm text-[var(--muted)]">Bu cihazdaki ve hesabınızdaki kayıtlar</p>
+          <p className="mt-1 text-sm text-[var(--muted)]">{s.tacticsSectionSubtitle}</p>
         </div>
       </div>
       {cloudItems.length > 0 && (
         <>
           <h3 className="mb-2 text-sm font-medium text-[var(--accent)]">
-            Hesabımdaki taktikler
+            {s.tacticsCloudHeading}
           </h3>
           <ul className="mb-4 grid gap-3 sm:grid-cols-2">
             {cloudItems.map((t) => {
@@ -141,7 +143,7 @@ export function ClientTactics() {
       {items.length > 0 && (
         <>
           <h3 className="mb-2 text-sm font-medium text-[var(--muted)]">
-            Bu cihazdaki kayıtlar
+            {s.tacticsLocalHeading}
           </h3>
           <ul className="grid gap-3 sm:grid-cols-2">
             {items.map((t) => {

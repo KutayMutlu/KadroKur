@@ -14,6 +14,8 @@ export interface TeamPanelProps {
   onRemoveOpponentLineup: () => void;
   showTeamName?: boolean;
   showOpponentSection?: boolean;
+  /** Dışarıda EditorSection vb. kart varsa çerçeveyi kaldır */
+  unstyled?: boolean;
 }
 
 export function TeamPanel({
@@ -26,9 +28,16 @@ export function TeamPanel({
   onRemoveOpponentLineup,
   showTeamName = true,
   showOpponentSection = true,
+  unstyled = false,
 }: TeamPanelProps) {
   return (
-    <div className="flex flex-col gap-4 rounded-xl border border-white/10 bg-black/10 p-3">
+    <div
+      className={
+        unstyled
+          ? "flex flex-col gap-4"
+          : "flex flex-col gap-4 rounded-xl border border-white/10 bg-black/10 p-3"
+      }
+    >
       {showTeamName && (
         <div>
           <Label htmlFor="teamName">Takım adı</Label>

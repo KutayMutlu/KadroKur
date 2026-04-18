@@ -2,20 +2,52 @@
 
 import { X } from "lucide-react";
 import { createPortal } from "react-dom";
+import { useEffect } from "react";
 import { AuthModalBody } from "./auth-modal-body";
 import type { AuthModalProps } from "./types";
 
 export function AuthModal(props: AuthModalProps) {
   const { onClose, authMessage, authMessageTone, ...panelProps } = props;
 
+  useEffect(() => {
+    const html = document.documentElement;
+    const body = document.body;
+    const scrollY = window.scrollY;
+
+    const prevHtmlOverflow = html.style.overflow;
+    const prevBodyOverflow = body.style.overflow;
+    const prevBodyPosition = body.style.position;
+    const prevBodyTop = body.style.top;
+    const prevBodyWidth = body.style.width;
+
+    html.style.overflow = "hidden";
+    body.style.overflow = "hidden";
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.left = "0";
+    body.style.right = "0";
+    body.style.width = "100%";
+
+    return () => {
+      html.style.overflow = prevHtmlOverflow;
+      body.style.overflow = prevBodyOverflow;
+      body.style.position = prevBodyPosition;
+      body.style.top = prevBodyTop;
+      body.style.left = "";
+      body.style.right = "";
+      body.style.width = prevBodyWidth;
+      window.scrollTo(0, scrollY);
+    };
+  }, []);
+
   return createPortal(
     <div
-      className="fixed inset-0 z-[9999] flex min-h-0 items-end justify-center bg-black/60 backdrop-blur-md sm:items-center sm:p-4"
+      className="fixed inset-0 z-[9999] flex min-h-[100dvh] items-center justify-center overflow-hidden overscroll-none bg-black/60 p-3 backdrop-blur-md sm:p-6"
       onClick={onClose}
       role="presentation"
     >
       <div
-        className="flex max-h-[min(92dvh,720px)] w-full max-w-lg flex-col overflow-hidden rounded-t-[1.75rem] border border-[var(--border-subtle)] bg-[var(--bg-card)] shadow-[0_24px_64px_-16px_rgba(0,0,0,0.75)] backdrop-blur-xl sm:max-h-[min(90vh,680px)] sm:rounded-3xl"
+        className="flex min-h-0 w-full max-w-lg max-h-[min(90dvh,640px)] flex-col overflow-hidden rounded-3xl border border-[var(--border-subtle)] bg-[var(--bg-card)] shadow-[0_24px_64px_-16px_rgba(0,0,0,0.75)] backdrop-blur-xl"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -34,7 +66,7 @@ export function AuthModal(props: AuthModalProps) {
           >
             <X className="h-5 w-5" />
           </button>
-          <div className="flex flex-col items-center px-8 text-center sm:px-10">
+          <div className="flex flex-col items-center px-6 text-center sm:px-10">
             <p
               id="auth-modal-heading"
               className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--muted)]"

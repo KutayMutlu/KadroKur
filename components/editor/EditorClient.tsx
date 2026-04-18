@@ -23,6 +23,7 @@ import { useEditorHistory } from "./hooks/useEditorHistory";
 import { useEditorBoardActions } from "./hooks/useEditorBoardActions";
 import { useEditorSidebarProps } from "./hooks/useEditorSidebarProps";
 import { EditorHeader } from "./layout/EditorHeader";
+import { EditorMobileUndoRedo } from "./layout/EditorMobileUndoRedo";
 import { MobileSettingsDrawer } from "./layout/MobileSettingsDrawer";
 import { EditorWorkspace } from "./layout/EditorWorkspace";
 
@@ -200,7 +201,17 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
         canRedo={futureSnapshots.length > 0}
         onUndo={onUndo}
         onRedo={onRedo}
+        showUndoRedoInHeader={isLg}
       />
+
+      {!isLg && (
+        <EditorMobileUndoRedo
+          canUndo={pastSnapshots.length > 0}
+          canRedo={futureSnapshots.length > 0}
+          onUndo={onUndo}
+          onRedo={onRedo}
+        />
+      )}
 
       {!isLg && (
         <MobileSettingsDrawer

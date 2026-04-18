@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { EditorPanelHeader } from "./EditorPanelHeader";
+import { EditorSection } from "./EditorSection";
 import { FormationSelector } from "./FormationSelector";
 import { MatchFormatSelector } from "./MatchFormatSelector";
 import { TeamPanel } from "./TeamPanel";
@@ -97,20 +98,25 @@ export function EditorSidebar({
   return (
     <div className="space-y-4 sm:space-y-5">
       {!embeddedInDrawer && <EditorPanelHeader />}
-      <TeamPanel
-        teamName={teamName}
-        onTeamNameChange={onTeamNameChange}
-        opponentTeamName={opponentTeamName}
-        onOpponentTeamNameChange={onOpponentTeamNameChange}
-        hasOpponentLineup={hasOpponentLineup}
-        onAddOpponentLineup={onAddOpponentLineup}
-        onRemoveOpponentLineup={onRemoveOpponentLineup}
-        showOpponentSection={false}
-      />
-      <div className="space-y-3 rounded-xl border border-white/10 bg-black/10 p-3">
+
+      <EditorSection title="Takım" step={1}>
+        <TeamPanel
+          teamName={teamName}
+          onTeamNameChange={onTeamNameChange}
+          opponentTeamName={opponentTeamName}
+          onOpponentTeamNameChange={onOpponentTeamNameChange}
+          hasOpponentLineup={hasOpponentLineup}
+          onAddOpponentLineup={onAddOpponentLineup}
+          onRemoveOpponentLineup={onRemoveOpponentLineup}
+          showOpponentSection={false}
+          unstyled
+        />
+      </EditorSection>
+
+      <EditorSection title="Maç ve diziliş" step={2}>
         <MatchFormatSelector value={matchFormat} onChange={onMatchFormatChange} />
         <p className="text-xs leading-snug text-[var(--muted)]">
-          Oyuncuları düzenlemek için çift tıklayın, taşımak için sürükleyin.
+          Oyuncu: çift tıkla düzenle, sürükleyerek taşı.
         </p>
         <FormationSelector
           value={homeFormationKey}
@@ -135,9 +141,9 @@ export function EditorSidebar({
                 ? "← Sola atak"
                 : "Sağa atak →"}
           </Button>
-          <p className="mt-1.5 text-[10px] leading-snug text-[var(--muted)]">
-            Sahayı hangi yönden görmek istediğinizi seçin. Kendi oyuncularınız ve
-            rakip aynı anda döner; linke bakanlar da bu yönü görür.
+          <p className="mt-1.5 hidden text-[10px] leading-snug text-[var(--muted)] sm:block">
+            Sahayı hangi yönden görmek istediğinizi seçin. Kendi oyuncularınız ve rakip
+            aynı anda döner; linke bakanlar da bu yönü görür.
           </p>
         </div>
         <div>
@@ -164,26 +170,27 @@ export function EditorSidebar({
             Oyuncu konumlarını sıfırla
           </Button>
         </div>
-      </div>
-      <div className="space-y-3 rounded-xl border border-white/10 bg-black/10 p-3">
+      </EditorSection>
+
+      <EditorSection title="Rakip (isteğe bağlı)" step={3}>
         <div className="flex items-center justify-between gap-2">
-          <Label>Rakip takım</Label>
+          <span className="text-sm text-[var(--foreground)]">Rakip dizilişi</span>
           {hasOpponentLineup ? (
             <Button
               type="button"
               variant="secondary"
               size="sm"
-              className="h-8 px-2 text-xs"
+              className="h-8 shrink-0 px-2 text-xs"
               onClick={onRemoveOpponentLineup}
             >
-              Rakibi kaldır
+              Kaldır
             </Button>
           ) : (
             <Button
               type="button"
               variant="secondary"
               size="sm"
-              className="h-8 w-8 rounded-full p-0 text-lg leading-none"
+              className="h-8 w-8 shrink-0 rounded-full p-0 text-lg leading-none"
               onClick={onAddOpponentLineup}
               title="Rakip dizilişi ekle"
               aria-label="Rakip dizilişi ekle"
@@ -202,17 +209,15 @@ export function EditorSidebar({
           />
         )}
         {hasOpponentLineup && (
-          <div>
-            <FormationSelector
-              value={awayFormationKey}
-              onChange={onAwayFormationChange}
-              options={availableFormations}
-            />
-          </div>
+          <FormationSelector
+            value={awayFormationKey}
+            onChange={onAwayFormationChange}
+            options={availableFormations}
+          />
         )}
         {hasOpponentLineup && (
           <div>
-            <Label>Hazır taktikler</Label>
+            <Label>Hazır taktikler (rakip)</Label>
             <Select value={awayPresetKey} onValueChange={onAwayPresetChange}>
               <SelectTrigger className="mt-1 w-full">
                 <SelectValue />
@@ -227,19 +232,23 @@ export function EditorSidebar({
             </Select>
           </div>
         )}
-      </div>
-      <Toolbar
-        tacticTitle={tacticTitle}
-        onTacticTitleChange={onTacticTitleChange}
-        onSave={onSave}
-        onExport={onExport}
-        onCopyShare={onCopyShare}
-        saving={saving}
-        canCopyShare={canCopyShare}
-        copyBlockedMessage={copyBlockedMessage}
-        message={message}
-        messageTone={messageTone}
-      />
+      </EditorSection>
+
+      <EditorSection title="Kaydet ve paylaş" step={4}>
+        <Toolbar
+          tacticTitle={tacticTitle}
+          onTacticTitleChange={onTacticTitleChange}
+          onSave={onSave}
+          onExport={onExport}
+          onCopyShare={onCopyShare}
+          saving={saving}
+          canCopyShare={canCopyShare}
+          copyBlockedMessage={copyBlockedMessage}
+          message={message}
+          messageTone={messageTone}
+          embedded
+        />
+      </EditorSection>
     </div>
   );
 }

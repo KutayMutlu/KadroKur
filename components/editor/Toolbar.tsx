@@ -16,6 +16,8 @@ export interface ToolbarProps {
   copyBlockedMessage: string;
   message: string | null;
   messageTone: "success" | "warning";
+  /** EditorSection içinde kullanım — dış çerçeve yok */
+  embedded?: boolean;
 }
 
 export function Toolbar({
@@ -29,9 +31,10 @@ export function Toolbar({
   copyBlockedMessage,
   message,
   messageTone,
+  embedded = false,
 }: ToolbarProps) {
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-white/10 bg-black/10 p-3">
+    <div className={embedded ? "flex flex-col gap-3" : "flex flex-col gap-3 rounded-xl border border-white/10 bg-black/10 p-3"}>
       <div className="grid gap-3">
         <div>
           <Label htmlFor="title">Taktik adı</Label>

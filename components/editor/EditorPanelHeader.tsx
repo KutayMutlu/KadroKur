@@ -1,16 +1,25 @@
 "use client";
 
+import { cn } from "@/lib/utils";
+
 const STEPS = [
   { n: 1, label: "Takım" },
-  { n: 2, label: "Saha" },
+  { n: 2, label: "Maç" },
   { n: 3, label: "Rakip" },
   { n: 4, label: "Kaydet" },
 ] as const;
 
+export type EditorPanelHeaderProps = {
+  /** 0 = hiçbiri seçili değil (hepsi kapalı) */
+  activeStep: number;
+  onStepSelect: (step: number) => void;
+};
+
 /**
  * Sol panel üstü — masaüstü: tam blok; mobil çekmede drawer başlığı kullanılır, bu bileşen gösterilmez.
+ * Adım rozetleri accordion ile eşlenir; aynı rozete tekrar tıklanınca bölüm kapanır.
  */
-export function EditorPanelHeader() {
+export function EditorPanelHeader({ activeStep, onStepSelect }: EditorPanelHeaderProps) {
   return (
     <header className="relative overflow-hidden rounded-2xl border border-[var(--border-subtle)] bg-gradient-to-b from-[var(--bg-elevated)]/80 to-[var(--bg-card)]/50 px-3 py-3.5 shadow-[var(--card-inset-glow)] sm:px-4 sm:py-4">
       <div
@@ -28,22 +37,42 @@ export function EditorPanelHeader() {
             EDİTÖR
           </h2>
           <p className="mt-1 max-w-md text-pretty text-[11px] leading-relaxed text-[var(--muted)] sm:mx-0 sm:text-xs">
-            Aşağıdaki sırayı izleyin: önce takım, sonra saha, isteğe rakip, en sonda kayıt.
+            Her adımda yalnızca o bölüm açık kalır; sırayı izleyin veya aşağıdan bir başlığa tıklayın.
           </p>
         </div>
 
         <ol className="flex flex-wrap justify-center gap-2 sm:justify-start" aria-label="Adımlar">
-          {STEPS.map((s) => (
-            <li
-              key={s.n}
-              className="inline-flex items-center gap-1.5 rounded-full border border-white/8 bg-black/20 py-1 pl-1 pr-2.5 text-[10px] font-medium text-[var(--muted)] ring-1 ring-white/[0.04]"
-            >
-              <span className="flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-[var(--accent)]/22 px-1 text-[10px] font-bold tabular-nums text-[var(--accent)]">
-                {s.n}
-              </span>
-              <span className="text-[var(--foreground)]/90">{s.label}</span>
-            </li>
-          ))}
+          {STEPS.map((s) => {
+            const isActive = activeStep === s.n;
+            return (
+              <li key={s.n}>
+                <button
+                  type="button"
+                  onClick={() => onStepSelect(s.n)}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-full border py-1 pl-1 pr-2.5 text-[10px] font-medium ring-1 transition-colors",
+                    isActive
+                      ? "border-[var(--accent)]/45 bg-[var(--accent)]/14 text-[var(--foreground)] ring-[var(--accent)]/25"
+                      : "border-white/8 bg-black/20 text-[var(--muted)] ring-white/[0.04] hover:border-white/15 hover:bg-black/28"
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "flex h-5 min-w-[1.25rem] items-center justify-center rounded-full px-1 text-[10px] font-bold tabular-nums",
+                      isActive
+                        ? "bg-[var(--accent)]/35 text-[var(--accent)]"
+                        : "bg-[var(--accent)]/22 text-[var(--accent)]"
+                    )}
+                  >
+                    {s.n}
+                  </span>
+                  <span className={cn(isActive ? "text-[var(--foreground)]" : "text-[var(--foreground)]/90")}>
+                    {s.label}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
         </ol>
       </div>
     </header>

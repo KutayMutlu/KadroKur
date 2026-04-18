@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -95,11 +96,25 @@ export function EditorSidebar({
   messageTone,
   embeddedInDrawer = false,
 }: EditorSidebarProps) {
-  return (
-    <div className="space-y-4 sm:space-y-5">
-      {!embeddedInDrawer && <EditorPanelHeader />}
+  /** 0 = hepsi kapalı; 1–4 = o adım açık. Aynı başlığa tekrar tıklanınca kapanır. */
+  const [openStep, setOpenStep] = useState(1);
 
-      <EditorSection title="Takım" step={1}>
+  const toggleStep = (step: number) => {
+    setOpenStep((prev) => (prev === step ? 0 : step));
+  };
+
+  return (
+    <div className="flex min-h-0 flex-col gap-3 sm:gap-4">
+      {!embeddedInDrawer && (
+        <EditorPanelHeader activeStep={openStep} onStepSelect={toggleStep} />
+      )}
+
+      <EditorSection
+        title="Takım"
+        step={1}
+        expanded={openStep === 1}
+        onSelect={() => toggleStep(1)}
+      >
         <TeamPanel
           teamName={teamName}
           onTeamNameChange={onTeamNameChange}
@@ -113,7 +128,12 @@ export function EditorSidebar({
         />
       </EditorSection>
 
-      <EditorSection title="Maç ve diziliş" step={2}>
+      <EditorSection
+        title="Maç ve diziliş"
+        step={2}
+        expanded={openStep === 2}
+        onSelect={() => toggleStep(2)}
+      >
         <MatchFormatSelector value={matchFormat} onChange={onMatchFormatChange} />
         <p className="text-xs leading-snug text-[var(--muted)]">
           Oyuncu: çift tıkla düzenle, sürükleyerek taşı.
@@ -172,7 +192,12 @@ export function EditorSidebar({
         </div>
       </EditorSection>
 
-      <EditorSection title="Rakip (isteğe bağlı)" step={3}>
+      <EditorSection
+        title="Rakip (isteğe bağlı)"
+        step={3}
+        expanded={openStep === 3}
+        onSelect={() => toggleStep(3)}
+      >
         <div className="flex items-center justify-between gap-2">
           <span className="text-sm text-[var(--foreground)]">Rakip dizilişi</span>
           {hasOpponentLineup ? (
@@ -234,7 +259,12 @@ export function EditorSidebar({
         )}
       </EditorSection>
 
-      <EditorSection title="Kaydet ve paylaş" step={4}>
+      <EditorSection
+        title="Kaydet ve paylaş"
+        step={4}
+        expanded={openStep === 4}
+        onSelect={() => toggleStep(4)}
+      >
         <Toolbar
           tacticTitle={tacticTitle}
           onTacticTitleChange={onTacticTitleChange}

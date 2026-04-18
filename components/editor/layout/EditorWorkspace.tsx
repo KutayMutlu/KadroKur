@@ -18,8 +18,10 @@ export function EditorWorkspace({ isLg, sidebarProps, children }: EditorWorkspac
       }
     >
       {isLg && (
-        <aside className="h-fit max-h-full overflow-auto rounded-xl border border-white/10 bg-[var(--card)]/85 p-3 shadow-[0_20px_50px_-30px_rgba(15,23,42,0.9)] backdrop-blur sm:rounded-2xl sm:p-4 lg:h-full">
-          <EditorSidebar {...sidebarProps} />
+        <aside className="flex min-h-0 max-h-full flex-col overflow-hidden rounded-xl border border-white/10 bg-[var(--card)]/85 p-3 shadow-[0_20px_50px_-30px_rgba(15,23,42,0.9)] backdrop-blur sm:rounded-2xl sm:p-4 lg:h-full lg:self-stretch">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            <EditorSidebar {...sidebarProps} />
+          </div>
         </aside>
       )}
       <div className={`relative min-h-0 min-w-0 overflow-hidden ${isLg ? "lg:h-full" : "flex-1"}`}>

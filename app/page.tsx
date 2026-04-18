@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, Download, LayoutGrid, Share2, Sparkles } from "lucide-react";
+import { HomePitchPreview } from "@/components/home/HomePitchPreview";
 import { SiteHeader } from "@/components/site-header";
 import { ClientTactics } from "./client-tactics";
 
@@ -105,35 +106,7 @@ export default function HomePage() {
             </ul>
           </div>
 
-          {/* Önizleme kartı */}
-          <div className="relative lg:pl-2">
-            <div className="absolute -inset-1 rounded-[1.65rem] bg-gradient-to-br from-[var(--accent)]/18 via-transparent to-[var(--accent-hot)]/12 blur-2xl" aria-hidden />
-            <div
-              className="relative overflow-hidden rounded-3xl border border-[var(--border-subtle)] bg-[var(--bg-card)]/95 p-5 shadow-2xl backdrop-blur-md sm:p-6"
-              style={{ boxShadow: "var(--card-inset-glow)" }}
-            >
-              <div className="mb-4 flex items-center justify-between gap-2 text-xs text-[var(--muted)]">
-                <span className="font-medium text-[var(--foreground)]/90">Canlı önizleme</span>
-                <span className="rounded-lg bg-[var(--bg-elevated)] px-2 py-1 font-mono text-[10px] text-[var(--accent)]">
-                  /editor
-                </span>
-              </div>
-              <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl border border-[var(--pitch-line)] bg-gradient-to-b from-[var(--mini-pitch-from)] to-[var(--mini-pitch-to)]">
-                <div className="absolute inset-x-[12%] top-[8%] bottom-[8%] rounded-sm border border-[var(--pitch-line)]" />
-                <div className="absolute left-1/2 top-1/2 h-[28%] w-[28%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-[var(--pitch-line)]" />
-                <div className="absolute left-0 right-0 top-1/2 border-t border-[var(--pitch-line)]" />
-                <div className="absolute bottom-[18%] left-[22%] h-3 w-3 rounded-full bg-[#f87171] ring-2 ring-[var(--mini-pitch-ring)]" />
-                <div className="absolute bottom-[28%] left-1/2 h-3 w-3 -translate-x-1/2 rounded-full bg-[#fbbf24] ring-2 ring-[var(--mini-pitch-ring)]" />
-                <div className="absolute bottom-[18%] right-[22%] h-3 w-3 rounded-full bg-[#4ade80] ring-2 ring-[var(--mini-pitch-ring)]" />
-                <div className="absolute bottom-[42%] left-[30%] h-3 w-3 rounded-full bg-[#a78bfa] ring-2 ring-[var(--mini-pitch-ring)]" />
-                <div className="absolute bottom-[42%] right-[30%] h-3 w-3 rounded-full bg-[#22d3ee] ring-2 ring-[var(--mini-pitch-ring)]" />
-              </div>
-              <p className="mt-4 text-center text-xs leading-relaxed text-[var(--muted)]">
-                Editörde oyuncuları sürükleyerek konumlandırırsın; atak yönünü tek dokunuşla
-                çevirebilirsin.
-              </p>
-            </div>
-          </div>
+          <HomePitchPreview />
         </section>
 
         {/* Nasıl çalışır */}

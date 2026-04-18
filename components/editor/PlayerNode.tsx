@@ -1,6 +1,9 @@
 "use client";
 
+import { useMemo, memo } from "react";
 import { Group, Rect } from "react-konva";
+import type { KonvaEventObject } from "konva/lib/Node";
+import type { Vector2d } from "konva/lib/types";
 import type { Player } from "@/types/player";
 import { visualAttackY, storedAttackYFromVisual } from "@/lib/attack-direction";
 import { resolveJerseyKit } from "@/lib/jersey-kit";
@@ -39,7 +42,7 @@ export interface PlayerNodeProps {
   hitInsetYBottom?: number;
 }
 
-export function PlayerNode({
+function PlayerNodeInner({
   player,
   pitchWidth,
   pitchHeight,
@@ -69,28 +72,27 @@ export function PlayerNode({
   const insetYBottom =
     hitInsetYBottom ?? Math.max(DRAG_INSET_Y_BOTTOM * visualScale, MIN_HIT_HALF);
 
+  const dragBoundFunc = useMemo(() => {
+    if (renderMode !== "jersey") return undefined;
+    const minX = Math.min(insetX, pitchWidth / 2);
+    const maxX = Math.max(pitchWidth - insetX, pitchWidth / 2);
+    const minY = Math.min(insetYTop, pitchHeight / 2);
+    const maxY = Math.max(pitchHeight - insetYBottom, pitchHeight / 2);
+    return (pos: Vector2d) => ({
+      x: Math.max(minX, Math.min(maxX, pos.x)),
+      y: Math.max(minY, Math.min(maxY, pos.y)),
+    });
+  }, [renderMode, insetX, pitchWidth, insetYTop, pitchHeight, insetYBottom]);
+
   return (
     <Group
       x={px}
       y={py}
       draggable={interactive && renderMode === "jersey"}
-      dragBoundFunc={
-        renderMode === "jersey"
-          ? (pos) => {
-              const minX = Math.min(insetX, pitchWidth / 2);
-              const maxX = Math.max(pitchWidth - insetX, pitchWidth / 2);
-              const minY = Math.min(insetYTop, pitchHeight / 2);
-              const maxY = Math.max(pitchHeight - insetYBottom, pitchHeight / 2);
-              return {
-                x: Math.max(minX, Math.min(maxX, pos.x)),
-                y: Math.max(minY, Math.min(maxY, pos.y)),
-              };
-            }
-          : undefined
-      }
+      dragBoundFunc={dragBoundFunc}
       onDragEnd={
         renderMode === "jersey"
-          ? (e) => {
+          ? (e: KonvaEventObject<DragEvent>) => {
               const node = e.target;
               const nx = verticalLayout
                 ? node.x() / pitchWidth
@@ -139,6 +141,8 @@ export function PlayerNode({
     </Group>
   );
 }
+
+export const PlayerNode = memo(PlayerNodeInner);
 
 /** Yaklaşık yatay yarı genişlik (geri uyumluluk / dışarı kullanım) */
 export const PLAYER_NODE_RADIUS = DRAG_INSET_X;

@@ -1,6 +1,14 @@
 "use client";
 
-import { useRef, useEffect, useState, forwardRef, useImperativeHandle } from "react";
+import {
+  useRef,
+  useEffect,
+  useState,
+  forwardRef,
+  useImperativeHandle,
+  useCallback,
+  useMemo,
+} from "react";
 import { Stage, Layer, Rect, Line, Circle, Group, Text } from "react-konva";
 import type Konva from "konva";
 import { PlayerNode } from "./PlayerNode";
@@ -68,6 +76,8 @@ export const PitchCanvas = forwardRef<PitchCanvasHandle, PitchCanvasProps>(
     const [pinchDistance, setPinchDistance] = useState<number | null>(null);
     const [verticalLayout, setVerticalLayout] = useState(false);
     const [draggingPlayerId, setDraggingPlayerId] = useState<string | null>(null);
+    /** iPhone Retina 3x tam çözünürlükte Konva sahnesi ağır; 2 ile tavan — sürüklemede belirgin kazanç */
+    const [pixelRatio, setPixelRatio] = useState(1);
     const onLayoutChangeRef = useRef<PitchCanvasProps["onLayoutChange"]>(undefined);
     const onAdaptiveDropChangeRef = useRef<PitchCanvasProps["onAdaptiveDropChange"]>(undefined);
     const lastDropKeyRef = useRef<string>("");
@@ -83,6 +93,18 @@ export const PitchCanvas = forwardRef<PitchCanvasHandle, PitchCanvasProps>(
     useImperativeHandle(ref, () => ({
       getStage: () => stageRef.current,
     }));
+
+    useEffect(() => {
+      setPixelRatio(Math.min(2, typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1));
+    }, []);
+
+    const handlePlayerDragEnd = useCallback(
+      (id: string, x: number, y: number) => {
+        setDraggingPlayerId(null);
+        onPlayerMove(id, x, y);
+      },
+      [onPlayerMove]
+    );
 
     useEffect(() => {
       if (dimensions) {
@@ -168,7 +190,7 @@ export const PitchCanvas = forwardRef<PitchCanvasHandle, PitchCanvasProps>(
     const margin = 8;
     const innerW = canvasSize.w - margin * 2;
     const innerH = canvasSize.h - margin * 2;
-    const adaptive = getAdaptiveNodeMetrics(innerW, innerH);
+    const adaptive = useMemo(() => getAdaptiveNodeMetrics(innerW, innerH), [innerW, innerH]);
 
     useEffect(() => {
       const key = JSON.stringify(adaptive.drop);
@@ -178,7 +200,7 @@ export const PitchCanvas = forwardRef<PitchCanvasHandle, PitchCanvasProps>(
     }, [adaptive.drop]);
 
     return (
-      <div className="relative h-full w-full overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/80 via-slate-900/65 to-emerald-950/70 p-3 shadow-[0_20px_60px_-30px_rgba(16,185,129,0.45)] backdrop-blur-sm">
+      <div className="relative h-full w-full overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/80 via-slate-900/65 to-emerald-950/70 p-3 shadow-[0_20px_60px_-30px_rgba(16,185,129,0.45)] lg:backdrop-blur-sm">
         <div
           ref={containerRef}
           className="h-full w-full max-w-full overflow-hidden"
@@ -188,6 +210,7 @@ export const PitchCanvas = forwardRef<PitchCanvasHandle, PitchCanvasProps>(
             height={canvasSize.h}
             ref={stageRef}
             className="rounded-xl"
+            pixelRatio={pixelRatio}
             draggable={enablePanZoom}
             scaleX={stageScale * scale}
             scaleY={stageScale * scale}
@@ -200,7 +223,7 @@ export const PitchCanvas = forwardRef<PitchCanvasHandle, PitchCanvasProps>(
               if (pinchDistance !== null) setPinchDistance(null);
             }}
           >
-          <Layer>
+          <Layer listening={false}>
             <Rect
               x={margin}
               y={margin}
@@ -397,7 +420,7 @@ export const PitchCanvas = forwardRef<PitchCanvasHandle, PitchCanvasProps>(
               />
             </Group>
           </Layer>
-          <Layer>
+          <Layer listening={false}>
             <Group x={margin} y={margin}>
               {players.map((p) => (
                 p.id === draggingPlayerId ? null :
@@ -434,10 +457,7 @@ export const PitchCanvas = forwardRef<PitchCanvasHandle, PitchCanvasProps>(
                   hitInsetX={adaptive.hitInsetX}
                   hitInsetYTop={adaptive.hitInsetYTop}
                   hitInsetYBottom={adaptive.hitInsetYBottom}
-                  onDragEnd={(id, x, y) => {
-                    setDraggingPlayerId(null);
-                    onPlayerMove(id, x, y);
-                  }}
+                  onDragEnd={handlePlayerDragEnd}
                   onDragStart={setDraggingPlayerId}
                   onEdit={onEditPlayer}
                 />

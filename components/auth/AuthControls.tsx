@@ -4,12 +4,15 @@ import { AccountDropdown } from "@/components/auth/auth-controls/account-dropdow
 import { AuthModal } from "@/components/auth/auth-controls/auth-modal";
 import { AuthNotConfigured } from "@/components/auth/auth-controls/not-configured";
 import type { AuthControlsProps, AuthModalProps } from "@/components/auth/auth-controls/types";
-import { isLikelyValidEmail } from "@/components/auth/auth-controls/user-helpers";
-import { Button } from "@/components/ui/button";
+import {
+  isLikelyValidEmail,
+  type ProfileNameFields,
+} from "@/components/auth/auth-controls/user-helpers";
 import { getOAuthRedirectOrigin } from "@/lib/site-origin";
 import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import type { User } from "@supabase/supabase-js";
-import { useEffect, useRef, useState } from "react";
+import { LogIn } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export type { AuthControlsProps };
 
@@ -65,8 +68,29 @@ export function AuthControls({ guestCompanion }: AuthControlsProps) {
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarTone, setSnackbarTone] = useState<"success" | "warning">("success");
   const [emailInvalid, setEmailInvalid] = useState(false);
+  const [profileNames, setProfileNames] = useState<ProfileNameFields | null>(null);
   const emailInputRef = useRef<HTMLInputElement | null>(null);
   const configured = isSupabaseConfigured();
+
+  const fetchProfileNames = useCallback(async () => {
+    const uid = user?.id;
+    if (!uid) {
+      setProfileNames(null);
+      return;
+    }
+    const sb = getSupabase();
+    if (!sb) return;
+    const { data } = await sb
+      .from("user_profiles")
+      .select("first_name, last_name")
+      .eq("user_id", uid)
+      .maybeSingle();
+    setProfileNames(
+      data
+        ? { first_name: data.first_name ?? null, last_name: data.last_name ?? null }
+        : null
+    );
+  }, [user?.id]);
 
   useEffect(() => {
     const sb = getSupabase();
@@ -77,6 +101,10 @@ export function AuthControls({ guestCompanion }: AuthControlsProps) {
     });
     return () => sub.subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    void fetchProfileNames();
+  }, [fetchProfileNames]);
 
   useEffect(() => {
     if (!user) return;
@@ -456,20 +484,37 @@ export function AuthControls({ guestCompanion }: AuthControlsProps) {
     return (
       <>
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-          <Button
+          <button
             type="button"
-            variant="secondary"
-            size="sm"
-            className="min-h-[40px] shrink-0 touch-manipulation text-xs sm:min-h-0 sm:text-sm"
+            disabled={loading}
+            aria-haspopup="dialog"
+            aria-expanded={authModalOpen}
+            aria-label="Giriş yap veya kayıt ol"
             onClick={() => {
               setAuthMode("signIn");
               setAuthMessage("");
               setAuthModalOpen(true);
             }}
-            disabled={loading}
+            className="group relative flex min-h-[44px] shrink-0 touch-manipulation items-center gap-2.5 overflow-hidden rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)]/95 py-2 pl-2 pr-3 shadow-[var(--card-inset-glow)] backdrop-blur-sm transition hover:border-[var(--accent)]/35 hover:shadow-[0_0_0_1px_color-mix(in_srgb,var(--accent)_22%,transparent)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/40 disabled:pointer-events-none disabled:opacity-50 sm:min-h-0 sm:py-1.5 sm:pl-1.5 sm:pr-2.5"
           >
-            Giriş Yap / Kayıt Ol
-          </Button>
+            <span
+              className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[var(--accent)]/28 to-transparent opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100"
+              aria-hidden
+            />
+            <span className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--accent)]/[0.14] text-[var(--accent)] ring-1 ring-[var(--accent)]/18">
+              <LogIn className="h-[18px] w-[18px]" strokeWidth={2.25} aria-hidden />
+            </span>
+            <span
+              className="relative min-w-0 text-[13px] font-semibold leading-tight text-[var(--foreground)] sm:text-sm"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              <span className="whitespace-nowrap">
+                Giriş yap
+                <span className="px-1 text-[var(--muted)]">·</span>
+                Kayıt ol
+              </span>
+            </span>
+          </button>
           {guestCompanion}
           {authModalOpen ? <AuthModal {...modalProps} /> : null}
         </div>
@@ -492,7 +537,15 @@ export function AuthControls({ guestCompanion }: AuthControlsProps) {
 
   return (
     <>
-      <AccountDropdown user={user} loading={loading} onSignOut={signOut} />
+      <AccountDropdown
+        user={user}
+        profile={profileNames}
+        loading={loading}
+        onSignOut={signOut}
+        onMenuOpenChange={(open) => {
+          if (open) void fetchProfileNames();
+        }}
+      />
       {snackbarMessage ? (
         <div className="pointer-events-none fixed bottom-4 left-1/2 z-[10020] w-[min(calc(100vw-2rem),28rem)] -translate-x-1/2 px-2">
           <div

@@ -31,7 +31,6 @@ export function PublicTacticViewer({ title, formationKey, ownerName, state }: Pr
             opponentTeamName={state.opponentTeamName}
             onPlayerMove={() => {}}
             interactive={false}
-            enablePanZoom
           />
         </section>
       </main>

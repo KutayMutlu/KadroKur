@@ -157,6 +157,14 @@ export const PitchCanvas = forwardRef<PitchCanvasHandle, PitchCanvasProps>(
       setPinchDistance(dist);
     };
 
+    /** Oyuncu sürüklemesi de Stage’de dragEnd tetikleyebilir; e.target oyuncu grubu olunca sahne yanlış kayıyordu. */
+    const handleStageDragEnd = (e: Konva.KonvaEventObject<DragEvent>) => {
+      if (!enablePanZoom) return;
+      const stage = stageRef.current;
+      if (!stage || e.target !== stage) return;
+      setStagePos({ x: stage.x(), y: stage.y() });
+    };
+
     const margin = 8;
     const innerW = canvasSize.w - margin * 2;
     const innerH = canvasSize.h - margin * 2;
@@ -185,7 +193,7 @@ export const PitchCanvas = forwardRef<PitchCanvasHandle, PitchCanvasProps>(
             scaleY={stageScale * scale}
             x={stagePos.x}
             y={stagePos.y}
-            onDragEnd={(e) => setStagePos({ x: e.target.x(), y: e.target.y() })}
+            onDragEnd={handleStageDragEnd}
             onWheel={handleWheelZoom}
             onTouchMove={handleTouchMove}
             onTouchEnd={() => {

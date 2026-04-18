@@ -49,6 +49,8 @@ interface UseEditorPersistenceParams {
   setTacticId: (v: string | null) => void;
   setShareId: (v: string | null) => void;
   setDidSaveOnce: (v: boolean) => void;
+  /** Hesaba bulut yazımı başarılı — inline mesaj yerine toast */
+  onTacticSavedToCloud?: () => void;
 }
 
 export function useEditorPersistence({
@@ -78,6 +80,7 @@ export function useEditorPersistence({
   setTacticId,
   setShareId,
   setDidSaveOnce,
+  onTacticSavedToCloud,
 }: UseEditorPersistenceParams) {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -279,8 +282,8 @@ export function useEditorPersistence({
           "Bu cihazda kaydedildi; buluta yazılamadı. Bağlantınızı ve oturumunuzu kontrol edip yeniden deneyin."
         );
       } else if (cloudAttempted && !cloudSaveFailed) {
-        setMessageTone("success");
-        setMessage("Taktik kaydedildi ve hesabınıza yazıldı.");
+        setMessage(null);
+        onTacticSavedToCloud?.();
       } else {
         setMessageTone("success");
         setMessage("Taktik bu cihazda kaydedildi.");
@@ -309,6 +312,7 @@ export function useEditorPersistence({
     tacticTitle,
     teamName,
     ownerName,
+    onTacticSavedToCloud,
   ]);
 
   const handleCopyShare = useCallback(async () => {

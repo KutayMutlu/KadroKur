@@ -3,7 +3,8 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Download, Link2, Loader2, Save } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { AlertTriangle, CheckCircle2, Download, Link2, Loader2, Save } from "lucide-react";
 
 export interface ToolbarProps {
   tacticTitle: string;
@@ -92,16 +93,34 @@ export function Toolbar({
         </Button>
       </div>
 
-      {message && (
-        <p
-          className={`text-sm ${
-            messageTone === "success" ? "text-green-400" : "text-red-400"
-          }`}
+      {message ? (
+        <div
           role="status"
+          aria-live="polite"
+          className={cn(
+            "flex items-start gap-2.5 rounded-2xl border px-3 py-2.5 text-left shadow-[0_12px_40px_-28px_rgba(0,0,0,0.65)] backdrop-blur-sm animate-in fade-in slide-in-from-bottom-1 duration-200",
+            messageTone === "success" &&
+              "border-[var(--accent)]/40 bg-[var(--bg-elevated)]/95 text-[var(--foreground)] ring-1 ring-[var(--accent)]/12",
+            messageTone === "warning" &&
+              "border-amber-500/45 bg-amber-500/[0.11] text-[var(--foreground)] ring-1 ring-amber-500/18 dark:bg-amber-950/45 dark:text-amber-50 dark:ring-amber-500/22"
+          )}
         >
-          {message}
-        </p>
-      )}
+          {messageTone === "success" ? (
+            <CheckCircle2
+              className="mt-0.5 h-[18px] w-[18px] shrink-0 text-[var(--accent)]"
+              strokeWidth={2}
+              aria-hidden
+            />
+          ) : (
+            <AlertTriangle
+              className="mt-0.5 h-[18px] w-[18px] shrink-0 text-amber-600 dark:text-amber-300"
+              strokeWidth={2}
+              aria-hidden
+            />
+          )}
+          <span className="min-w-0 flex-1 text-[13px] font-medium leading-snug">{message}</span>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { PitchCanvas, type PitchCanvasHandle } from "./PitchCanvas";
 import { PlayerEditModal } from "./PlayerEditModal";
 import { createPlayersForFormation } from "@/lib/players-factory";
@@ -26,6 +26,10 @@ import { EditorHeader } from "./layout/EditorHeader";
 import { EditorMobileUndoRedo } from "./layout/EditorMobileUndoRedo";
 import { MobileSettingsDrawer } from "./layout/MobileSettingsDrawer";
 import { EditorWorkspace } from "./layout/EditorWorkspace";
+import { EditorSaveToast } from "./EditorSaveToast";
+
+const EDITOR_CLOUD_SAVE_TOAST =
+  "Taktik başarıyla kaydedildi. Sahaya çıkmaya hazırsın! 📋";
 
 export interface EditorClientProps {
   initialTacticId?: string | null;
@@ -59,6 +63,11 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
   const [didSaveOnce, setDidSaveOnce] = useState(false);
   const [dropConfig, setDropConfig] = useState<AdaptiveDropConfig>(DEFAULT_DROP_CONFIG);
   const [attackFlip, setAttackFlip] = useState(false);
+  const [cloudSaveToastOpen, setCloudSaveToastOpen] = useState(false);
+
+  const onTacticSavedToCloud = useCallback(() => {
+    setCloudSaveToastOpen(true);
+  }, []);
 
   const { pastSnapshots, futureSnapshots, makeSnapshot, pushHistory, onUndo, onRedo } =
     useEditorHistory({
@@ -154,6 +163,7 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
     setTacticId,
     setShareId,
     setDidSaveOnce,
+    onTacticSavedToCloud,
   });
 
   const editingPlayer = players.find((p) => p.id === editingId) ?? null;
@@ -244,6 +254,11 @@ export function EditorClient({ initialTacticId }: EditorClientProps) {
         player={editingPlayer}
         onClose={() => setEditingId(null)}
         onUpdatePlayer={onUpdatePlayer}
+      />
+      <EditorSaveToast
+        open={cloudSaveToastOpen}
+        message={EDITOR_CLOUD_SAVE_TOAST}
+        onDismiss={() => setCloudSaveToastOpen(false)}
       />
       </div>
     </div>

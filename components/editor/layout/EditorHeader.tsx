@@ -3,11 +3,10 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { AuthControls } from "@/components/auth/AuthControls";
-import { cn } from "@/lib/utils";
 import { Redo2, Undo2 } from "lucide-react";
+import { EditorHeaderPitchBar } from "./EditorHeaderPitchBar";
 
 export interface EditorHeaderProps {
-  /** Kayıt panelindeki taktik adı — üstte bağlam olarak gösterilir */
   tacticTitle: string;
   canUndo: boolean;
   canRedo: boolean;
@@ -25,9 +24,6 @@ export function EditorHeader({
   onRedo,
   showUndoRedoInHeader = true,
 }: EditorHeaderProps) {
-  const trimmed = tacticTitle.trim();
-  const hasTitle = trimmed.length > 0;
-
   return (
     <header
       className="sticky top-0 z-30 -mx-3 mb-2 shrink-0 border-b border-[var(--border-subtle)] bg-[var(--bg-elevated)]/92 px-3 pb-2.5 pt-[max(0.5rem,env(safe-area-inset-top))] backdrop-blur-md sm:-mx-4 sm:mb-3 sm:px-4 sm:pb-3"
@@ -59,17 +55,8 @@ export function EditorHeader({
           </div>
         </Link>
 
-        <div className="min-w-0 flex-1 px-0.5 sm:px-2">
-          <p
-            className={cn(
-              "truncate text-center text-[13px] font-medium leading-snug sm:text-left sm:text-sm",
-              hasTitle ? "text-[var(--foreground)]" : "text-[var(--muted)]"
-            )}
-            style={{ fontFamily: "var(--font-display)" }}
-            title={hasTitle ? trimmed : undefined}
-          >
-            {hasTitle ? trimmed : "Adsız taktik"}
-          </p>
+        <div className="min-w-0 flex-1 flex justify-center px-0.5 sm:px-2">
+          <EditorHeaderPitchBar tacticTitle={tacticTitle} />
         </div>
 
         <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">

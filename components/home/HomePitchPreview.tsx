@@ -40,9 +40,6 @@ export function HomePitchPreview() {
               </span>
               Canlı önizleme
             </span>
-            <span className="pl-4 text-[10px] font-normal leading-tight text-[var(--muted)]/90 sm:pl-6">
-              Animasyonlu örnek — editördeki saha görünümünü yansıtır
-            </span>
           </div>
           <div className="flex shrink-0 items-center gap-1.5">
             <span className="rounded-md bg-[var(--accent)]/12 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[var(--accent)] ring-1 ring-[var(--accent)]/25">
@@ -135,16 +132,19 @@ export function HomePitchPreview() {
         </div>
 
         <p className="mt-4 text-center text-xs leading-relaxed text-[var(--muted)]">
-          Editörde oyuncuları sürükleyerek konumlandırırsın; atak yönünü tek dokunuşla çevirebilirsin.
+          Taktiklerini özgürce çiz, oyuncuları sürükle ve oyun planını tek bir dokunuşla tersyüz et.
         </p>
         <p className="mt-2 text-center">
           <Link
             href="/editor"
-            className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[var(--accent)] underline-offset-4 transition hover:underline"
+            className="group inline-flex items-center gap-1.5 text-[11px] font-semibold text-[var(--accent)] underline-offset-4 transition hover:underline"
             style={{ fontFamily: "var(--font-display)" }}
           >
             Tam önizlemeyi editörde aç
-            <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+            <ArrowRight
+              className="h-3.5 w-3.5 shrink-0 transition-transform duration-200 ease-out group-hover:translate-x-1"
+              aria-hidden
+            />
           </Link>
         </p>
       </div>

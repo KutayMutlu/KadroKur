@@ -13,7 +13,7 @@ type SiteHeaderProps = {
 export function SiteHeader({ showEditorLink = true }: SiteHeaderProps) {
   return (
     <header className="relative z-10 border-b border-[var(--border-subtle)] bg-[var(--bg-elevated)]/80 backdrop-blur-md">
-      <div className="mx-auto flex max-w-5xl flex-row items-center justify-between gap-2 px-4 py-3 sm:gap-3 sm:px-6">
+      <div className="mx-auto flex max-w-5xl flex-row items-center justify-between gap-2 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] sm:gap-3 sm:px-6 sm:pt-3">
         <Link
           href="/"
           className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3"

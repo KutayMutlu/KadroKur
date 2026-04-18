@@ -65,35 +65,47 @@ export function ClientTactics() {
 
   if (items.length === 0 && cloudItems.length === 0 && cloudReady) {
     return (
-      <section className="mt-16 rounded-2xl border border-dashed border-[var(--border-subtle)] bg-[var(--bg-card)] p-8 text-center backdrop-blur-sm">
-        <p
-          className="text-sm text-[var(--muted)]"
-          style={{ fontFamily: "var(--font-body)" }}
-        >
-          Henüz kayıtlı taktik yok. Editörde bir diziliş kaydettiğinde burada
-          listelenecek.
-        </p>
-        <Link
-          href="/editor"
-          className="mt-4 inline-block text-sm font-medium text-[var(--accent)] underline-offset-4 hover:underline"
-        >
-          İlk taktikini oluştur →
-        </Link>
+      <section
+        className="mt-14 border-t border-[var(--border-subtle)]/80 pt-14 sm:mt-16 sm:pt-16"
+        aria-labelledby="taktikler-bos"
+      >
+        <h2 id="taktikler-bos" className="sr-only">
+          Kayıtlı taktikler
+        </h2>
+        <div className="rounded-2xl border border-dashed border-[var(--border-subtle)] bg-[var(--bg-card)]/80 p-8 text-center shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)] backdrop-blur-sm sm:p-10">
+          <p
+            className="mx-auto max-w-md text-sm leading-relaxed text-[var(--muted)]"
+            style={{ fontFamily: "var(--font-body)" }}
+          >
+            Henüz kayıtlı taktik yok. Editörde bir diziliş kaydettiğinde burada listelenecek.
+          </p>
+          <Link
+            href="/editor"
+            className="mt-5 inline-flex min-h-[44px] items-center justify-center rounded-xl bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-[var(--on-accent)] transition hover:brightness-110 touch-manipulation"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
+            İlk taktikini oluştur
+          </Link>
+        </div>
       </section>
     );
   }
 
   return (
-    <section className="mt-16">
-      <div className="mb-5 flex items-end justify-between gap-4">
+    <section
+      className="mt-14 border-t border-[var(--border-subtle)]/80 pt-14 sm:mt-16 sm:pt-16"
+      aria-labelledby="taktikler-baslik"
+    >
+      <div className="mb-6 flex flex-col gap-2 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2
-            className="text-xl font-semibold text-[var(--foreground)]"
+            id="taktikler-baslik"
+            className="text-2xl font-semibold tracking-tight text-[var(--foreground)] sm:text-3xl"
             style={{ fontFamily: "var(--font-display)" }}
           >
             Kayıtlı taktikler
           </h2>
-          <p className="mt-1 text-sm text-[var(--muted)]">Bu cihaz + hesabınız</p>
+          <p className="mt-1 text-sm text-[var(--muted)]">Bu cihazdaki ve hesabınızdaki kayıtlar</p>
         </div>
       </div>
       {cloudItems.length > 0 && (

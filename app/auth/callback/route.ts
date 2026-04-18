@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { ensureUserProfileFromAuthUser } from "@/lib/user-profile-sync";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -25,6 +26,7 @@ export async function GET(request: Request) {
   if (code) {
     const supabase = await createClient();
     await supabase.auth.exchangeCodeForSession(code);
+    await ensureUserProfileFromAuthUser(supabase);
   }
 
   const res = NextResponse.redirect(`${origin}${nextPath}`);

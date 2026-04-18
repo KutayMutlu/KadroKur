@@ -22,7 +22,7 @@ type Props = {
   user: User;
   loading: boolean;
   onSignOut: () => void | Promise<void>;
-  /** `user_profiles` — yoksa kayıt metadata’sındaki ad/soyad kullanılır */
+  /** `user_profiles` (tercih); yoksa oturum metadata’sı (aynı mantık sunucu tetikleyicisiyle) */
   profile?: ProfileNameFields | null;
   onMenuOpenChange?: (open: boolean) => void;
   /** Ayarlar ile tek çerçevede sağ segment */

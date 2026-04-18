@@ -1,4 +1,5 @@
 import type { User } from "@supabase/supabase-js";
+import { extractProfileNamesFromUserMetadata, joinFirstLast } from "@/lib/profile-names";
 
 /** `user_profiles` satırı — AuthControls isteğe bağlı yükler */
 export type ProfileNameFields = {
@@ -6,12 +7,7 @@ export type ProfileNameFields = {
   last_name?: string | null;
 };
 
-function joinFirstLast(first?: string | null, last?: string | null): string {
-  const fn = (first ?? "").trim();
-  const ln = (last ?? "").trim();
-  if (!fn && !ln) return "";
-  return [fn, ln].filter(Boolean).join(" ");
-}
+export { joinFirstLast, extractProfileNamesFromUserMetadata };
 
 export function pickAvatarUrl(user: User): string | null {
   const m = user.user_metadata as Record<string, unknown> | undefined;
@@ -24,36 +20,17 @@ export function pickAvatarUrl(user: User): string | null {
 }
 
 /**
- * Görünen ad: önce `user_profiles`, sonra kayıtta yazılan metadata `first_name`/`last_name`,
- * sonra OAuth alanları; en son e-posta yereli.
+ * Görünen ad: önce `user_profiles` (tek doğruluk kaynağı), boşsa metadata;
+ * en son e-posta yereli.
  */
 export function pickDisplayName(user: User, profile?: ProfileNameFields | null): string {
   const fromDb = joinFirstLast(profile?.first_name, profile?.last_name);
   if (fromDb) return fromDb;
 
-  const m = user.user_metadata as Record<string, unknown> | undefined;
-  if (m) {
-    const fromSignup = joinFirstLast(
-      typeof m.first_name === "string" ? m.first_name : null,
-      typeof m.last_name === "string" ? m.last_name : null
-    );
-    if (fromSignup) return fromSignup;
+  const meta = extractProfileNamesFromUserMetadata(user);
+  const fromMeta = joinFirstLast(meta.first_name, meta.last_name);
+  if (fromMeta) return fromMeta;
 
-    const full = m.full_name;
-    if (typeof full === "string" && full.trim()) return full.trim();
-    const given = m.given_name;
-    const family = m.family_name;
-    if (typeof given === "string" && given.trim()) {
-      if (typeof family === "string" && family.trim()) {
-        return `${given.trim()} ${family.trim()}`;
-      }
-      return given.trim();
-    }
-    const name = m.name;
-    if (typeof name === "string" && name.trim()) return name.trim();
-    const userName = m.user_name;
-    if (typeof userName === "string" && userName.trim()) return userName.trim();
-  }
   const email = user.email;
   if (email) {
     const local = email.split("@")[0]?.trim();
@@ -76,8 +53,16 @@ export function pickInitials(user: User, profile?: ProfileNameFields | null): st
   return display.charAt(0).toUpperCase() || "?";
 }
 
+/** Kopyala-yapıştır / IME kaynaklı görünmez karakterleri temizler (Supabase “invalid format” önlemi). */
+export function normalizeEmailInput(value: string): string {
+  return value
+    .trim()
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .normalize("NFKC");
+}
+
 /** Basit e-posta kontrolü: @ ve alan adı için en az bir nokta (ör. a@b.co). */
 export function isLikelyValidEmail(value: string): boolean {
-  const s = value.trim();
+  const s = normalizeEmailInput(value);
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
 }

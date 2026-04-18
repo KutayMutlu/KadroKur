@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { syncAuthMetadataNamesToProfile } from "@/lib/user-profile-sync";
 
 function toText(value: FormDataEntryValue | null): string {
   return typeof value === "string" ? value.trim() : "";
@@ -73,8 +74,9 @@ export async function POST(request: Request) {
   };
 
   if (section === "profil") {
-    payload.position = toText(formData.get("position")) || null;
-    payload.preferred_foot = toText(formData.get("preferred_foot")) || null;
+    /* user_profiles: position, preferred_foot NOT NULL — boş seçim '' olmalı, null değil */
+    payload.position = toText(formData.get("position"));
+    payload.preferred_foot = toText(formData.get("preferred_foot"));
     payload.dominant_roles = parseRoleList(formData.get("dominant_roles"));
     payload.avatar_url = toText(formData.get("avatar_url"));
     payload.social_link = toText(formData.get("social_link"));
@@ -96,6 +98,14 @@ export async function POST(request: Request) {
   if (error) {
     const msg = encodeURIComponent(error.message.slice(0, 180));
     return NextResponse.redirect(new URL(withQuery(returnPath, `error=1&msg=${msg}`), request.url), 303);
+  }
+
+  if (section === "kisisel") {
+    await syncAuthMetadataNamesToProfile(
+      supabase,
+      String(payload.first_name ?? ""),
+      String(payload.last_name ?? "")
+    );
   }
 
   return NextResponse.redirect(new URL(withQuery(returnPath, "saved=1"), request.url), 303);

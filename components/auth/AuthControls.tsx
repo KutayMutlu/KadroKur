@@ -1,5 +1,9 @@
 "use client";
 
+import {
+  AuthSessionToast,
+  type AuthSessionToastTone,
+} from "@/components/auth/auth-controls/auth-session-toast";
 import { AccountDropdown } from "@/components/auth/auth-controls/account-dropdown";
 import { AuthModal } from "@/components/auth/auth-controls/auth-modal";
 import { AppSettingsPopover } from "@/components/app-settings-popover";
@@ -7,12 +11,15 @@ import { AuthNotConfigured } from "@/components/auth/auth-controls/not-configure
 import type { AuthControlsProps, AuthModalProps } from "@/components/auth/auth-controls/types";
 import {
   isLikelyValidEmail,
+  normalizeEmailInput,
   type ProfileNameFields,
 } from "@/components/auth/auth-controls/user-helpers";
 import { getOAuthRedirectOrigin } from "@/lib/site-origin";
 import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
+import { ensureUserProfileFromAuthUser } from "@/lib/user-profile-sync";
 import type { User } from "@supabase/supabase-js";
 import { CircleUserRound } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 export type { AuthControlsProps };
@@ -41,6 +48,13 @@ function mapAuthErrorMessage(rawMessage: string, action: "signIn" | "signUp" | "
   if (message.includes("network") || message.includes("failed to fetch")) {
     return "Bağlantı sorunu oluştu. İnternetinizi kontrol edip tekrar deneyin.";
   }
+  if (
+    message.includes("unable to validate email") ||
+    message.includes("invalid format") ||
+    message.includes("invalid email")
+  ) {
+    return "E-posta adresi geçersiz görünüyor. Yazımı kontrol edin; kopyala-yapıştırdıysanız boşluk veya yanlış karakter olmamalı.";
+  }
 
   if (action === "reset") return "Şifre sıfırlama işlemi tamamlanamadı. Lütfen tekrar deneyin.";
   if (action === "signUp") return "Kayıt işlemi tamamlanamadı. Bilgileri kontrol edip tekrar deneyin.";
@@ -49,6 +63,7 @@ function mapAuthErrorMessage(rawMessage: string, action: "signIn" | "signUp" | "
 }
 
 export function AuthControls({ guestCompanion }: AuthControlsProps) {
+  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -67,7 +82,7 @@ export function AuthControls({ guestCompanion }: AuthControlsProps) {
   const [authMessage, setAuthMessage] = useState("");
   const [authMessageTone, setAuthMessageTone] = useState<"success" | "warning">("warning");
   const [snackbarMessage, setSnackbarMessage] = useState("");
-  const [snackbarTone, setSnackbarTone] = useState<"success" | "warning">("success");
+  const [snackbarTone, setSnackbarTone] = useState<AuthSessionToastTone>("success");
   const [emailInvalid, setEmailInvalid] = useState(false);
   const [profileNames, setProfileNames] = useState<ProfileNameFields | null>(null);
   const emailInputRef = useRef<HTMLInputElement | null>(null);
@@ -104,8 +119,22 @@ export function AuthControls({ guestCompanion }: AuthControlsProps) {
   }, []);
 
   useEffect(() => {
-    void fetchProfileNames();
-  }, [fetchProfileNames]);
+    if (!user?.id) {
+      setProfileNames(null);
+      return;
+    }
+    const sb = getSupabase();
+    if (!sb) return;
+    let cancelled = false;
+    void (async () => {
+      await ensureUserProfileFromAuthUser(sb);
+      if (cancelled) return;
+      await fetchProfileNames();
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, fetchProfileNames]);
 
   useEffect(() => {
     if (!user) return;
@@ -159,7 +188,7 @@ export function AuthControls({ guestCompanion }: AuthControlsProps) {
 
   useEffect(() => {
     if (!snackbarMessage) return;
-    const timer = window.setTimeout(() => setSnackbarMessage(""), 2600);
+    const timer = window.setTimeout(() => setSnackbarMessage(""), 3200);
     return () => window.clearTimeout(timer);
   }, [snackbarMessage]);
 
@@ -256,7 +285,7 @@ export function AuthControls({ guestCompanion }: AuthControlsProps) {
     setEmailInvalid(false);
     setPasswordMainInvalid(false);
 
-    const em = email.trim();
+    const em = normalizeEmailInput(email);
     const pwEmpty = password.trim().length === 0;
     const emailMissing = em.length === 0;
     const emailBadFormat = em.length > 0 && !isLikelyValidEmail(em);
@@ -283,7 +312,7 @@ export function AuthControls({ guestCompanion }: AuthControlsProps) {
 
     setLoading(true);
     const { error } = await sb.auth.signInWithPassword({
-      email: email.trim(),
+      email: em,
       password,
     });
     setLoading(false);
@@ -293,9 +322,9 @@ export function AuthControls({ guestCompanion }: AuthControlsProps) {
       return;
     }
     setAuthMessageTone("success");
-    setAuthMessage("Giriş başarılı.");
+    setAuthMessage("Giriş tamamlandı, hoş geldin.");
     setSnackbarTone("success");
-    setSnackbarMessage("Giriş başarılı.");
+    setSnackbarMessage("Giriş tamamlandı, hoş geldin.");
     setAuthModalOpen(false);
     setPassword("");
     setPasswordConfirm("");
@@ -305,7 +334,7 @@ export function AuthControls({ guestCompanion }: AuthControlsProps) {
     const sb = getSupabase();
     if (!sb) return;
     setAuthMessage("");
-    const em = email.trim();
+    const em = normalizeEmailInput(email);
     if (!em) {
       setAuthMessageTone("warning");
       setEmailInvalid(true);
@@ -347,7 +376,7 @@ export function AuthControls({ guestCompanion }: AuthControlsProps) {
     const fnOk = firstName.trim().length > 0;
     const lnOk = lastName.trim().length > 0;
     const birthOk = birthDate.trim().length > 0;
-    const em = email.trim();
+    const em = normalizeEmailInput(email);
     const emailMissing = em.length === 0;
     const emailBadFormat = em.length > 0 && !isLikelyValidEmail(em);
     const pw = password;
@@ -402,7 +431,7 @@ export function AuthControls({ guestCompanion }: AuthControlsProps) {
     setLoading(true);
     const origin = getOAuthRedirectOrigin();
     const { data, error } = await sb.auth.signUp({
-      email: email.trim(),
+      email: em,
       password,
       options: {
         emailRedirectTo: `${origin}/auth/confirm`,
@@ -413,12 +442,14 @@ export function AuthControls({ guestCompanion }: AuthControlsProps) {
         },
       },
     });
-    setLoading(false);
     if (error) {
+      setLoading(false);
       setAuthMessageTone("warning");
       setAuthMessage(mapAuthErrorMessage(error.message, "signUp"));
       return;
     }
+
+    setLoading(false);
     setAuthMessageTone("success");
     if (data.session) {
       setAuthMessage("Kayıt başarılı. Oturumunuz açıldı.");
@@ -436,6 +467,9 @@ export function AuthControls({ guestCompanion }: AuthControlsProps) {
     setLoading(true);
     await sb.auth.signOut();
     setLoading(false);
+    setSnackbarTone("neutral");
+    setSnackbarMessage("Oturum kapatıldı.");
+    router.replace("/");
   };
 
   if (!configured) {
@@ -522,19 +556,7 @@ export function AuthControls({ guestCompanion }: AuthControlsProps) {
           {guestCompanion}
           {authModalOpen ? <AuthModal {...modalProps} /> : null}
         </div>
-        {snackbarMessage ? (
-          <div className="pointer-events-none fixed bottom-4 left-1/2 z-[10020] w-[min(calc(100vw-2rem),28rem)] -translate-x-1/2 px-2">
-            <div
-              className={`rounded-lg border px-4 py-2 text-sm shadow-lg backdrop-blur ${
-                snackbarTone === "success"
-                  ? "border-green-500/50 bg-green-950/85 text-green-100"
-                  : "border-amber-500/50 bg-amber-950/85 text-amber-100"
-              }`}
-            >
-              {snackbarMessage}
-            </div>
-          </div>
-        ) : null}
+        <AuthSessionToast message={snackbarMessage} tone={snackbarTone} />
       </>
     );
   }
@@ -554,19 +576,7 @@ export function AuthControls({ guestCompanion }: AuthControlsProps) {
         />
         <AppSettingsPopover variant="embedded" />
       </div>
-      {snackbarMessage ? (
-        <div className="pointer-events-none fixed bottom-4 left-1/2 z-[10020] w-[min(calc(100vw-2rem),28rem)] -translate-x-1/2 px-2">
-          <div
-            className={`rounded-lg border px-4 py-2 text-sm shadow-lg backdrop-blur ${
-              snackbarTone === "success"
-                ? "border-green-500/50 bg-green-950/85 text-green-100"
-                : "border-amber-500/50 bg-amber-950/85 text-amber-100"
-            }`}
-          >
-            {snackbarMessage}
-          </div>
-        </div>
-      ) : null}
+      <AuthSessionToast message={snackbarMessage} tone={snackbarTone} />
     </>
   );
 }

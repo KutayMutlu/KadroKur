@@ -223,7 +223,7 @@ export const PitchCanvas = forwardRef<PitchCanvasHandle, PitchCanvasProps>(
               if (pinchDistance !== null) setPinchDistance(null);
             }}
           >
-          <Layer listening={false}>
+          <Layer listening={false} hitGraphEnabled={false}>
             <Rect
               x={margin}
               y={margin}
